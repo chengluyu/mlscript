@@ -106,14 +106,6 @@ object Parentheses:
 
   private def handleParens(node: Node, parent: Node, stack: List[Node]): Boolean =
     node match
-      case _: NullableTypeAnnotation => parent match
-        case _: ArrayTypeAnnotation => true
-        case _ => false
-      case _: FunctionTypeAnnotation =>
-        stack match
-          case _ :: (_: UnionTypeAnnotation | _: IntersectionTypeAnnotation | _: ArrayTypeAnnotation) :: _ => true
-          case _ :: (_: TypeAnnotation) :: (_: ArrowFunctionExpression) :: _ => true
-          case _ => false
       case _: UpdateExpression =>
         hasPostfixPart(node, parent) || (parent match
           case node: Node with Class => node.superClass.contains(node)
@@ -162,12 +154,6 @@ object Parentheses:
               case _ => true
             (parentPrec == nodePrec && parent.right == node && parentIsNotLogicalExpr) || parentPrec > nodePrec
           case _ => false)
-      case _: UnionTypeAnnotation | _: IntersectionTypeAnnotation => parent match
-        case _: ArrayTypeAnnotation | _: NullableTypeAnnotation | _: IntersectionTypeAnnotation | _: UnionTypeAnnotation => true
-        case _ => false
-      case _: OptionalIndexedAccessType => parent match
-        case IndexedAccessType(objectType, _) => objectType == node
-        case _ => false
       case _: TSAsExpression | _: TSSatisfiesExpression | _: TSTypeAssertion => true
       case _: TSUnionType | _: TSIntersectionType => parent match
         case _: TSArrayType | _: TSOptionalType | _: TSIntersectionType | _: TSUnionType | _: TSRestType => true

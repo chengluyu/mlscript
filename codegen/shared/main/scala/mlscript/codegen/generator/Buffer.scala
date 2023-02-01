@@ -18,7 +18,7 @@ class BufferOutput(
   val rawMappings: Option[Any] // TODO: Fill the right types after they're done.
 )
 
-class Buffer(map: Option[SourceMapBuilder], printer: Printer) {
+class Buffer(map: Option[SourceMapBuilder]) {
   private var position: Position = Position(1, 0)
 
   private var sourcePosition: SourcePosition = SourcePosition()
@@ -186,13 +186,13 @@ class Buffer(map: Option[SourceMapBuilder], printer: Printer) {
   def hasContent: Boolean =
     !revertableQueue.isEmpty || last != '\u0000'
 
-  def exactSource(loc: Option[Location], node: Node, parent: Option[Node], printer: Printer)(implicit options: PrinterOptions): Unit =
-    if (map.isEmpty) printer.print(node, parent)
-    else {
-      source(LocationType.Start, loc)
-      printer.print(node, parent)
-      source(LocationType.End, loc)
-    }
+  // def exactSource(loc: Option[Location], node: Node, parent: Option[Node], printer: Printer)(implicit options: PrinterOptions): Unit =
+  //   if (map.isEmpty) printer.print(node, parent)
+  //   else {
+  //     source(LocationType.Start, loc)
+  //     printer.print(node, parent)
+  //     source(LocationType.End, loc)
+  //   }
 
   def source(prop: LocationType, loc: Option[Location]): Unit =
     if (!map.isEmpty) normalizePosition(prop, loc, 0, 0)
@@ -205,12 +205,12 @@ class Buffer(map: Option[SourceMapBuilder], printer: Printer) {
   ): Unit =
     if (!map.isEmpty) normalizePosition(prop, loc, lineOffset, columnOffset)
 
-  def withSource(prop: LocationType, loc: Option[Location], node: Node, parent: Node, printer: Printer)(implicit options: PrinterOptions): Unit =
-    if (map.isEmpty) printer.print(node, Some(parent))
-    else {
-      source(prop, loc)
-      printer.print(node, Some(parent))
-    }
+  // def withSource(prop: LocationType, loc: Option[Location], node: Node, parent: Node, printer: Printer)(implicit options: PrinterOptions): Unit =
+  //   if (map.isEmpty) printer.print(node, Some(parent))
+  //   else {
+  //     source(prop, loc)
+  //     printer.print(node, Some(parent))
+  //   }
 
   private def normalizePosition(
     prop: LocationType,

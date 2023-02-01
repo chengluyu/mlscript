@@ -3,24 +3,8 @@ package mlscript.codegen.generator
 import mlscript.codegen.ast.Node
 
 class BufferSuite extends munit.FunSuite:
-  // TODO: Decouple Printer and Buffer.
-  val printer = new Printer(new Format {
-    val compact: Boolean = false
-    val minified: Boolean = false
-    var concise: Boolean = false
-    val retainLines: Boolean = false
-    val auxiliaryCommentBefore: String = ""
-    val auxiliaryCommentAfter: String = ""
-    val adjustMultilineComment: Boolean = false
-    val retainFunctionParens: Boolean = false
-    val indent = "  "
-    
-    def shouldPrintComment(comment: String): Boolean = false
-  }, new SourceMapBuilder(None, None, Left(""))) {
-    def print(node: Node, parent: Option[Node])(implicit options: PrinterOptions): Unit = ()
-  }
   test("Buffer Output - queue") {
-    val buffer = new Buffer(None, printer)
+    val buffer = new Buffer(None)
     buffer.queue('H')
     buffer.queue('e')
     buffer.queue('l')
@@ -38,7 +22,7 @@ class BufferSuite extends munit.FunSuite:
   }
 
   test("Buffer Output - position") {
-    val buffer = new Buffer(None, printer)
+    val buffer = new Buffer(None)
     assertEquals(buffer.getCurrentLine, 1)
     assertEquals(buffer.getCurrentColumn, 0)
 
@@ -56,7 +40,7 @@ class BufferSuite extends munit.FunSuite:
   }
 
   test("Buffer Output - others") {
-    val buffer = new Buffer(None, printer)
+    val buffer = new Buffer(None)
     assertEquals(buffer.hasContent, false)
 
     buffer.appendChar('?')

@@ -91,13 +91,6 @@ object Whitespace:
           _: Identifier | _: MemberExpression => true
         case _ => false
 
-  // Used in `needsWhitespace`.
-  extension (parent: Option[Node])
-    def asObjectTypeAnnotation: ObjectTypeAnnotation =
-      parent match
-        case Some(parent: ObjectTypeAnnotation) => parent
-        case _ => throw new Error("expect the parent of SwitchCase to be a ObjectTypeAnnotation")
-
   def needsWhitespace(node: Node, parent: Option[Node], stack: List[Node]): Whitespace =
     node match
       case AssignmentExpression(_, _, right) =>
@@ -132,34 +125,13 @@ object Whitespace:
         }
       case IfStatement(test, consequent, alternate) if consequent.isBlockStatement =>
         Whitespace.Both
-      case _: ObjectProperty | _: ObjectTypeProperty | _: ObjectMethod =>
+      case _: ObjectProperty | _: ObjectMethod =>
         // Check the `parent` type.
         val enclosingObject = parent match
           case Some(parent: ObjectExpression) => parent
           case _ => throw new Error("expect the parent of SwitchCase to be a ObjectExpression")
         // Only the first element needs whitespace before
         Whitespace.Before when enclosingObject.properties.hasHead(node)
-      case node: ObjectTypeCallProperty =>
-        val enclosing = parent.asObjectTypeAnnotation
-        Whitespace.Before when (
-          enclosing.callProperties.hasHead(node) &&
-            enclosing.properties.isEmpty
-        )
-      case node: ObjectTypeIndexer =>
-        val enclosing = parent.asObjectTypeAnnotation
-        Whitespace.Before when (
-          enclosing.indexers.hasHead(node) &&
-            enclosing.properties.isEmpty &&
-            enclosing.callProperties.isEmpty
-        )
-      case node: ObjectTypeInternalSlot =>
-        val enclosing = parent.asObjectTypeAnnotation
-        Whitespace.Before when (
-          enclosing.internalSlots.hasHead(node) &&
-            enclosing.properties.isEmpty &&
-            enclosing.callProperties.isEmpty &&
-            enclosing.indexers.isEmpty
-        )
       case _: Node with Function | _: Node with Class | _: Node with Loop |
           _: LabeledStatement | _: SwitchStatement | _: TryStatement =>
         Whitespace.Both
