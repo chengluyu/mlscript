@@ -5,11 +5,11 @@ import mlscript.codegen.{Location => SourceLocation}
 sealed abstract class PrintCommand()(implicit indentLevel: Int)
 
 final case class Semicolon(
-  force: Boolean
+  force: Boolean = false
 )(implicit indentLevel: Int = 0) extends PrintCommand
 
 final case class Space(
-  force: Boolean,
+  force: Boolean = false,
 )(implicit indentLevel: Int = 0) extends PrintCommand
 
 final case class Word(
@@ -22,10 +22,10 @@ final case class Number(
 
 final case class Token(
   str: String,
-  maybeNewline: Boolean
+  maybeNewline: Boolean = false
 )(implicit indentLevel: Int = 0) extends PrintCommand
 
 final case class Newline(
-  i: Int,
-  force: Boolean
+  i: Int = 1,
+  force: Boolean = false
 )(implicit indentLevel: Int = 0) extends PrintCommand

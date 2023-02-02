@@ -44,8 +44,8 @@ object snippets:
       BlockStatement(
         AssignmentExpression(
           "=",
-          MemberExpression(target, Identifier("key").get, true, None).get,
-          MemberExpression(source, Identifier("key").get, true, None).get,
+          MemberExpression(target, Identifier("key").get, true).get,
+          MemberExpression(source, Identifier("key").get, true).get,
         ).get.toStatement :: Nil
       ).get
     ).get

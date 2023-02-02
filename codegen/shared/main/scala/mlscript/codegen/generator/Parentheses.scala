@@ -38,7 +38,7 @@ object Parentheses:
   private def isOrHasCallExpression(node: Node): Boolean =
     node match
       case ce: CallExpression => true
-      case MemberExpression(obj, _, _, _) => isOrHasCallExpression(obj)
+      case MemberExpression(obj, _, _) => isOrHasCallExpression(obj)
       case _ => false
 
   def needsParens(node: Node, parent: Option[Node], stack: List[Node]): Boolean =
@@ -50,7 +50,7 @@ object Parentheses:
 
   private def hasPostfixPart(node: Node, parent: Node) =
     parent match
-      case MemberExpression(obj, _, _, _) if (obj == node) => true
+      case MemberExpression(obj, _, _) if (obj == node) => true
       case OptionalMemberExpression(obj, _, _, _) if (obj == node) => true
       case CallExpression(callee, _) if (callee == node) => true
       case OptionalCallExpression(callee, _, _) if (callee == node) => true
@@ -70,7 +70,7 @@ object Parentheses:
   private def isFirstInContext(stack: List[Node], checkBits: Int): Option[Boolean] =
     def shouldRec(node: Node, parent: Node): Boolean =
       parent match
-        case MemberExpression(target, _, _, _) => target == node
+        case MemberExpression(target, _, _) => target == node
         case OptionalMemberExpression(target, _, _, _) => target == node
         case CallExpression(callee, _) => callee == node
         case OptionalCallExpression(callee, _, _) => callee == node
@@ -227,7 +227,7 @@ object Parentheses:
       case _: OptionalMemberExpression =>
         parent match
           case CallExpression(callee, _) if (callee == node) => true
-          case MemberExpression(obj, _, _, _) if (obj == node) => true
+          case MemberExpression(obj, _, _) if (obj == node) => true
           case _ => false
       case AssignmentExpression(_, left, _) =>
         left match

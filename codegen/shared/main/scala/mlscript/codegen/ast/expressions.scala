@@ -19,10 +19,10 @@ case class UnaryExpression(
   val prefix: Boolean = true
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with UnaryLike with Expression
 
-case class DoExpression(val body: BlockStatement, val async: Boolean = false)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class DoExpression(body: BlockStatement, async: Boolean = false)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
-case class ParenthesizedExpression(val expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ParenthesizedExpression(expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression with ExpressionWrapper
 
 enum UpdateOperator:
@@ -36,9 +36,9 @@ case class UpdateExpression(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
 case class ConditionalExpression(
-  val test: Node with Expression,
-  val consequent: Node with Expression,
-  val alternate: Node with Expression
+  test: Node with Expression,
+  consequent: Node with Expression,
+  alternate: Node with Expression
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression with Conditional
 
 case class NewExpression(
@@ -57,14 +57,14 @@ case class ThisExpression()(val start: Option[Int], val end: Option[Int], val lo
 case class Super()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
-case class Decorator(val expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class Decorator(expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node
 
 case class OptionalMemberExpression(
-  val `object`: Node with Expression,
-  val property: Node with Expression | Identifier,
-  val computed: Option[Boolean] = Some(false),
-  val optional: Boolean
+  `object`: Node with Expression,
+  property: Node with Expression | Identifier,
+  computed: Boolean = false,
+  optional: Boolean
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
 case class OptionalCallExpression(
@@ -95,23 +95,21 @@ case class YieldExpression(
 case class EmptyStatement()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with Standardized with Statement
 
-case class ExpressionStatement(val expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ExpressionStatement(expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement with ExpressionWrapper
 
 case class AssignmentPattern(
-  val left: Identifier | ObjectPattern | ArrayPattern | MemberExpression | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression,
-  val right: Node with Expression
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Pattern with PatternLike with LVal:
-  var decorators: Option[List[Decorator]] = None
-  var typeAnnotation: Option[TSTypeAnnotation | Noop] = None
+  left: Identifier | ObjectPattern | ArrayPattern | MemberExpression | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression,
+  right: Node with Expression
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Pattern with PatternLike with LVal
 
 case class AssignmentExpression(
-  val operator: String,
-  val left: Node with LVal,
-  val right: Node with Expression
+  operator: String,
+  left: Node with LVal,
+  right: Node with Expression
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
-case class BindExpression(val `object`: Node with Expression, val callee: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class BindExpression(`object`: Node with Expression, callee: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
 enum BinaryOperator:
@@ -166,11 +164,36 @@ object BinaryOperator:
       case "<=" => Some(LessThanOrEqual)
       case "|>" => Some(Pipeline)
       case _ => None
+  def to(op: BinaryOperator): String = op match {
+    case Plus => "+"
+    case Minus => "-"
+    case Divide => "/"
+    case Modolus => "%"
+    case Multiplication => "*"
+    case Exponentiation => "**"
+    case BitwiseAnd => "&"
+    case BitwiseOr => "|"
+    case BitwiseRightShift => ">>"
+    case BitwiseUnsignedRightShift => ">>>"
+    case BitwiseLeftShift => "<<"
+    case BitwiseXor => "^"
+    case Equal => "=="
+    case StrictEqual => "==="
+    case NotEqual => "!="
+    case StrictNotEqual => "!=="
+    case In => "in"
+    case InstanceOf => "instanceof"
+    case GreaterThan => ">"
+    case LessThan => "<"
+    case GreaterThanOrEqual => ">="
+    case LessThanOrEqual => "<="
+    case Pipeline => "|>"
+  }
 
 case class BinaryExpression(
-  val operator: BinaryOperator,
-  val left: Node with Expression | PrivateName,
-  val right: Node with Expression
+  operator: BinaryOperator,
+  left: Node with Expression | PrivateName,
+  right: Node with Expression
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Binary with Expression
 
 enum LogicalOperator:
@@ -185,28 +208,33 @@ object LogicalOperator:
       case "&&" => Some(And)
       case "??" => Some(NullishCoalescing)
       case _ => None
+  def to(op: LogicalOperator): String =
+    op match {
+      case Or => "||"
+      case And => "&&"
+      case NullishCoalescing => "??"
+    }
 
 case class LogicalExpression(
-  val operator: LogicalOperator,
-  val left: Node with Expression,
-  val right: Node with Expression
+  operator: LogicalOperator,
+  left: Node with Expression,
+  right: Node with Expression
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Binary with Expression
 
 case class MemberExpression(
-  val `object`: Node with Expression | Super,
-  val property: Node with Expression | Identifier | PrivateName,
-  val computed: Boolean = false,
-  val optional: Option[Boolean] = None
+  `object`: Node with Expression | Super,
+  property: Node with Expression | Identifier | PrivateName,
+  computed: Boolean = false
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression with LVal
 
-case class MetaProperty(val meta: Identifier, val property: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class MetaProperty(meta: Identifier, property: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
-case class PrivateName(val id: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class PrivateName(id: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Private
 
-case class V8IntrinsicIdentifier(val name: String)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class V8IntrinsicIdentifier(name: String)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Miscellaneous
 
-case class ModuleExpression(val body: Program)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ModuleExpression(body: Program)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression

@@ -14,8 +14,7 @@ case class Program(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with BlockParent with Block
 
 case class File(
-  val program: Program,
-  val tokens: Option[List[Any]] = None
+  program: Program
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized
 
 case class BlockStatement(

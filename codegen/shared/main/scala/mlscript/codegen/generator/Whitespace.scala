@@ -55,7 +55,7 @@ object Whitespace:
   extension (node: Node)
     private def analyze: State =
       node match
-        case MemberExpression(target, property, computed, _) =>
+        case MemberExpression(target, property, computed) =>
           target.analyze
         case OptionalMemberExpression(target, property, computed, _) =>
           target.analyze
@@ -73,7 +73,7 @@ object Whitespace:
 
     def isHelper: Boolean =
       node match
-        case MemberExpression(target, property, _, _) =>
+        case MemberExpression(target, property, _) =>
           target.isHelper || property.isHelper
         case Identifier(name) =>
           name == "require" || name.headOption.contains('_')
