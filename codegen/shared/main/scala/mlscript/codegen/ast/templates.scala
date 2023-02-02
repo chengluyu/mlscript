@@ -7,7 +7,7 @@ case class TaggedTemplateExpression(val tag: Node with Expression, val quasi: Te
     extends Node with Standardized with Expression:
   var typeParameters: Option[TSTypeParameterInstantiation] = None
 
-case class TemplateElement(val value: Any, val tail: Boolean = false)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class TemplateElement(val value: String, val tail: Boolean = false)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with Standardized
 
 case class TemplateLiteral(

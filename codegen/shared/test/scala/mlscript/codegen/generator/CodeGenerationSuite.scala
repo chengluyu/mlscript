@@ -1,6 +1,7 @@
 package mlscript.codegen.generator
 
 import mlscript.codegen.ast._
+import mlscript.codegen.generator._
 
 class CodeGenerationSuite extends munit.FunSuite:
   private val format = new Format {
@@ -18,3 +19,27 @@ class CodeGenerationSuite extends munit.FunSuite:
   }
 
   private val sourceMap = new SourceMapBuilder(None, None, Left(""))
+
+  test("Basic Test") {
+    val printer = Printer(sourceMap)
+    {
+      val generator = CodeGenerator(format, sourceMap)
+      generator.generate(printer.print(Import()(None, None, None))(0))
+      assertEquals(generator.get.code, "import")
+    }
+    {
+      val generator = CodeGenerator(format, sourceMap)
+      generator.generate(printer.print(EmptyStatement()(None, None, None))(0))
+      assertEquals(generator.get.code, ";")
+    }
+    {
+      val generator = CodeGenerator(format, sourceMap)
+      generator.generate(printer.print(StringLiteral("abc")(None, None, None))(0))
+      assertEquals(generator.get.code, "\"abc\"")
+    }
+    {
+      val generator = CodeGenerator(format, sourceMap)
+      generator.generate(printer.print(NumericLiteral(114.514)(None, None, None))(0))
+      assertEquals(generator.get.code, "114.514")
+    }
+  }

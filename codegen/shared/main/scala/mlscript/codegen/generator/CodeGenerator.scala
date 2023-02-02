@@ -12,19 +12,19 @@ class CodeGenerator(
   private val buffer = new Buffer(Some(sourceMap))
 
   // TODO: add source mapping & check format
-  def generate(commands: List[PrintCommand], lastCmd: Option[PrintCommand] = None)(implicit indentLevel: Int): Unit = commands match {
-    case Semicolon(force, start, end, location) :: tail =>
+  def generate(commands: List[PrintCommand], lastCmd: Option[PrintCommand] = None): Unit = commands match {
+    case Semicolon(force) :: tail =>
       if (force) buffer.appendChar(';')
       else buffer.queue(';')
-      generate(tail, Some(Semicolon(force, start, end, location)))
-    case Space(force, start, end, location) :: tail =>
+      generate(tail, Some(Semicolon(force)))
+    case Space(force) :: tail =>
       if (force) space()
       else if (buffer.hasContent) {
         val last = buffer.getLastChar
         if (last != ' ' && last != '\n') space()
       }
-      generate(tail, Some(Space(force, start, end, location)))
-    case Word(str, start, end, location) :: tail =>
+      generate(tail, Some(Space(force)))
+    case Word(str) :: tail =>
       lastCmd match {
         case Some(w: Word) => space()
         case Some(n: Number) => space()
@@ -32,15 +32,15 @@ class CodeGenerator(
         case _ => ()
       }
       buffer.append(str, false)
-      generate(tail, Some(Word(str, start, end, location)))
-    case Number(str, start, end, location) :: tail =>
+      generate(tail, Some(Word(str)))
+    case Number(str) :: tail =>
       lastCmd match {
         case Some(w: Word) => space()
         case _ => ()
       }
       buffer.append(str, false)
-      generate(tail, Some(Number(str, start, end, location)))
-    case Token(str, maybeNewline, start, end, location) :: tail =>
+      generate(tail, Some(Number(str)))
+    case Token(str, maybeNewline) :: tail =>
       lastCmd match {
         case Some(n: Number) if (str.startsWith(".")) => space()
         case _ if (buffer.getLastChar == '!' && str.startsWith("--") ||
@@ -49,18 +49,20 @@ class CodeGenerator(
         case _ => ()
       }
       buffer.append(str, maybeNewline)
-      generate(tail, Some(Token(str, maybeNewline, start, end, location)))
-    case Newline(i, force, start, end, location) :: tail =>
+      generate(tail, Some(Token(str, maybeNewline)))
+    case Newline(i, force) :: tail =>
       if (i > 0 && force) {
         val exactNewline = (if (i > 2) 2 else i) - buffer.getNewlineCount
         if (i == 2) { buffer.queue('\n'); buffer.queue('\n') }
         else if (i == 1) buffer.queue('\n')
       }
-      generate(tail, Some(Newline(i, force, start, end, location)))
+      generate(tail, Some(Newline(i, force)))
     case Nil => ()
   }
 
   private def space() = buffer.queue(' ')
+
+  def get = buffer.get()
 
   // private def printStatementAfterKeyword(node: Option[Node], parent: Node, isLabel: Boolean)(implicit options: PrinterOptions) =
   //   node match {
