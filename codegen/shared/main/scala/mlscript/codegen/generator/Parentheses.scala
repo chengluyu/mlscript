@@ -55,7 +55,7 @@ object Parentheses:
       case CallExpression(callee, _) if (callee == node) => true
       case OptionalCallExpression(callee, _, _) if (callee == node) => true
       case NewExpression(callee, _) if (callee == node) => true
-      case TaggedTemplateExpression(tag, _) if (tag == node) => true
+      case TaggedTemplateExpression(tag, _, _) if (tag == node) => true
       case _: TSNonNullExpression => true
       case _ => false
 
@@ -74,7 +74,7 @@ object Parentheses:
         case OptionalMemberExpression(target, _, _, _) => target == node
         case CallExpression(callee, _) => callee == node
         case OptionalCallExpression(callee, _, _) => callee == node
-        case TaggedTemplateExpression(tag, _) => tag == node
+        case TaggedTemplateExpression(tag, _, _) => tag == node
         case _: TSNonNullExpression => true
         case SequenceExpression(first :: _) => first == node
         case UpdateExpression(_, _, prefix) => !prefix

@@ -11,7 +11,7 @@ case class Identifier(name: String, val typeAnnotation: Option[TSTypeAnnotation 
 case class ArgumentPlaceholder()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node
 
-case class RestElement(val argument: Node with LVal, typeAnnotation: Option[TSTypeAnnotation | Noop] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class RestElement(argument: Node with LVal, typeAnnotation: Option[TSTypeAnnotation | Noop] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with Standardized with LVal with PatternLike:
   var decorators: Option[List[Decorator]] = None
   var optional: Option[Boolean] = None
@@ -46,14 +46,14 @@ case class ObjectMethod(
   var typeParameters: Option[TSTypeParameterDeclaration | Noop] = None
 
 case class ObjectProperty(
-  val key: Node with Expression | Identifier | StringLiteral | NumericLiteral | BigIntLiteral | DecimalLiteral | PrivateName,
-  val value: Node with Expression | Node with PatternLike,
-  val computed: Boolean = false,
-  val shorthand: Boolean = false,
-  val decorators: Option[List[Decorator]] = None
+  key: Node with Expression | Identifier | StringLiteral | NumericLiteral | BigIntLiteral | DecimalLiteral | PrivateName,
+  value: Node with Expression | Node with PatternLike,
+  computed: Boolean = false,
+  shorthand: Boolean = false,
+  decorators: Option[List[Decorator]] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with UserWhitespacable with Property with ObjectMember
 
-case class ArrayExpression(val elements: List[Option[(Node with Expression) | (Node with SpreadElement)]] = Nil)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ArrayExpression(elements: List[Option[(Node with Expression) | (Node with SpreadElement)]] = Nil)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
 case class ArrayPattern(val elements: List[Option[Node with PatternLike | Node with LVal]], typeAnnotation: Option[TSTypeAnnotation | Noop] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
@@ -64,7 +64,7 @@ case class ArrayPattern(val elements: List[Option[Node with PatternLike | Node w
 case class RecordExpression(val properties: List[ObjectProperty | SpreadElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
-case class TupleExpression(val elements: List[Node with Expression | SpreadElement] = Nil)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class TupleExpression(elements: List[Node with Expression | SpreadElement] = Nil)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
 case class RegExpLiteral(val pattern: String, val flags: String = "")(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
@@ -91,10 +91,10 @@ case class DecimalLiteral(val value: String)(val start: Option[Int], val end: Op
 case class TopicReference()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
-case class PipelineTopicExpression(val expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class PipelineTopicExpression(expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
-case class PipelineBareFunction(val callee: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class PipelineBareFunction(callee: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
 case class PipelinePrimaryTopicReference()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
