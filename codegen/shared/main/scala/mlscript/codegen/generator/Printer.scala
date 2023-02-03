@@ -122,12 +122,12 @@ class Printer(map: SourceMapBuilder) {
         case ImportKind.TypeOf => print(imported, Some(node), previous ::: List(Word("type"), Space()))
         case _ => print(imported, Some(node), previous)
       }
-      local match {
-        case Some(Identifier(localName)) => imported match {
-          case Identifier(name) if (!name.equals(localName)) =>
-            print(Identifier(localName)(None, None, None), Some(node), printImported ::: List(Space(), Word("as"), Space()))
+      local match { // TODO: add location information
+        case Some(Identifier(localName, typeAnnotation)) => imported match {
+          case Identifier(name, _) if (!name.equals(localName)) =>
+            print(Identifier(localName, typeAnnotation)(None, None, None), Some(node), printImported ::: List(Space(), Word("as"), Space()))
           case StringLiteral(str) if (!str.equals(localName)) =>
-            print(Identifier(localName)(None, None, None), Some(node), printImported ::: List(Space(), Word("as"), Space()))
+            print(Identifier(localName, typeAnnotation)(None, None, None), Some(node), printImported ::: List(Space(), Word("as"), Space()))
           case _ => printImported
         }
         case _ => printImported
@@ -141,12 +141,12 @@ class Printer(map: SourceMapBuilder) {
         case ExportKind.Type => print(exported, Some(node), previous ::: List(Word("type"), Space()))
         case _ => print(exported, Some(node), previous)
       }
-      local match {
-        case Some(Identifier(localName)) => exported match {
-          case Identifier(name) if (!name.equals(localName)) =>
-            print(Identifier(localName)(None, None, None), Some(node), printExported ::: List(Space(), Word("as"), Space()))
+      local match { // TODO: add location information
+        case Some(Identifier(localName, typeAnnotation)) => exported match {
+          case Identifier(name, _) if (!name.equals(localName)) =>
+            print(Identifier(localName, typeAnnotation)(None, None, None), Some(node), printExported ::: List(Space(), Word("as"), Space()))
           case StringLiteral(str) if (!str.equals(localName)) =>
-            print(Identifier(localName)(None, None, None), Some(node), printExported ::: List(Space(), Word("as"), Space()))
+            print(Identifier(localName, typeAnnotation)(None, None, None), Some(node), printExported ::: List(Space(), Word("as"), Space()))
           case _ => printExported
         }
         case _ => printExported
@@ -183,6 +183,78 @@ class Printer(map: SourceMapBuilder) {
         case _ => printTest
       }
       printBlock(body, Some(node), printUpdate :+ Token(")"))
+    case WhileStatement(test, body) =>
+      val printTest = print(test, Some(node), previous ::: List(Word("while"), Space(), Token("("))) :+ Token(")")
+      printBlock(body, Some(node), printTest)
+    case ForInStatement(left, right, body) =>
+      val printLeft = print(left, Some(node), previous ::: List(Word("for"), Space(), Token("(")))
+      val printRight = print(right, Some(node), printLeft ::: List(Word("in"), Space())) :+ Token(")")
+      printBlock(body, Some(node), printRight)
+    case ForOfStatement(left, right, body, await) =>
+      val prefix =
+        if (await) List(Word("for"), Space(), Word("await"), Space(), Token("("))
+        else List(Word("for"), Space(), Token("("))
+      val printLeft = print(left, Some(node), previous ::: prefix)
+      val printRight = print(right, Some(node), printLeft ::: List(Word("of"), Space())) :+ Token(")")
+      printBlock(body, Some(node), printRight)
+    case DoWhileStatement(test, body) =>
+      val printBody = print(body, Some(node), previous ::: List(Word("do"), Space()))
+      print(test, Some(node), printBody ::: List(Space(), Word("while"), Space(), Token("("))) ::: List(Token(")"), Semicolon())
+    case LabeledStatement(label, body) =>
+      val printLabel = print(label, Some(node), previous) ::: List(Token(":"), Space())
+      print(body, Some(node), printLabel)
+    case TryStatement(block, handler, finalizer) =>
+      val printBlock = print(block, Some(node), previous ::: List(Word("try"), Space())) :+ Space()
+      val printHandler = handler match {
+        case Some(handler) => print(handler, Some(node), printBlock)
+        case _ => printBlock
+      }
+      finalizer match {
+        case Some(finalizer) => print(finalizer, Some(node), printHandler ::: List(Space(), Word("finally"), Space()))
+        case _ => printHandler
+      }
+    case CatchClause(param, body) =>
+      val prefix = List(Word("catch"), Space())
+      val printParam = param match {
+        case Some(id: Identifier) => id.typeAnnotation match {
+          case Some(typeAnnotation) =>
+            print(typeAnnotation, Some(node), print(id, Some(node), (previous ::: prefix) :+ Token("("))) ::: List(Token(")"), Space())
+          case _ =>
+            print(id, Some(node), (previous ::: prefix) :+ Token("(")) ::: List(Token(")"), Space())
+        }
+        case Some(pat: ArrayPattern) => pat.typeAnnotation match {
+          case Some(typeAnnotation) =>
+            print(typeAnnotation, Some(node), print(pat, Some(node), (previous ::: prefix) :+ Token("("))) ::: List(Token(")"), Space())
+          case _ =>
+            print(pat, Some(node), (previous ::: prefix) :+ Token("(")) ::: List(Token(")"), Space())
+        }
+        case Some(pat: ObjectPattern) => pat.typeAnnotation match {
+          case Some(typeAnnotation) =>
+            print(typeAnnotation, Some(node), print(pat, Some(node), (previous ::: prefix) :+ Token("("))) ::: List(Token(")"), Space())
+          case _ =>
+            print(pat, Some(node), (previous ::: prefix) :+ Token("(")) ::: List(Token(")"), Space())
+        }
+        case _ => prefix
+      }
+      print(body, Some(node), printParam)
+    case DebuggerStatement() =>
+      previous ::: List(Word("debugger"), Semicolon())
+    case VariableDeclarator(id, init, definite) =>
+      val printId = print(id, Some(node), previous) ::: (if (definite) List(Token("!")) else List())
+      val printAnnotation = id match {
+        case Identifier(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
+        case RestElement(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
+        case ArrayPattern(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
+        case ObjectPattern(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
+        case TSAsExpression(_, typeAnnotation) => print(typeAnnotation, Some(node), printId)
+        case TSSatisfiesExpression(_, typeAnnotation) => print(typeAnnotation, Some(node), printId)
+        case TSTypeAssertion(typeAnnotation, _) => print(typeAnnotation, Some(node), printId)
+        case _ => printId
+      }
+      init match {
+        case Some(init) => print(init, Some(node), printAnnotation ::: List(Space(), Token("="), Space()))
+        case _ => printAnnotation
+      }
     // END statements.scala
     // ---
     // BEGIN templates.scala
@@ -197,7 +269,7 @@ class Printer(map: SourceMapBuilder) {
     // END templates.scala
     // ---
     // BEGIN types.scala
-    case Identifier(name) =>
+    case Identifier(name, _) =>
       previous :+ Word(name)
     case ArgumentPlaceholder() =>
       previous :+ Token("?")

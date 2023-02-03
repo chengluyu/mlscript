@@ -75,7 +75,7 @@ object Whitespace:
       node match
         case MemberExpression(target, property, _) =>
           target.isHelper || property.isHelper
-        case Identifier(name) =>
+        case Identifier(name, _) =>
           name == "require" || name.headOption.contains('_')
         case CallExpression(callee, _) =>
           callee.isHelper
@@ -115,7 +115,7 @@ object Whitespace:
         Whitespace.Both
       case VariableDeclaration(kind, declarations) =>
         Whitespace.Both when declarations.exists {
-          case VariableDeclarator(id, init) =>
+          case VariableDeclarator(id, init, _) =>
             val enabled = id.isHelper && !init.map(_.isType).getOrElse(false)
             init match
               case Some(init) if !enabled =>

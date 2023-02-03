@@ -238,7 +238,7 @@ object Parentheses:
             case ConditionalExpression(test, _, _) => test == node
             case parent: Node with Class => parent.superClass.contains(node)
             case _ => hasPostfixPart(node, parent)
-      case Identifier(name) =>
+      case Identifier(name, _) =>
         // Three corner cases:
         // 1. `(fn) = function () {}`
         // 2. Non-strict code allows the identifier `let`
