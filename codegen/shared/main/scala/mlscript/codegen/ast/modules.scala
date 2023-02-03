@@ -3,25 +3,28 @@ package mlscript.codegen.ast
 import mlscript.codegen.ast._
 import mlscript.codegen.{Position => SourcePosition, Location => SourceLocation}
 
+enum ImportKind:
+  case Type
+  case Value
+  case TypeOf
+
 enum ExportKind:
   case Type
   case Value
 
-case class ImportSpecifier(val local: Identifier, val imported: Identifier | StringLiteral)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-  extends Node with Standardized with ModuleSpecifier:
-  var importKind: Option[ImportKind] = None
-
-case class ImportDefaultSpecifier(val local: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ImportSpecifier(local: Option[Identifier], imported: Identifier | StringLiteral, importKind: ImportKind)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with ModuleSpecifier
 
-case class ExportDefaultSpecifier(val exported: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ImportDefaultSpecifier(local: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+  extends Node with Standardized with ModuleSpecifier
+
+case class ExportDefaultSpecifier(exported: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with ModuleSpecifier
 
-case class ExportSpecifier(val local: Identifier, val exported: Identifier | StringLiteral)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with Standardized with ModuleSpecifier:
-  var exportKind: Option[ExportKind] = None
+case class ExportSpecifier(local: Option[Identifier], exported: Identifier | StringLiteral, exportKind: ExportKind)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+    extends Node with Standardized with ModuleSpecifier
 
-case class ExportNamespaceSpecifier(val exported: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ExportNamespaceSpecifier(exported: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with ModuleSpecifier
 
 case class ExportAllDeclaration(val source: StringLiteral)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
@@ -38,14 +41,8 @@ case class ExportNamedDeclaration(
   var exportKind: Option[ExportKind] = None
 
 case class ExportDefaultDeclaration(
-  val declaration: TSDeclareFunction | FunctionDeclaration | ClassDeclaration | Node with Expression
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration with ModuleDeclaration with ExportDeclaration:
-  var exportKind: Option["value"] = None
-
-enum ImportKind:
-  case Type
-  case Value
-  case TypeOf
+  declaration: TSDeclareFunction | FunctionDeclaration | ClassDeclaration | Node with Expression
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration with ModuleDeclaration with ExportDeclaration
 
 case class ImportDeclaration(
   val specifiers: List[ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier],
@@ -55,8 +52,8 @@ case class ImportDeclaration(
   var importKind: Option[ImportKind] = None
   var module: Option[Boolean] = None
 
-case class ImportAttribute(val key: Identifier | StringLiteral, val value: StringLiteral)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ImportAttribute(key: Identifier | StringLiteral, value: StringLiteral)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node
 
-case class ImportNamespaceSpecifier(val local: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ImportNamespaceSpecifier(local: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with ModuleSpecifier

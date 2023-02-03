@@ -43,3 +43,12 @@ class CodeGenerationSuite extends munit.FunSuite:
       assertEquals(generator.get.code, "114.514")
     }
   }
+
+  test("Composed Test") {
+    val printer = Printer(sourceMap)
+    {
+      val generator = CodeGenerator(format, sourceMap)
+      generator.generate(printer.print(ImportSpecifier(Some(Identifier("bar")(None, None, None)), Identifier("foo")(None, None, None), ImportKind.Value)(None, None, None))(0))
+      assertEquals(generator.get.code, "foo as bar")
+    }
+  }

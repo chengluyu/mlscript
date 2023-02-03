@@ -3,7 +3,7 @@ package mlscript.codegen.ast
 import mlscript.codegen.ast._
 import mlscript.codegen.{Position => SourcePosition, Location => SourceLocation}
 
-case class WithStatement(val `object`: Node with Expression, val body: Node with Statement)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class WithStatement(`object`: Node with Expression, body: Node with Statement)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement
 
 case class IfStatement(
@@ -13,10 +13,10 @@ case class IfStatement(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Conditional
 
 case class ForStatement(
-  val init: Option[VariableDeclaration | Node with Expression] = None,
-  val test: Option[Node with Expression] = None,
-  val update: Option[Node with Expression] = None,
-  val body: Node with Statement
+  init: Option[VariableDeclaration | Node with Expression] = None,
+  test: Option[Node with Expression] = None,
+  update: Option[Node with Expression] = None,
+  body: Node with Statement
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with Statement with For with BlockParent with Loop
 
 case class WhileStatement(val test: Node with Expression, val body: Node with Statement)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
