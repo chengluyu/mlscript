@@ -22,7 +22,7 @@ case class RestElement(
 case class SpreadElement(val argument: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with UnaryLike
 
-case class ObjectExpression(val properties: List[ObjectMethod | ObjectProperty | SpreadElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ObjectExpression(properties: List[ObjectMethod | ObjectProperty | SpreadElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
 case class ObjectPattern(
@@ -39,24 +39,24 @@ enum ObjectMethodKind:
   case Init
 
 case class ObjectMethod(
-  val kind: Option[ObjectMethodKind] = Some(ObjectMethodKind.Method),
+  val kind: ObjectMethodKind = ObjectMethodKind.Method,
   val key: Node with Expression | Identifier | StringLiteral | NumericLiteral | BigIntLiteral,
   val params: List[Identifier | Node with Pattern | RestElement],
   val body: BlockStatement,
   val computed: Boolean = false,
   val generator: Boolean = false,
-  val async: Boolean = false
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with UserWhitespacable with Function with Scopable with BlockParent with FunctionParent with Method with ObjectMember:
-  var decorators: Option[List[Decorator]] = None
-  var returnType: Option[TSTypeAnnotation] = None
+  val async: Boolean = false,
+  var decorators: List[Decorator] = Nil,
+  var returnType: Option[TSTypeAnnotation] = None,
   var typeParameters: Option[TSTypeParameterDeclaration] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with UserWhitespacable with Function with Scopable with BlockParent with FunctionParent with Method with ObjectMember
 
 case class ObjectProperty(
   key: Node with Expression | Identifier | StringLiteral | NumericLiteral | BigIntLiteral | DecimalLiteral | PrivateName,
   value: Node with Expression | Node with PatternLike,
   computed: Boolean = false,
   shorthand: Boolean = false,
-  decorators: Option[List[Decorator]] = None
+  decorators: List[Decorator] = Nil
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with UserWhitespacable with Property with ObjectMember
 
 case class ArrayExpression(elements: List[Option[(Node with Expression) | (Node with SpreadElement)]] = Nil)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
@@ -70,7 +70,7 @@ case class ArrayPattern(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with Standardized with Pattern with PatternLike with LVal
 
-case class RecordExpression(val properties: List[ObjectProperty | SpreadElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class RecordExpression(properties: List[ObjectProperty | SpreadElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression
 
 case class TupleExpression(elements: List[Node with Expression | SpreadElement] = Nil)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])

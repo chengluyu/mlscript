@@ -84,7 +84,7 @@ case class CallExpression(
 case class Import()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
-case class AwaitExpression(val argument: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class AwaitExpression(argument: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression with Terminatorless
 
 case class YieldExpression(

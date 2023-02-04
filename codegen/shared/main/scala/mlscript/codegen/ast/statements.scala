@@ -7,9 +7,9 @@ case class WithStatement(`object`: Node with Expression, body: Node with Stateme
   extends Node with Standardized with Statement
 
 case class IfStatement(
-  val test: Node with Expression,
-  val consequent: Node with Statement,
-  val alternate: Option[Node with Statement] = None
+  test: Node with Expression,
+  consequent: Node with Statement,
+  alternate: Option[Node with Statement] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Conditional
 
 case class ForStatement(
@@ -65,11 +65,11 @@ case class CatchClause(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with BlockParent
 
 case class SwitchCase(
-  val test: Option[Node with Expression] = None,
-  val consequent: List[Node with Statement]
+  test: Option[Node with Expression] = None,
+  consequent: List[Node with Statement]
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized
 
-case class SwitchStatement(val discriminant: Node with Expression, val cases: List[SwitchCase])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class SwitchStatement(discriminant: Node with Expression, cases: List[SwitchCase])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement with BlockParent with Scopable
 
 case class DebuggerStatement()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
@@ -82,10 +82,10 @@ enum VariableDeclarationKind:
   case Using
 
 case class VariableDeclaration(
-  val kind: VariableDeclarationKind,
-  val declarations: List[VariableDeclarator]
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration:
-  var declare: Option[Boolean] = None
+  kind: VariableDeclarationKind,
+  declarations: List[VariableDeclarator],
+  declare: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration
 
-case class VariableDeclarator(id: Node with LVal, init: Option[Node with Expression] = None, definite: Boolean = false)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with Standardized
+case class VariableDeclarator(id: Node with LVal, val init: Option[Node with Expression] = None, definite: Boolean = false)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+  extends Node with Standardized

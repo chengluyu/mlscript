@@ -113,7 +113,7 @@ object Whitespace:
         Whitespace.Both
       case OptionalCallExpression(callee, _, _, _) if callee.isFunction =>
         Whitespace.Both
-      case VariableDeclaration(kind, declarations) =>
+      case VariableDeclaration(kind, declarations, _) =>
         Whitespace.Both when declarations.exists {
           case VariableDeclarator(id, init, _) =>
             val enabled = id.isHelper && !init.map(_.isType).getOrElse(false)

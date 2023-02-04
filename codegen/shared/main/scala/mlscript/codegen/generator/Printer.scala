@@ -244,10 +244,18 @@ class Printer(map: SourceMapBuilder) {
         case _ => printCallee
       }
       printJoin(arguments, Some(node), printType :+ Token("("), List(Token(","), Space())) :+ Token(")")
+    case AwaitExpression(argument) =>
+      print(argument, Some(node), previous ::: List(Word("await"), Space()))
     // END expressions.scala
     // ---
     // BEGIN methods.scala
-
+    case FunctionExpression(id, params, body, generator, asnyc, returnType, typeParameters) =>
+      print(body, Some(node),
+        functionHead(typeParameters, params, returnType, id, Some(node), previous :+ Space(), asnyc, generator))
+    case ArrowFunctionExpression(parameters, body, asnyc, expression, generator, returnType, typeParameter) =>
+      val printAsync = if (asnyc) List(Word("async"), Space()) else List()
+      val printParam = params(typeParameter, parameters, returnType, Some(node), previous ::: printAsync)
+      print(body, Some(node), printParam ::: List(Space(), Token("=>"), Space()))
     // END methods.scala
     // ---
     // BEGIN modules.scala
@@ -298,6 +306,89 @@ class Printer(map: SourceMapBuilder) {
       print(value, Some(node), printKey ::: List(Token(":"), Space()))
     case ImportNamespaceSpecifier(local) =>
       print(local, Some(node), previous ::: List(Token("*"), Space(), Word("as"), Space()))
+    case ExportAllDeclaration(source, assertions, exportKind) =>
+      val printExport =
+        if (exportKind == ExportKind.Type) List(Word("export"), Space(), Word("type"), Space())
+        else List(Word("export"), Space())
+      val printSource = print(source, Some(node), previous ::: printExport ::: List(Token("*"), Space(), Word("from"), Space()))
+      assertions match {
+        case Some(assertions) if (assertions.length > 0) =>
+          printAssertions(assertions, Some(node), printSource :+ Space()) :+ Semicolon()
+        case _ => printSource :+ Semicolon()
+      }
+    case ExportNamedDeclaration(declaration, specifiers, source,assertions, exportKind) =>
+      def run(spec: List[Node], prev: List[PrintCommand], hasSpecial: Boolean): (List[PrintCommand], List[Node], Boolean) = spec match {
+        case first :: rest => first match {
+          case _: ExportDefaultSpecifier => 
+            run(rest, (print(first, Some(node), prev) ::: (if (rest.length > 0) List(Token(","), Space()) else List())), true)
+          case _: ExportNamespaceSpecifier =>
+            run(rest, (print(first, Some(node), prev) ::: (if (rest.length > 0) List(Token(","), Space()) else List())), true)
+          case _ => (prev, spec, hasSpecial)
+        }
+        case _ => (prev, spec, hasSpecial)
+      }
+
+      declaration match {
+        case Some(declaration: Statement) =>
+          print(declaration, Some(node), previous ::: List(Word("export"), Space()))
+        case Some(declaration) =>
+          print(declaration, Some(node), previous ::: List(Word("export"), Space())) :+ Semicolon()
+        case _ => {
+          val printDeclare =
+            if (exportKind == ExportKind.Type) previous ::: List(Word("export"), Space(), Word("type"), Space())
+            else previous ::: List(Word("export"), Space())
+          
+          val (printSpec, rest, hasSpecial) = run(specifiers, printDeclare, false)
+          val printRest =
+            if (rest.length > 0) printJoin(rest, Some(node), printSpec ::: List(Token("{"), Space()), List(Token(","), Space())) ::: List(Space(), Token("}"))
+            else if (!hasSpecial) printSpec ::: List(Token("{"), Token("}"))
+            else printSpec
+          (source match {
+            case Some(source) => assertions match {
+              case Some(assertions) if (assertions.length > 0) =>
+                printAssertions(assertions, Some(node), 
+                  print(source, Some(node), printRest ::: List(Space(), Word("from"), Space())))
+              case _ => print(source, Some(node), printRest ::: List(Space(), Word("from"), Space()))
+            }
+            case _ => printRest
+          }) :+ Semicolon()
+        }
+      }
+    case ImportDeclaration(specifiers, source, assertions, importKind, module) =>
+      val printKind =
+        if (importKind == ImportKind.Type)
+          previous ::: List(Word("import"), Space(), Word("type"), Space())
+        else if (importKind == ImportKind.TypeOf)
+          previous ::: List(Word("import"), Space(), Word("typeof"), Space())
+        else if (module)
+          previous ::: List(Word("import"), Space(), Word("module"), Space())
+        else previous ::: List(Word("import"), Space())
+      def run(spec: List[Node], prev: List[PrintCommand]): (List[PrintCommand], List[Node]) = spec match {
+        case first :: rest => first match {
+          case _: ImportDefaultSpecifier => 
+            run(rest, (print(first, Some(node), prev) ::: (if (rest.length > 0) List(Token(","), Space()) else List())))
+          case _: ImportNamespaceSpecifier =>
+            run(rest, (print(first, Some(node), prev) ::: (if (rest.length > 0) List(Token(","), Space()) else List())))
+          case _ => (prev, spec)
+        }
+        case _ => (prev, spec)
+      }
+      val (printSpec, rest) =
+        if (specifiers.length > 0) run(specifiers, printKind)
+        else (printKind, specifiers)
+      val printRest =
+        if (rest.length > 0) printJoin(rest, Some(node), printSpec ::: List(Token("{"), Space())) ::: List(Space(), Token("}"))
+        else if (importKind == ImportKind.Type || importKind == ImportKind.TypeOf) printSpec ::: List(Token("{"), Token("}"))
+        else printSpec
+      val printFrom =
+        if (specifiers.length > 0 || importKind == ImportKind.Type || importKind == ImportKind.TypeOf)
+          printRest ::: List(Space(), Word("from"), Space())
+        else printRest
+      (assertions match {
+        case Some(assertions) =>
+          printAssertions(assertions, Some(node), print(source, Some(node), printFrom) :+ Space())
+        case _ => print(source, Some(node), printFrom)
+      }) :+ Semicolon()
     // END modules.scala
     // ---
     // BEGIN statements.scala
@@ -390,6 +481,52 @@ class Printer(map: SourceMapBuilder) {
         case Some(init) => print(init, Some(node), printAnnotation ::: List(Space(), Token("="), Space()))
         case _ => printAnnotation
       }
+    case IfStatement(test, consequent, alternate) =>
+      val printTest = print(test, Some(node), previous ::: List(Word("if"), Space(), Token("("))) ::: List(Token(")"), Space())
+      val needsBlock = alternate.isDefined // TODO: check last statement
+      val newIndent = if (needsBlock) indentLevel + 1 else indentLevel
+      val printConseq =
+         print(consequent, Some(node), printTest ::: (if (needsBlock) List(Token("{"), Newline()) else List()))(newIndent) ::: (if (needsBlock) List(Newline(), Token("}")) else List())
+      alternate match {
+        case Some(alternate) => printConseq.last match {
+          case Token("}", _) => print(alternate, Some(node), printConseq ::: List(Space(), Word("else"), Space()))
+          case _ => print(alternate, Some(node), printConseq ::: List(Word("else"), Space()))
+        }
+        case _ => printConseq
+      }
+    case SwitchStatement(discriminant, cases) =>
+      val printDis = print(discriminant, Some(node), previous ::: List(Word("switch"), Space(), Token("("))) ::: List(Token(")"), Space(), Token("{"))
+      printJoin(cases, Some(node), printDis, indent = true, statement = true) :+ Token("}")
+    case SwitchCase(test, consequent) =>
+      val printTest = test match {
+        case Some(test) => print(test, Some(node), previous ::: List(Word("case"), Space())) :+ Token(":")
+        case _ => previous ::: List(Word("default"), Token(":"))
+      }
+      if (consequent.length > 0)
+        printJoin(consequent, Some(node), printTest :+ Newline(), indent = true, statement = true)
+      else printTest
+    case VariableDeclaration(kind, declarations, declare) =>
+      val printDeclare = if (declare) previous ::: List(Word("declare"), Space()) else previous
+      val printKind = kind match {
+        case VariableDeclarationKind.Var => printDeclare ::: List(Word("var"), Space())
+        case VariableDeclarationKind.Let => printDeclare ::: List(Word("let"), Space())
+        case VariableDeclarationKind.Const => printDeclare ::: List(Word("const"), Space())
+        case VariableDeclarationKind.Using => printDeclare ::: List(Word("using"), Space())
+      }
+      val isFor = parent match {
+        case Some(_: For) => true
+        case _ => false
+      }
+      val hasInits =
+        if (isFor) false else declarations.foldLeft(false)((res, dec) => if (dec.init.isDefined) true else res)
+      val sep = if (hasInits) List(Token(","), Newline()) else List()
+      val suffix = if (isFor) parent match {
+        case Some(ForStatement(Some(init), _, _, _)) if (init.equals(node)) => List()
+        case Some(ForInStatement(left, _, _)) if (left.equals(node)) => List()
+        case Some(ForOfStatement(left, _, _, _)) if (left.equals(node)) => List()
+        case _ => List(Semicolon())
+      }
+      printJoin(declarations, Some(node), printKind, sep, statement = true, indent = declarations.length > 1)
     // END statements.scala
     // ---
     // BEGIN templates.scala
@@ -454,6 +591,36 @@ class Printer(map: SourceMapBuilder) {
       print(expression, Some(node), previous)
     case PipelineBareFunction(callee) =>
       print(callee, Some(node), previous)
+    case ObjectExpression(props) =>
+      if (props.length > 0)
+        printJoin(props, Some(node), previous :+ Token("{"), List(Token(","), Space()), true, true) ::: List(Space(), Token("}"))
+      else previous ::: List(Token("{"), Token("}"))
+    case ObjectMethod(kind, key, params, body, computed, generator, async, decorators, returnType, typeParameters) =>
+      val printDec = printJoin(decorators, Some(node), previous)
+      val printHead = methodHead(typeParameters, params, returnType, Some(node), printDec,
+        kind match {
+          case ObjectMethodKind.Method => "method"
+          case ObjectMethodKind.Init => "init"
+          case ObjectMethodKind.Getter => "get"
+          case ObjectMethodKind.Setter => "set"
+        },
+        key, async, generator, computed, false)
+      print(body, Some(node), printHead :+ Space())
+    case ObjectProperty(key, value, computed, shorthand, decorators) =>
+      val printDec = printJoin(decorators, Some(node), previous)
+      val printKey =
+        if (computed) print(key, Some(node), printDec :+ Token("[")) :+ Token("]")
+        else print(key, Some(node), printDec)
+      (key, value) match {
+        case (Identifier(name1, _), AssignmentPattern(Identifier(name2, _), _)) if (name1.equals(name2)) =>
+          print(value, Some(node), printDec)
+        case (Identifier(name1, _), Identifier(name2, _)) if (name1.equals(name2) && shorthand) => printKey
+        case _ => print(value, Some(node), printKey ::: List(Token(":"), Space()))
+      }
+    case RecordExpression(props) =>
+      if (props.length > 0)
+        printJoin(props, Some(node), previous ::: List(Token("#{"), Space()), List(Token(","), Space()), true, true) ::: List(Space(), Token("}"))
+      else previous ::: List(Token("#{"), Token("}"))
     // END types.scala
     // ---
     // BEGIN typescript.scala
@@ -632,6 +799,75 @@ class Printer(map: SourceMapBuilder) {
       print(exp, Some(node), previous ::: List(Word("export"), Space(), Token("="), Space())) :+ Token(";")
     case TSNamespaceExportDeclaration(id) =>
       print(id, Some(node), previous ::: List(Word("export"), Space(), Word("as"), Space(), Word("namespace"), Space()))
+    case TSTypeParameterInstantiation(params) =>
+      val printParams = printJoin(params, Some(node), previous :+ Token("<"), List(Token(","), Space()))
+      parent match {
+        case Some(_: ArrowFunctionExpression) if (params.length == 1) =>
+          printParams ::: List(Token(","), Token(">"))
+        case _ => printParams :+ Token(">")
+      }
+    case TSParameterProperty(parameter, accessibility, decorators, overrided, readonly) =>
+      val printAccess = accessibility match {
+        case Some(AccessModifier.Public) => List(Word("public"), Space())
+        case Some(AccessModifier.Private) => List(Word("private"), Space())
+        case Some(AccessModifier.Protected) => List(Word("protected"), Space())
+        case _ => List()
+      }
+      if (readonly) param(parameter, Some(node), previous ::: printAccess ::: List(Word("readonly"), Space()))
+      else param(parameter, Some(node), previous ::: printAccess)
+    case TSDeclareFunction(id, typeParameters, params, returnType, asnyc, declare, generator) =>
+      if (declare)
+        functionHead(typeParameters, params, returnType, id, Some(node), previous ::: List(Word("declare"), Space()), asnyc, generator) :+ Token(";")
+      else
+        functionHead(typeParameters, params, returnType, id, Some(node), previous, asnyc, generator) :+ Token(";")
+    case method: TSDeclareMethod => classMethodHead(method, previous) :+ Token(";")
+    case TSCallSignatureDeclaration(typeParameter, params, typeAnnotation) =>
+      tsPrintSignatureDeclarationBase(typeParameter, params, typeAnnotation, Some(node), previous) :+ Token(";")
+    case TSConstructSignatureDeclaration(typeParameter, params, typeAnnotation) =>
+      tsPrintSignatureDeclarationBase(typeParameter, params, typeAnnotation, Some(node), previous ::: List(Word("new"), Space())) :+ Token(";")
+    case sig @ TSMethodSignature(key, typeParameters, parameters, typeAnnotation, kind, computed, optional) =>
+      val printKind = kind match {
+        case TSMethodSignatureKind.Method => previous
+        case TSMethodSignatureKind.Getter => previous ::: List(Word("get"), Space())
+        case TSMethodSignatureKind.Setter => previous ::: List(Word("set"), Space())
+      }
+      tsPrintSignatureDeclarationBase(typeParameters, parameters, typeAnnotation, Some(node),
+        tsPrintPropertyOrMethodName(sig, Some(node), printKind)) :+ Token(";")
+    case TSIndexSignature(params, typeAnnotation, readonly, static) =>
+      val printStatic = if (static) List(Word("static"), Space()) else List()
+      val printReadonly = if (readonly) List(Word("readonly"), Space()) else List()
+      typeAnnotation match {
+        case Some(typeAnnotation) =>
+          print(typeAnnotation, Some(node),
+            parameters(params, Some(node), (previous ::: printStatic ::: printReadonly) :+ Token("[")) :+ Token("]")
+          ) :+ Token(";")
+        case _ =>
+          parameters(params, Some(node), (previous ::: printStatic ::: printReadonly) :+ Token("[")) ::: List(Token("]"), Token(";"))
+      }
+    case TSFunctionType(typeParameters, params, typeAnnotation) =>
+      tsPrintFunctionOrConstructorType(typeParameters, params, typeAnnotation, Some(node), previous)
+    case TSConstructorType(typeParameters, params, typeAnnotation, abs) =>
+      if (abs)
+        tsPrintFunctionOrConstructorType(typeParameters, params, typeAnnotation, Some(node), previous ::: List(Word("abstract"), Space(), Word("new"), Space()))
+      else
+        tsPrintFunctionOrConstructorType(typeParameters, params, typeAnnotation, Some(node), previous ::: List(Word("new"), Space()))
+    case TSUnionType(types) =>
+      printJoin(types, Some(node), previous, List(Space(), Token("|"), Space()))
+    case TSIntersectionType(types) =>
+      printJoin(types, Some(node), previous, List(Space(), Token("&"), Space()))
+    case TSInterfaceDeclaration(id, typeParameters, ext, body, declare) =>
+      val printID =
+        if (declare) print(id, Some(node), previous ::: List(Word("declare"), Space(), Word("interface"), Space()))
+        else print(id, Some(node), previous ::: List(Word("interface"), Space()))
+      val printType = typeParameters match {
+        case Some(typeParameters) => print(typeParameters, Some(node), printID)
+        case _ => printID
+      }
+      val printExt =
+        if (ext.length > 0)
+          printJoin(ext, Some(node), printType ::: List(Space(), Word("extends"), Space()), List(Token(","), Space()))
+        else printType
+      print(body, Some(node), printExt :+ Space())
     // END typescript.scala
   }
 
@@ -816,6 +1052,68 @@ class Printer(map: SourceMapBuilder) {
           key, async, generator, computed, optional
         )
   }
+
+  private def functionHead(
+    typeParameter: Option[Node],
+    parameters: List[Identifier | RestElement | Node with Pattern | TSParameterProperty],
+    returnType: Option[Node],
+    id: Option[Node],
+    parent: Option[Node] = None,
+    previous: List[PrintCommand],
+    async: Boolean = false,
+    generator: Boolean = false
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] = {
+    val printFunc = if (async) List(Word("async"), Space(), Word("function")) else List(Word("function"))
+    val printGenerator = if (generator) printFunc :+ Token("*") else printFunc
+    val printID = id match {
+      case Some(id) => print(id, parent, printGenerator :+ Space())
+      case _ => printGenerator
+    }
+    params(typeParameter, parameters, returnType, parent, printID)
+  }
+
+  private def printAssertions(
+    assertions: List[Node],
+    parent: Option[Node],
+    previous: List[PrintCommand]
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] =
+    printJoin(assertions, parent,
+      previous ::: List(Word("assert"), Space(), Token("{"), Space()),
+      List(Token(","), Space())) ::: List(Space(), Token("}"))
+
+  private def tsPrintSignatureDeclarationBase(
+    typeParameter: Option[Node],
+    params: List[Identifier | RestElement | Node with Pattern | TSParameterProperty],
+    returnType: Option[Node],
+    parent: Option[Node] = None,
+    previous: List[PrintCommand]
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] =
+    (typeParameter, returnType) match {
+      case (Some(typeParameter), Some(returnType)) =>
+        print(returnType, parent, parameters(params, parent, print(typeParameter, parent, previous) :+ Token("(")) :+ Token(")"))
+      case (Some(typeParameter), None) =>
+        parameters(params, parent, print(typeParameter, parent, previous) :+ Token("(")) :+ Token(")")
+      case (None, Some(returnType)) =>
+        print(returnType, parent, parameters(params, parent, previous :+ Token("(")) :+ Token(")"))
+      case _ => parameters(params, parent, previous :+ Token("(")) :+ Token(")")
+    }
+  
+  private def tsPrintFunctionOrConstructorType(
+    typeParameter: Option[Node],
+    params: List[Identifier | RestElement | Node with Pattern | TSParameterProperty],
+    returnType: Option[Node],
+    parent: Option[Node] = None,
+    previous: List[PrintCommand]
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] =
+    (typeParameter, returnType) match {
+      case (Some(typeParameter), Some(returnType)) =>
+        print(returnType, parent, parameters(params, parent, print(typeParameter, parent, previous) :+ Token("(")) ::: List(Token(")"), Space(), Token("=>"), Space()))
+      case (Some(typeParameter), None) =>
+        parameters(params, parent, print(typeParameter, parent, previous) :+ Token("(")) ::: List(Token(")"), Space(), Token("=>"), Space())
+      case (None, Some(returnType)) =>
+        print(returnType, parent, parameters(params, parent, previous :+ Token("(")) ::: List(Token(")"), Space(), Token("=>"), Space()))
+      case _ => parameters(params, parent, previous :+ Token("(")) ::: List(Token(")"), Space(), Token("=>"), Space())
+    }
 }
 
 object Printer {

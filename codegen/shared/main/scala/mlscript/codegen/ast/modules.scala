@@ -27,30 +27,32 @@ case class ExportSpecifier(local: Option[Identifier], exported: Identifier | Str
 case class ExportNamespaceSpecifier(exported: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with ModuleSpecifier
 
-case class ExportAllDeclaration(val source: StringLiteral)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with Standardized with Statement with Declaration with ModuleDeclaration with ExportDeclaration:
-  var assertions: Option[List[ImportAttribute]] = None
-  var exportKind: Option[ExportKind] = None
+case class ExportAllDeclaration(
+  source: StringLiteral,
+  assertions: Option[List[ImportAttribute]] = None,
+  exportKind: ExportKind
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+    extends Node with Standardized with Statement with Declaration with ModuleDeclaration with ExportDeclaration
 
 case class ExportNamedDeclaration(
-  val declaration: Option[Node with Declaration] = None,
-  val specifiers: List[ExportSpecifier | ExportDefaultSpecifier | ExportNamespaceSpecifier] = Nil,
-  val source: Option[StringLiteral] = None
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration with ModuleDeclaration with ExportDeclaration:
-  var assertions: Option[List[ImportAttribute]] = None
-  var exportKind: Option[ExportKind] = None
+  declaration: Option[Node with Declaration] = None,
+  specifiers: List[ExportSpecifier | ExportDefaultSpecifier | ExportNamespaceSpecifier] = Nil,
+  source: Option[StringLiteral] = None,
+  assertions: Option[List[ImportAttribute]] = None,
+  exportKind: ExportKind
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration with ModuleDeclaration with ExportDeclaration
 
 case class ExportDefaultDeclaration(
   declaration: TSDeclareFunction | FunctionDeclaration | ClassDeclaration | Node with Expression
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration with ModuleDeclaration with ExportDeclaration
 
 case class ImportDeclaration(
-  val specifiers: List[ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier],
-  val source: StringLiteral
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration with ModuleDeclaration:
-  var assertions: Option[List[ImportAttribute]] = None
-  var importKind: Option[ImportKind] = None
-  var module: Option[Boolean] = None
+  specifiers: List[ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier],
+  source: StringLiteral,
+  assertions: Option[List[ImportAttribute]] = None,
+  importKind: ImportKind,
+  module: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Statement with Declaration with ModuleDeclaration
 
 case class ImportAttribute(key: Identifier | StringLiteral, value: StringLiteral)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node

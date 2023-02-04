@@ -90,7 +90,7 @@ object Parentheses:
               if (checkBits & CheckBit.expressionStatement) != 0 && expression == node => Some(true)
             case ExportDefaultDeclaration(declaration)
               if (checkBits & CheckBit.exportDefault) != 0 && declaration == node => Some(true)
-            case ArrowFunctionExpression(_, body, _, _)
+            case ArrowFunctionExpression(_, body, _, _, _, _, _)
               if (checkBits & CheckBit.arrowBody) != 0 && body == node => Some(true)
             case ForStatement(init, _, _, _)
               if (checkBits & CheckBit.forHead) != 0 && init == node => Some(true)

@@ -13,14 +13,14 @@ case class TSParameterProperty(
     extends Node with TypeScript with LVal
 
 case class TSDeclareFunction(
-  val id: Option[Identifier] = None,
-  val typeParameters: Option[TSTypeParameterDeclaration] = None,
-  val params: List[Identifier | Node with Pattern | RestElement],
-  val returnType: Option[TSTypeAnnotation] = None
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with Statement with Declaration:
-  var async: Boolean = false
-  var declare: Boolean = false
-  var generator: Boolean = false
+  id: Option[Identifier] = None,
+  typeParameters: Option[TSTypeParameterDeclaration] = None,
+  params: List[Identifier | Node with Pattern | RestElement],
+  returnType: Option[TSTypeAnnotation] = None,
+  async: Boolean = false,
+  declare: Boolean = false,
+  generator: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with Statement with Declaration
 
 enum TSDeclareMethodKind:
   case Getter
@@ -49,15 +49,15 @@ case class TSQualifiedName(left: Node with TSEntityName, right: Identifier)(val 
     extends Node with TypeScript with TSEntityName
 
 case class TSCallSignatureDeclaration(
-  val typeParameters: Option[TSTypeParameterDeclaration] = None,
-  val parameters: List[Identifier | RestElement],
-  val typeAnnotation: Option[TSTypeAnnotation] = None
+  typeParameters: Option[TSTypeParameterDeclaration] = None,
+  parameters: List[Identifier | RestElement],
+  typeAnnotation: Option[TSTypeAnnotation] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSTypeElement
 
 case class TSConstructSignatureDeclaration(
-  val typeParameters: Option[TSTypeParameterDeclaration] = None,
-  val parameters: List[Identifier | RestElement],
-  val typeAnnotation: Option[TSTypeAnnotation] = None
+  typeParameters: Option[TSTypeParameterDeclaration] = None,
+  parameters: List[Identifier | RestElement],
+  typeAnnotation: Option[TSTypeAnnotation] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSTypeElement
 
 enum TSPropertySignatureKind:
@@ -90,11 +90,11 @@ case class TSMethodSignature(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSTypeElement
 
 case class TSIndexSignature(
-  val parameters: List[Identifier],
-  val typeAnnotation: Option[TSTypeAnnotation] = None
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSTypeElement:
-  var readonly: Boolean = false
-  var static: Boolean = false
+  parameters: List[Identifier],
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  readonly: Boolean = false,
+  static: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSTypeElement
 
 case class TSAnyKeyword()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with TypeScript with TSType with TSBaseType
@@ -139,17 +139,17 @@ case class TSThisType()(val start: Option[Int], val end: Option[Int], val locati
     extends Node with TypeScript with TSType with TSBaseType
 
 case class TSFunctionType(
-  val typeParameters: Option[TSTypeParameterDeclaration] = None,
-  val parameters: List[Identifier | RestElement],
-  val typeAnnotation: Option[TSTypeAnnotation] = None
+  typeParameters: Option[TSTypeParameterDeclaration] = None,
+  parameters: List[Identifier | RestElement],
+  typeAnnotation: Option[TSTypeAnnotation] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSType
 
 case class TSConstructorType(
-  val typeParameters: Option[TSTypeParameterDeclaration] = None,
-  val parameters: List[Identifier | RestElement],
-  val typeAnnotation: Option[TSTypeAnnotation] = None
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSType:
-  var `abstract`: Boolean = false
+  typeParameters: Option[TSTypeParameterDeclaration] = None,
+  parameters: List[Identifier | RestElement],
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  `abstract`: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSType
 
 case class TSTypeReference(
   typeName: Node with TSEntityName,
@@ -188,10 +188,10 @@ case class TSNamedTupleMember(
   optional: Boolean = false
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript
 
-case class TSUnionType(val types: List[Node with TSType])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class TSUnionType(types: List[Node with TSType])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with TypeScript with TSType
 
-case class TSIntersectionType(val types: List[Node with TSType])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class TSIntersectionType(types: List[Node with TSType])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with TypeScript with TSType
 
 case class TSConditionalType(
@@ -231,12 +231,12 @@ case class TSExpressionWithTypeArguments(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSType
 
 case class TSInterfaceDeclaration(
-  val id: Identifier,
-  val typeParameters: Option[TSTypeParameterDeclaration] = None,
-  val `extends`: Option[List[TSExpressionWithTypeArguments]] = None,
-  val body: TSInterfaceBody
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with Statement with Declaration:
-  var declare: Boolean = false
+  id: Identifier,
+  typeParameters: Option[TSTypeParameterDeclaration] = None,
+  `extends`: List[TSExpressionWithTypeArguments] = Nil,
+  body: TSInterfaceBody,
+  declare: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with Statement with Declaration
 
 case class TSInterfaceBody(body: List[Node with TSTypeElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with TypeScript
@@ -316,19 +316,19 @@ case class TSNonNullExpression(expression: Node with Expression)(val start: Opti
     extends Node with TypeScript with Expression with LVal with PatternLike
 
 case class TSExportAssignment(expression: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with TypeScript with Statement
+  extends Node with TypeScript with Statement
 
 case class TSNamespaceExportDeclaration(id: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with TypeScript with Statement
+  extends Node with TypeScript with Statement
 
 case class TSTypeAnnotation(typeAnnotation: Node with TSType)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with TypeScript
+  extends Node with TypeScript
 
-case class TSTypeParameterInstantiation(val params: List[Node with TSType])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with TypeScript
+case class TSTypeParameterInstantiation(params: List[Node with TSType])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+  extends Node with TypeScript
 
 case class TSTypeParameterDeclaration(val params: List[TSTypeParameter])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with TypeScript
+  extends Node with TypeScript
 
 case class TSTypeParameter(
   val constraint: Option[Node with TSType] = None,
