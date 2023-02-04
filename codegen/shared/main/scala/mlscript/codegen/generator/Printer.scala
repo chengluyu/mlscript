@@ -244,8 +244,18 @@ class Printer(map: SourceMapBuilder) {
         case _ => printCallee
       }
       printJoin(arguments, Some(node), printType :+ Token("("), List(Token(","), Space())) :+ Token(")")
+    case UpdateExpression(operator, argument, prefix) =>
+      if (prefix) print(argument, Some(node), previous :+ Token(UpdateOperator.to(operator)))
+      else print(argument, Some(node), previous) :+ Token(UpdateOperator.to(operator))
     case AwaitExpression(argument) =>
       print(argument, Some(node), previous ::: List(Word("await"), Space()))
+    case YieldExpression(argument, delegate) =>
+      argument match {
+        case Some(argument) if (delegate) => print(argument, Some(node), previous ::: List(Word("yield"), Token("*"), Space()))
+        case _ if (delegate) => previous ::: List(Word("yield"), Token("*"))
+        case Some(argument) => print(argument, Some(node), previous ::: List(Word("yield"), Space()))
+        case _ => previous :+ Word("yield")
+      }
     // END expressions.scala
     // ---
     // BEGIN methods.scala
@@ -527,6 +537,14 @@ class Printer(map: SourceMapBuilder) {
         case _ => List(Semicolon())
       }
       printJoin(declarations, Some(node), printKind, sep, statement = true, indent = declarations.length > 1)
+    case BreakStatement(label) =>
+      printStatementAfterKeyword(label, Some(node), previous :+ Word("break"))
+    case ContinueStatement(label) =>
+      printStatementAfterKeyword(label, Some(node), previous :+ Word("continue"))
+    case ReturnStatement(argument) =>
+      printStatementAfterKeyword(argument, Some(node), previous :+ Word("return"))
+    case ThrowStatement(argument) =>
+      print(argument, Some(node), previous ::: List(Space(), Word("throw"))) :+ Semicolon()
     // END statements.scala
     // ---
     // BEGIN templates.scala
@@ -1114,6 +1132,16 @@ class Printer(map: SourceMapBuilder) {
         print(returnType, parent, parameters(params, parent, previous :+ Token("(")) ::: List(Token(")"), Space(), Token("=>"), Space()))
       case _ => parameters(params, parent, previous :+ Token("(")) ::: List(Token(")"), Space(), Token("=>"), Space())
     }
+
+  private def printStatementAfterKeyword(
+    node: Option[Node],
+    parent: Option[Node],
+    previous: List[PrintCommand]
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] = node match {
+    case Some(node) =>
+      print(node, parent, previous :+ Space()) :+ Semicolon()
+    case _ => previous :+ Semicolon()
+  }
 }
 
 object Printer {

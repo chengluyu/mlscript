@@ -38,16 +38,16 @@ case class ForOfStatement(
 case class DoWhileStatement(test: Node with Expression, body: Node with Statement)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement with BlockParent with Loop with While with Scopable
 
-case class BreakStatement(val label: Option[Identifier] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class BreakStatement(label: Option[Identifier] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement with Terminatorless with CompletionStatement
 
-case class ContinueStatement(val label: Option[Identifier] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ContinueStatement(label: Option[Identifier] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement with Terminatorless with CompletionStatement
 
-case class ReturnStatement(val argument: Option[Node with Expression] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ReturnStatement(argument: Option[Node with Expression] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement with Terminatorless with CompletionStatement
 
-case class ThrowStatement(val argument: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class ThrowStatement(argument: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Statement with Terminatorless with CompletionStatement
 
 case class LabeledStatement(label: Identifier, body: Node with Statement)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])

@@ -29,10 +29,17 @@ enum UpdateOperator:
   case Increment
   case Decrement
 
+object UpdateOperator {
+  def to(op: UpdateOperator): String = op match {
+    case Increment => "++"
+    case Decrement => "--"
+  }
+}
+
 case class UpdateExpression(
-  val operator: UpdateOperator,
-  val argument: Node with Expression,
-  val prefix: Boolean = false
+  operator: UpdateOperator,
+  argument: Node with Expression,
+  prefix: Boolean = false
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
 case class ConditionalExpression(
@@ -88,8 +95,8 @@ case class AwaitExpression(argument: Node with Expression)(val start: Option[Int
   extends Node with Standardized with Expression with Terminatorless
 
 case class YieldExpression(
-  val argument: Option[Node with Expression] = None,
-  val delegate: Boolean = false
+  argument: Option[Node with Expression] = None,
+  delegate: Boolean = false
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression with Terminatorless
 
 case class EmptyStatement()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
