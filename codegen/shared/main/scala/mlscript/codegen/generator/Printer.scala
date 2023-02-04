@@ -82,7 +82,7 @@ class Printer(map: SourceMapBuilder) {
     case ClassBody(body) =>
       if (body.length == 0) previous ::: List(Token("{"), Token("}"))
       else 
-        val res = printJoin(body, Some(node), previous ::: List(Token("{"), Newline()))(indentLevel + 1, stack)
+        val res = printJoin(body, Some(node), previous ::: List(Token("{"), Newline()), statement = true)(indentLevel + 1, stack)
         res.last match {
           case _: Newline => res :+ Token("}")
           case _ => res ::: List(Newline(), Token("}"))
@@ -190,17 +190,23 @@ class Printer(map: SourceMapBuilder) {
       val printLeft = print(left, Some(node), previous)
       print(right, Some(node), printLeft ::: List(Space(), Token("="), Space()))
     case AssignmentExpression(op, left, right) => // TODO: check if parens are necessary
-      val printLeft = print(left, Some(node), previous :+ Token("(")) :+ Space()
+      val needsParens = op.equals("in") && !Parentheses.needsParens(node, parent, List())
+      val printLeft = print(left, Some(node), if (needsParens) previous :+ Token("(") else previous) :+ Space()
       val opPrint = if (op.equals("in") || op.equals("instanceof")) Word(op) else Token(op)
-      print(right, Some(node), printLeft ::: List(opPrint, Space())) :+ Token(")")
+      if (needsParens)
+        print(right, Some(node), printLeft ::: List(opPrint, Space())) :+ Token(")")
+      else print(right, Some(node), printLeft ::: List(opPrint, Space()))
     case BindExpression(obj, callee) =>
       val printObj = print(obj, Some(node), previous)
       print(callee, Some(node), printObj :+ Token("::"))
     case BinaryExpression(op, left, right) =>
-      val printLeft = print(left, Some(node), previous :+ Token("(")) :+ Space()
+      val needsParens = op == BinaryOperator.In && !Parentheses.needsParens(node, parent, List())
+      val printLeft = print(left, Some(node), if (needsParens) previous :+ Token("(") else previous) :+ Space()
       val ops = BinaryOperator.to(op)
       val opPrint = if (ops.equals("in") || ops.equals("instanceof")) Word(ops) else Token(ops)
-      print(right, Some(node), printLeft ::: List(opPrint, Space())) :+ Token(")")
+      if (needsParens)
+        print(right, Some(node), printLeft ::: List(opPrint, Space())) :+ Token(")")
+      else print(right, Some(node), printLeft ::: List(opPrint, Space()))
     case LogicalExpression(op, left, right) =>
       val printLeft = print(left, Some(node), previous :+ Token("(")) :+ Space()
       val ops = LogicalOperator.to(op)
@@ -261,7 +267,10 @@ class Printer(map: SourceMapBuilder) {
     // BEGIN methods.scala
     case FunctionExpression(id, params, body, generator, asnyc, returnType, typeParameters) =>
       print(body, Some(node),
-        functionHead(typeParameters, params, returnType, id, Some(node), previous :+ Space(), asnyc, generator))
+        functionHead(typeParameters, params, returnType, id, Some(node), previous :+ Space(), asnyc, generator):+ Space())
+    case FunctionDeclaration(id, params, body, generator, asnyc, _, returnType, typeParameters) =>
+      print(body, Some(node),
+        functionHead(typeParameters, params, returnType, id, Some(node), previous :+ Space(), asnyc, generator):+ Space())
     case ArrowFunctionExpression(parameters, body, asnyc, expression, generator, returnType, typeParameter) =>
       val printAsync = if (asnyc) List(Word("async"), Space()) else List()
       val printParam = params(typeParameter, parameters, returnType, Some(node), previous ::: printAsync)
@@ -536,7 +545,7 @@ class Printer(map: SourceMapBuilder) {
         case Some(ForOfStatement(left, _, _, _)) if (left.equals(node)) => List()
         case _ => List(Semicolon())
       }
-      printJoin(declarations, Some(node), printKind, sep, statement = true, indent = declarations.length > 1)
+      printJoin(declarations, Some(node), printKind, sep, indent = declarations.length > 1)
     case BreakStatement(label) =>
       printStatementAfterKeyword(label, Some(node), previous :+ Word("break"))
     case ContinueStatement(label) =>
@@ -1022,8 +1031,8 @@ class Printer(map: SourceMapBuilder) {
       if (async) List(Word("async"), Space())
       else List()
     val printGenerator =
-      if ((kind.equals("method") || kind.equals("init")) && generator) (printKind ::: printAsync) :+ Token("*")
-      else printKind ::: printAsync
+      if ((kind.equals("method") || kind.equals("init")) && generator) (previous ::: printKind ::: printAsync) :+ Token("*")
+      else previous ::: printKind ::: printAsync
     val printKey =
       if (computed) print(key, parent, printGenerator :+ Token("[")) :+ Token("]")
       else print(key, parent, printGenerator)
@@ -1081,7 +1090,7 @@ class Printer(map: SourceMapBuilder) {
     async: Boolean = false,
     generator: Boolean = false
   )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] = {
-    val printFunc = if (async) List(Word("async"), Space(), Word("function")) else List(Word("function"))
+    val printFunc = if (async) previous ::: List(Word("async"), Space(), Word("function")) else previous ::: List(Word("function"))
     val printGenerator = if (generator) printFunc :+ Token("*") else printFunc
     val printID = id match {
       case Some(id) => print(id, parent, printGenerator :+ Space())

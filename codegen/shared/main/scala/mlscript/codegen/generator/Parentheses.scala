@@ -47,6 +47,7 @@ object Parentheses:
       case Some(NewExpression(callee, _, _, _))
         if callee == node && isOrHasCallExpression(node) => true
       case Some(parent) => handleParens(node, parent, stack)
+      case _ => false
 
   private def hasPostfixPart(node: Node, parent: Node) =
     parent match
