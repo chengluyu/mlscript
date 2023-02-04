@@ -63,9 +63,9 @@ object Whitespace:
           node.left.analyze + node.right.analyze
         case AssignmentExpression(_, left, right) =>
           left.analyze + right.analyze
-        case CallExpression(callee, _) =>
+        case CallExpression(callee, _, _, _) =>
           callee.analyze.withCall
-        case OptionalCallExpression(callee, _, _) =>
+        case OptionalCallExpression(callee, _, _, _) =>
           callee.analyze.withCall
         case _: Node with Function =>
           State(hasFunction = true)
@@ -77,7 +77,7 @@ object Whitespace:
           target.isHelper || property.isHelper
         case Identifier(name, _) =>
           name == "require" || name.headOption.contains('_')
-        case CallExpression(callee, _) =>
+        case CallExpression(callee, _, _, _) =>
           callee.isHelper
         case node: Node with Binary =>
           (node.left.isIdentifier && node.left.isHelper) || node.right.isHelper
@@ -109,9 +109,9 @@ object Whitespace:
         Whitespace.After
       case StringLiteral("use strict") =>
         Whitespace.After
-      case CallExpression(callee, _) if callee.isFunction || node.isHelper =>
+      case CallExpression(callee, _, _, _) if callee.isFunction || node.isHelper =>
         Whitespace.Both
-      case OptionalCallExpression(callee, _, _) if callee.isFunction =>
+      case OptionalCallExpression(callee, _, _, _) if callee.isFunction =>
         Whitespace.Both
       case VariableDeclaration(kind, declarations) =>
         Whitespace.Both when declarations.exists {

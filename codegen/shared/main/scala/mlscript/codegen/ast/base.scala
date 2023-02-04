@@ -8,9 +8,9 @@ enum SourceType:
   case Module
 
 case class Program(
-  val body: List[Node with Statement],
-  val sourceType: SourceType = SourceType.Script,
-  val sourceFile: String
+  body: List[Node with Statement],
+  sourceType: SourceType = SourceType.Script,
+  sourceFile: String
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with BlockParent with Block
 
 case class File(
@@ -18,6 +18,6 @@ case class File(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized
 
 case class BlockStatement(
-  val body: List[Node with Statement]
+  body: List[Node with Statement]
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with BlockParent with Block with Statement
 

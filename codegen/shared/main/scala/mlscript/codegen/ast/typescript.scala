@@ -3,25 +3,24 @@ package mlscript.codegen.ast
 import mlscript.codegen.ast._
 import mlscript.codegen.{Position => SourcePosition, Location => SourceLocation}
 
-case class Noop()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-  extends Node with Miscellaneous
-
-case class TSParameterProperty(val parameter: Identifier | AssignmentPattern)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with TypeScript with LVal:
-  var accessibility: Option[AccessModifier] = None
-  var decorators: Option[List[Decorator]] = None
-  var `override`: Option[Boolean] = None
-  var readonly: Option[Boolean] = None
+case class TSParameterProperty(
+  parameter: Identifier | AssignmentPattern,
+  accessibility: Option[AccessModifier] = None,
+  decorators: List[Decorator] = List(),
+  `override`: Boolean = false,
+  readonly: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+    extends Node with TypeScript with LVal
 
 case class TSDeclareFunction(
   val id: Option[Identifier] = None,
-  val typeParameters: Option[TSTypeParameterDeclaration | Noop] = None,
+  val typeParameters: Option[TSTypeParameterDeclaration] = None,
   val params: List[Identifier | Node with Pattern | RestElement],
-  val returnType: Option[TSTypeAnnotation | Noop] = None
+  val returnType: Option[TSTypeAnnotation] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with Statement with Declaration:
-  var async: Option[Boolean] = None
-  var declare: Option[Boolean] = None
-  var generator: Option[Boolean] = None
+  var async: Boolean = false
+  var declare: Boolean = false
+  var generator: Boolean = false
 
 enum TSDeclareMethodKind:
   case Getter
@@ -30,22 +29,21 @@ enum TSDeclareMethodKind:
   case Constructor
 
 case class TSDeclareMethod(
-  val decorators: Option[List[Decorator]] = None,
-  val key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression,
-  val typeParameters: Option[TSTypeParameterDeclaration | Noop] = None,
-  val params: List[Identifier | Node with Pattern | RestElement | TSParameterProperty],
-  val returnType: Option[TSTypeAnnotation | Noop] = None
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript:
-  var `abstract`: Option[Boolean] = None
-  var access: Option[AccessModifier] = None
-  var accessibility: Option[AccessModifier] = None
-  var async: Option[Boolean] = None
-  var computed: Option[Boolean] = None
-  var generator: Option[Boolean] = None
-  var kind: Option[TSDeclareMethodKind] = None
-  var optional: Option[Boolean] = None
-  var `override`: Option[Boolean] = None
-  var static: Option[Boolean] = None
+  decorators: List[Decorator] = List(),
+  key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression,
+  typeParameters: Option[TSTypeParameterDeclaration] = None,
+  params: List[Identifier | Node with Pattern | RestElement | TSParameterProperty],
+  returnType: Option[TSTypeAnnotation] = None,
+  `abstract`: Boolean = false,
+  access: Option[AccessModifier] = None,
+  async: Boolean = false,
+  computed: Boolean = false,
+  generator: Boolean = false,
+  kind: TSDeclareMethodKind = TSDeclareMethodKind.Method,
+  optional: Boolean = false,
+  `override`: Boolean = false,
+  static: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript
 
 case class TSQualifiedName(left: Node with TSEntityName, right: Identifier)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with TypeScript with TSEntityName
@@ -95,8 +93,8 @@ case class TSIndexSignature(
   val parameters: List[Identifier],
   val typeAnnotation: Option[TSTypeAnnotation] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSTypeElement:
-  var readonly: Option[Boolean] = None
-  var static: Option[Boolean] = None
+  var readonly: Boolean = false
+  var static: Boolean = false
 
 case class TSAnyKeyword()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with TypeScript with TSType with TSBaseType
@@ -151,7 +149,7 @@ case class TSConstructorType(
   val parameters: List[Identifier | RestElement],
   val typeAnnotation: Option[TSTypeAnnotation] = None
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with TSType:
-  var `abstract`: Option[Boolean] = None
+  var `abstract`: Boolean = false
 
 case class TSTypeReference(
   typeName: Node with TSEntityName,
@@ -238,7 +236,7 @@ case class TSInterfaceDeclaration(
   val `extends`: Option[List[TSExpressionWithTypeArguments]] = None,
   val body: TSInterfaceBody
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with TypeScript with Statement with Declaration:
-  var declare: Option[Boolean] = None
+  var declare: Boolean = false
 
 case class TSInterfaceBody(body: List[Node with TSTypeElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with TypeScript

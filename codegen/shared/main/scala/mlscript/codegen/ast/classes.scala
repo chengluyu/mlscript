@@ -20,108 +20,108 @@ enum ClassMethodKind:
   case Constructor
 
 case class ClassExpression(
-  val id: Option[Identifier] = None,
-  val superClass: Option[Node with Expression] = None,
-  val body: ClassBody,
-  val decorators: Option[List[Decorator]] = None
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with Class with Expression:
-  var implements: Option[List[TSExpressionWithTypeArguments]] = None
-  var superTypeParameters: Option[TSTypeParameterInstantiation] = None
-  var typeParameters: Option[TSTypeParameterDeclaration | Noop] = None
+  id: Identifier,
+  superClass: Option[Node with Expression] = None,
+  body: ClassBody,
+  decorators: List[Decorator] = List(),
+  implements: Option[List[TSExpressionWithTypeArguments]] = None,
+  superTypeParameters: Option[TSTypeParameterInstantiation] = None,
+  typeParameters: Option[TSTypeParameterDeclaration] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with Class with Expression
 
 case class ClassDeclaration(
-  val id: Identifier,
-  val superClass: Option[Node with Expression] = None,
-  val body: ClassBody,
-  val decorators: Option[List[Decorator]] = None
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with Class with Statement with Declaration:
-  var `abstract`: Option[Boolean] = None
-  var declare: Option[Boolean] = None
-  var implements: Option[List[TSExpressionWithTypeArguments]] = None
-  var superTypeParameters: Option[TSTypeParameterInstantiation] = None
-  var typeParameters: Option[TSTypeParameterDeclaration | Noop] = None
+  id: Identifier,
+  superClass: Option[Node with Expression] = None,
+  body: ClassBody,
+  decorators: List[Decorator] = List(),
+  `abstract`: Boolean = false,
+  declare: Boolean = false,
+  implements: Option[List[TSExpressionWithTypeArguments]] = None,
+  superTypeParameters: Option[TSTypeParameterInstantiation] = None,
+  typeParameters: Option[TSTypeParameterDeclaration] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Scopable with Class with Statement with Declaration
 
 case class ClassBody(
-  val body: List[ClassMethod | ClassPrivateMethod | ClassProperty | ClassPrivateProperty | ClassAccessorProperty | TSDeclareMethod | TSIndexSignature | StaticBlock]
+  body: List[ClassMethod | ClassPrivateMethod | ClassProperty | ClassPrivateProperty | ClassAccessorProperty | TSDeclareMethod | TSIndexSignature | StaticBlock]
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized
 
 case class ClassProperty(
-  val key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression,
-  val value: Option[Node with Expression] = None,
-  val decorators: Option[List[Decorator]] = None,
-  val computed: Boolean = false,
-  val static: Boolean = false
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Property:
-  var `abstract`: Option[Boolean] = None
-  var accessibility: Option[AccessModifier] = None
-  var declare: Option[Boolean] = None
-  var definite: Option[Boolean] = None
-  var optional: Option[Boolean] = None
-  var `override`: Option[Boolean] = None
-  var readonly: Option[Boolean] = None
+  key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression,
+  value: Option[Node with Expression] = None,
+  decorators: List[Decorator] = List(),
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  computed: Boolean = false,
+  static: Boolean = false,
+  `abstract`: Boolean = false,
+  accessibility: Option[AccessModifier] = None,
+  declare: Boolean = false,
+  definite: Boolean = false,
+  optional: Boolean = false,
+  `override`: Boolean = false,
+  readonly: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Property
 
 case class ClassAccessorProperty(
-  val key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression | PrivateName,
-  val value: Option[Node with Expression] = None,
-  val decorators: Option[List[Decorator]] = None,
-  val computed: Boolean = false,
-  val static: Boolean = false
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Property with Accessor:
-  var `abstract`: Option[Boolean] = None
-  var accessibility: Option[AccessModifier] = None
-  var declare: Option[Boolean] = None
-  var definite: Option[Boolean] = None
-  var optional: Option[Boolean] = None
-  var `override`: Option[Boolean] = None
-  var readonly: Option[Boolean] = None
+  key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression | PrivateName,
+  value: Option[Node with Expression] = None,
+  decorators: List[Decorator] = List(),
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  computed: Boolean = false,
+  static: Boolean = false,
+  `abstract`: Boolean = false,
+  accessibility: Option[AccessModifier] = None,
+  declare: Boolean = false,
+  definite: Boolean = false,
+  optional: Boolean = false,
+  `override`: Boolean = false,
+  readonly: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Property with Accessor
 
 case class ClassPrivateMethod(
-  val kind: Option[ClassPrivateMethodKind] = Some(ClassPrivateMethodKind.Method),
-  val key: PrivateName,
-  val params: List[Identifier | Node with Pattern | RestElement | TSParameterProperty],
+  kind: ClassPrivateMethodKind = ClassPrivateMethodKind.Method,
+  key: PrivateName,
+  params: List[Identifier | Node with Pattern | RestElement | TSParameterProperty],
   val body: BlockStatement,
-  val static: Boolean = false
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Function with Scopable with BlockParent with FunctionParent with Method with Private:
-  var `abstract`: Option[Boolean] = None
-  var access: Option[AccessModifier] = None
-  var accessibility: Option[AccessModifier] = None
-  var async: Option[Boolean] = None
-  var computed: Option[Boolean] = None
-  var decorators: Option[List[Decorator]] = None
-  var generator: Option[Boolean] = None
-  var optional: Option[Boolean] = None
-  var `override`: Option[Boolean] = None
-  var returnType: Option[TSTypeAnnotation | Noop] = None
-  var typeParameters: Option[TSTypeParameterDeclaration | Noop] = None
-
+  static: Boolean = false,
+  `abstract`: Boolean = false,
+  access: Option[AccessModifier] = None,
+  async: Boolean = false,
+  computed: Boolean = false,
+  decorators: List[Decorator] = List(),
+  generator: Boolean = false,
+  optional: Boolean = false,
+  `override`: Boolean = false,
+  returnType: Option[TSTypeAnnotation] = None,
+  typeParameters: Option[TSTypeParameterDeclaration] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Function with Scopable with BlockParent with FunctionParent with Method with Private
 
 case class ClassPrivateProperty(
-  val key: PrivateName,
-  val value: Option[Node with Expression] = None,
-  val decorators: Option[List[Decorator]] = None,
-  val static: Boolean = false
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Property with Private:
-  var definite: Option[Boolean] = None
-  var readonly: Option[Boolean] = None
+  key: PrivateName,
+  value: Option[Node with Expression] = None,
+  decorators: List[Decorator] = List(),
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  static: Boolean = false,
+  definite: Option[Boolean] = None,
+  readonly: Option[Boolean] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Property with Private
 
 case class ClassMethod(
-  val kind: Option[ClassMethodKind] = Some(ClassMethodKind.Method),
-  val key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression,
-  val params: List[Identifier | Node with Pattern | RestElement | TSParameterProperty],
+  kind: ClassMethodKind = ClassMethodKind.Method,
+  key: Identifier | StringLiteral | NumericLiteral | BigIntLiteral | Node with Expression,
+  params: List[Identifier | Node with Pattern | RestElement | TSParameterProperty],
   val body: BlockStatement,
-  val computed: Boolean = false,
-  val static: Boolean = false,
-  val generator: Boolean = false,
-  val async: Boolean = false
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Function with Scopable with BlockParent with FunctionParent with Method:
-  var `abstract`: Option[Boolean] = None
-  var access: Option[AccessModifier] = None
-  var accessibility: Option[AccessModifier] = None
-  var decorators: Option[List[Decorator]] = None
-  var optional: Option[Boolean] = None
-  var `override`: Option[Boolean] = None
-  var returnType: Option[TSTypeAnnotation | Noop] = None
-  var typeParameters: Option[TSTypeParameterDeclaration | Noop] = None
+  computed: Boolean = false,
+  static: Boolean = false,
+  generator: Boolean = false,
+  async: Boolean = false,
+  `abstract`: Boolean = false,
+  access: Option[AccessModifier] = None,
+  decorators: List[Decorator] = List(),
+  optional: Boolean = false,
+  `override`: Boolean = false,
+  returnType: Option[TSTypeAnnotation] = None,
+  typeParameters: Option[TSTypeParameterDeclaration] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Function with Scopable with BlockParent with FunctionParent with Method
 
-case class StaticBlock(val body: List[Node with Statement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with Standardized with Scopable with BlockParent with FunctionParent
+case class StaticBlock(body: List[Node with Statement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+  extends Node with Standardized with Scopable with BlockParent with FunctionParent

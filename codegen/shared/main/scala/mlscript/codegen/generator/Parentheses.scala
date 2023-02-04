@@ -44,7 +44,7 @@ object Parentheses:
   def needsParens(node: Node, parent: Option[Node], stack: List[Node]): Boolean =
     parent match
       case None => false
-      case Some(NewExpression(callee, _))
+      case Some(NewExpression(callee, _, _, _))
         if callee == node && isOrHasCallExpression(node) => true
       case Some(parent) => handleParens(node, parent, stack)
 
@@ -52,9 +52,9 @@ object Parentheses:
     parent match
       case MemberExpression(obj, _, _) if (obj == node) => true
       case OptionalMemberExpression(obj, _, _, _) if (obj == node) => true
-      case CallExpression(callee, _) if (callee == node) => true
-      case OptionalCallExpression(callee, _, _) if (callee == node) => true
-      case NewExpression(callee, _) if (callee == node) => true
+      case CallExpression(callee, _, _, _) if (callee == node) => true
+      case OptionalCallExpression(callee, _, _, _) if (callee == node) => true
+      case NewExpression(callee, _, _, _) if (callee == node) => true
       case TaggedTemplateExpression(tag, _, _) if (tag == node) => true
       case _: TSNonNullExpression => true
       case _ => false
@@ -72,8 +72,8 @@ object Parentheses:
       parent match
         case MemberExpression(target, _, _) => target == node
         case OptionalMemberExpression(target, _, _, _) => target == node
-        case CallExpression(callee, _) => callee == node
-        case OptionalCallExpression(callee, _, _) => callee == node
+        case CallExpression(callee, _, _, _) => callee == node
+        case OptionalCallExpression(callee, _, _, _) => callee == node
         case TaggedTemplateExpression(tag, _, _) => tag == node
         case _: TSNonNullExpression => true
         case SequenceExpression(first :: _) => first == node
@@ -226,7 +226,7 @@ object Parentheses:
         case _ => hasPostfixPart(node, parent)
       case _: OptionalMemberExpression =>
         parent match
-          case CallExpression(callee, _) if (callee == node) => true
+          case CallExpression(callee, _, _, _) if (callee == node) => true
           case MemberExpression(obj, _, _) if (obj == node) => true
           case _ => false
       case AssignmentExpression(_, left, _) =>

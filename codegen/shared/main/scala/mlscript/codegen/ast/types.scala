@@ -3,7 +3,7 @@ package mlscript.codegen.ast
 import mlscript.codegen.ast._
 import mlscript.codegen.{Position => SourcePosition, Location => SourceLocation}
 
-case class Identifier(name: String, val typeAnnotation: Option[TSTypeAnnotation | Noop] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class Identifier(name: String, val typeAnnotation: Option[TSTypeAnnotation] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
     extends Node with Standardized with Expression with PatternLike with LVal with TSEntityName:
   var decorators: Option[List[Decorator]] = None
   var optional: Option[Boolean] = None
@@ -11,10 +11,13 @@ case class Identifier(name: String, val typeAnnotation: Option[TSTypeAnnotation 
 case class ArgumentPlaceholder()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node
 
-case class RestElement(argument: Node with LVal, typeAnnotation: Option[TSTypeAnnotation | Noop] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with Standardized with LVal with PatternLike:
-  var decorators: Option[List[Decorator]] = None
-  var optional: Option[Boolean] = None
+case class RestElement(
+  argument: Node with LVal,
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  decorators: List[Decorator] = List(),
+  optional: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+  extends Node with Standardized with LVal with PatternLike
 
 case class SpreadElement(val argument: Node with Expression)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with UnaryLike
@@ -22,9 +25,12 @@ case class SpreadElement(val argument: Node with Expression)(val start: Option[I
 case class ObjectExpression(val properties: List[ObjectMethod | ObjectProperty | SpreadElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
-case class ObjectPattern(properties: List[RestElement | ObjectProperty], typeAnnotation: Option[TSTypeAnnotation | Noop] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with Standardized with Pattern with PatternLike with LVal:
-  var decorators: Option[List[Decorator]] = None
+case class ObjectPattern(
+  properties: List[RestElement | ObjectProperty],
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  decorators: List[Decorator] = List()
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+    extends Node with Standardized with Pattern with PatternLike with LVal
 
 enum ObjectMethodKind:
   case Method
@@ -42,8 +48,8 @@ case class ObjectMethod(
   val async: Boolean = false
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with UserWhitespacable with Function with Scopable with BlockParent with FunctionParent with Method with ObjectMember:
   var decorators: Option[List[Decorator]] = None
-  var returnType: Option[TSTypeAnnotation | Noop] = None
-  var typeParameters: Option[TSTypeParameterDeclaration | Noop] = None
+  var returnType: Option[TSTypeAnnotation] = None
+  var typeParameters: Option[TSTypeParameterDeclaration] = None
 
 case class ObjectProperty(
   key: Node with Expression | Identifier | StringLiteral | NumericLiteral | BigIntLiteral | DecimalLiteral | PrivateName,
@@ -56,10 +62,13 @@ case class ObjectProperty(
 case class ArrayExpression(elements: List[Option[(Node with Expression) | (Node with SpreadElement)]] = Nil)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
-case class ArrayPattern(val elements: List[Option[Node with PatternLike | Node with LVal]], typeAnnotation: Option[TSTypeAnnotation | Noop] = None)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
-    extends Node with Standardized with Pattern with PatternLike with LVal:
-  var decorators: Option[List[Decorator]] = None
-  var optional: Option[Boolean] = None
+case class ArrayPattern(
+  elements: List[Option[Node with PatternLike | Node with LVal]],
+  typeAnnotation: Option[TSTypeAnnotation] = None,
+  decorators: List[Decorator] = List(),
+  optional: Boolean = false
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+    extends Node with Standardized with Pattern with PatternLike with LVal
 
 case class RecordExpression(val properties: List[ObjectProperty | SpreadElement])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Expression

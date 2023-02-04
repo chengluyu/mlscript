@@ -42,13 +42,13 @@ case class ConditionalExpression(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression with Conditional
 
 case class NewExpression(
-  val callee: Node with Expression | Super | V8IntrinsicIdentifier,
-  val arguments: List[Node with Expression | SpreadElement | ArgumentPlaceholder]
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression:
-  var optional: Option[Boolean] = None
-  var typeParameters: Option[TSTypeParameterInstantiation] = None
+  callee: Node with Expression | Super | V8IntrinsicIdentifier,
+  arguments: List[Node with Expression | SpreadElement | ArgumentPlaceholder],
+  optional: Boolean = false,
+  typeParameters: Option[TSTypeParameterInstantiation] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
-case class SequenceExpression(val expressions: List[Node with Expression])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
+case class SequenceExpression(expressions: List[Node with Expression])(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression
 
 case class ThisExpression()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
@@ -68,18 +68,18 @@ case class OptionalMemberExpression(
 )(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
 case class OptionalCallExpression(
-  val callee: Node with Expression,
-  val arguments: List[Node with Expression | SpreadElement | ArgumentPlaceholder],
-  val optional: Boolean
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression:
-  var typeParameters: Option[TSTypeParameterInstantiation] = None
+  callee: Node with Expression,
+  arguments: List[Node with Expression | SpreadElement | ArgumentPlaceholder],
+  optional: Boolean,
+  typeParameters: Option[TSTypeParameterInstantiation] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
 case class CallExpression(
-  val callee: Node with Expression | Super | V8IntrinsicIdentifier,
-  val arguments: List[Node with Expression | SpreadElement | ArgumentPlaceholder]
-)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression:
-  var optional: Option[Boolean] = None
-  var typeParameters: Option[TSTypeParameterInstantiation] = None
+  callee: Node with Expression | Super | V8IntrinsicIdentifier,
+  arguments: List[Node with Expression | SpreadElement | ArgumentPlaceholder],
+  optional: Boolean = false,
+  typeParameters: Option[TSTypeParameterInstantiation] = None
+)(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation]) extends Node with Standardized with Expression
 
 case class Import()(val start: Option[Int], val end: Option[Int], val location: Option[SourceLocation])
   extends Node with Standardized with Expression

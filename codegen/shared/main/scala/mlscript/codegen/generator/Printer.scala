@@ -31,10 +31,121 @@ class Printer(map: SourceMapBuilder) {
   )(implicit indentLevel: Int, stack: List[Node] = List()): List[PrintCommand] = node match {
     // BEGIN base.scala
     case File(program) => print(program, Some(node), previous)
+    case Program(body, _, _) => printJoin(body, Some(node), previous, statement = true)
+    case BlockStatement(body) =>
+      printJoin(body, Some(node), previous :+ Token("{"), statement = true, indent = true) :+ Token("}")
     // END base.scala
     // ---
     // BEGIN classes.scala
-
+    case ClassDeclaration(id, superClass, body, decorators, abs, dec, implements, superTypeParameters, typeParameters) =>
+      val printDecoractors = printJoin(decorators, Some(node), previous)
+      val printDeclare = if (dec) List(Word("declare"), Space()) else List()
+      val printAbs = if (abs) List(Word("abstract"), Space()) else List()
+      val printID = print(id, Some(node), (printDecoractors ::: printDeclare ::: printAbs) :+ Word("class"))
+      val printType = typeParameters match {
+        case Some(typeParameters) => print(typeParameters, Some(node), printID)
+        case _ => printID
+      }
+      val printSuper = (superClass, superTypeParameters) match {
+        case (Some(superClass), Some(superTypeParameters)) =>
+          print(superTypeParameters, Some(node), print(superClass, Some(node), printType ::: List(Space(), Word("extends"), Space())))
+        case (Some(superClass), None) =>
+          print(superClass, Some(node), printType ::: List(Space(), Word("extends"), Space()))
+        case _ => printType
+      }
+      val printImplement = implements match {
+        case Some(implements) =>
+          printJoin(implements, Some(node), printSuper ::: List(Space(), Word("implements"), Space()), statement = true)
+        case _ => printSuper
+      }
+      print(body, Some(node), printImplement :+ Space())
+    case ClassExpression(id, superClass, body, decorators, implements, superTypeParameters, typeParameters) =>
+      val printDecoractors = printJoin(decorators, Some(node), previous)
+      val printID = print(id, Some(node), printDecoractors :+ Word("class"))
+      val printType = typeParameters match {
+        case Some(typeParameters) => print(typeParameters, Some(node), printID)
+        case _ => printID
+      }
+      val printSuper = (superClass, superTypeParameters) match {
+        case (Some(superClass), Some(superTypeParameters)) =>
+          print(superTypeParameters, Some(node), print(superClass, Some(node), printType ::: List(Space(), Word("extends"), Space())))
+        case (Some(superClass), None) =>
+          print(superClass, Some(node), printType ::: List(Space(), Word("extends"), Space()))
+        case _ => printType
+      }
+      val printImplement = implements match {
+        case Some(implements) =>
+          printJoin(implements, Some(node), printSuper ::: List(Space(), Word("implements"), Space()), statement = true)
+        case _ => printSuper
+      }
+      print(body, Some(node), printImplement :+ Space())
+    case ClassBody(body) =>
+      if (body.length == 0) previous ::: List(Token("{"), Token("}"))
+      else 
+        val res = printJoin(body, Some(node), previous ::: List(Token("{"), Newline()))(indentLevel + 1, stack)
+        res.last match {
+          case _: Newline => res :+ Token("}")
+          case _ => res ::: List(Newline(), Token("}"))
+        }
+    case ClassProperty(key, value, decorators, typeAnnotation, computed, static, abs, access, declare, definite, optional, overrided, readonly) =>
+      val printDecoractors = printJoin(decorators, Some(node), previous)
+      val printModifier = tsPrintClassMemberModifiers(true, declare, access, static, overrided, abs, readonly)
+      val printKey =
+        if (computed) print(key, Some(node), (printDecoractors ::: printModifier) :+ Token("[")) :+ Token("]")
+        else print(key, Some(node), printDecoractors ::: printModifier)
+      val printOptional = if (optional) printKey :+ Token("?") else printKey
+      val printDefinite = if (definite) printOptional :+ Token("!") else printOptional
+      val printType = typeAnnotation match {
+        case Some(typeAnnotation) =>
+          print(typeAnnotation, Some(node), printDefinite)
+        case _ => printDefinite
+      }
+      (value match {
+        case Some(value) =>
+          print(value, Some(node), printType ::: List(Space(), Token("="), Space()))
+        case _ => printType
+      }) :+ Semicolon()
+    case ClassAccessorProperty(key, value, decorators, typeAnnotation, computed, static, abs, access, declare, definite, optional, overrided, readonly) =>
+      val printDecoractors = printJoin(decorators, Some(node), previous)
+      val printModifier =
+        tsPrintClassMemberModifiers(true, declare, access, static, overrided, abs, readonly) ::: List(Word("accessor"), Space())
+      val printKey =
+        if (computed) print(key, Some(node), (printDecoractors ::: printModifier) :+ Token("[")) :+ Token("]")
+        else print(key, Some(node), printDecoractors ::: printModifier)
+      val printOptional = if (optional) printKey :+ Token("?") else printKey
+      val printDefinite = if (definite) printOptional :+ Token("!") else printOptional
+      val printType = typeAnnotation match {
+        case Some(typeAnnotation) =>
+          print(typeAnnotation, Some(node), printDefinite)
+        case _ => printDefinite
+      }
+      (value match {
+        case Some(value) =>
+          print(value, Some(node), printType ::: List(Space(), Token("="), Space()))
+        case _ => printType
+      }) :+ Semicolon()
+    case ClassPrivateProperty(key, value, decorators, typeAnnotation, static, definite, readonly) =>
+      val printDecoractors = printJoin(decorators, Some(node), previous)
+      val printStatic = if (static) List(Word("static"), Space()) else List()
+      val printKey = print(key, Some(node), printDecoractors ::: printStatic)
+      val printType = typeAnnotation match {
+        case Some(typeAnnotation) =>
+          print(typeAnnotation, Some(node), printKey)
+        case _ => printKey
+      }
+      (value match {
+        case Some(value) =>
+          print(value, Some(node), printType ::: List(Space(), Token("="), Space()))
+        case _ => printType
+      }) :+ Semicolon()
+    case method: ClassMethod =>
+      print(method.body, Some(node), classMethodHead(method, previous) :+ Space())
+    case method: ClassPrivateMethod =>
+      print(method.body, Some(node), classMethodHead(method, previous) :+ Space())
+    case StaticBlock(body) =>
+      if (body.length == 0) previous ::: List(Word("static"), Space(), Token("{"), Token("}"))
+      else
+        printJoin(body, Some(node), previous ::: List(Word("static"), Space(), Token("{"), Newline()), indent = true) :+ Token("}")
     // END classes.scala
     // ---
     // BEGIN expressions.scala
@@ -109,6 +220,30 @@ class Printer(map: SourceMapBuilder) {
     case ModuleExpression(body) =>
       val prefix = List(Word("module"), Space(), Token("{"), Newline()(indentLevel + 1))
       print(body, Some(node), previous ::: prefix)(indentLevel + 1, stack) :+ Token("}")
+    case NewExpression(callee, arguments, _, typeParameters) =>
+      val printCallee = print(callee, Some(node), previous ::: List(Word("new"), Space()))
+      val printType = typeParameters match {
+        case Some(typeParameters) => print(typeParameters, Some(node), printCallee)
+        case _ => printCallee
+      }
+      printJoin(arguments, Some(node), printType :+ Token("("), List(Token(","), Space())) :+ Token(")")
+    case SequenceExpression(expressions) =>
+      printJoin(expressions, Some(node), previous, List(Token(","), Space()))
+    case OptionalCallExpression(callee, arguments, optional, typeParameters) =>
+      val printCallee = print(callee, Some(node), previous)
+      val printType = typeParameters match {
+        case Some(typeParameters) => print(typeParameters, Some(node), printCallee)
+        case _ => printCallee
+      }
+      val printOptional = if (optional) printType :+ Token("?.") else printType
+      printJoin(arguments, Some(node), printOptional :+ Token("("), List(Token(","), Space())) :+ Token(")")
+    case CallExpression(callee, arguments, optional, typeParameters) =>
+      val printCallee = print(callee, Some(node), previous)
+      val printType = typeParameters match {
+        case Some(typeParameters) => print(typeParameters, Some(node), printCallee)
+        case _ => printCallee
+      }
+      printJoin(arguments, Some(node), printType :+ Token("("), List(Token(","), Space())) :+ Token(")")
     // END expressions.scala
     // ---
     // BEGIN methods.scala
@@ -243,9 +378,9 @@ class Printer(map: SourceMapBuilder) {
       val printId = print(id, Some(node), previous) ::: (if (definite) List(Token("!")) else List())
       val printAnnotation = id match {
         case Identifier(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
-        case RestElement(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
-        case ArrayPattern(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
-        case ObjectPattern(_, Some(typeAnnotation)) => print(typeAnnotation, Some(node), printId)
+        case RestElement(_, Some(typeAnnotation), _, _) => print(typeAnnotation, Some(node), printId)
+        case ArrayPattern(_, Some(typeAnnotation), _, _) => print(typeAnnotation, Some(node), printId)
+        case ObjectPattern(_, Some(typeAnnotation), _) => print(typeAnnotation, Some(node), printId)
         case TSAsExpression(_, typeAnnotation) => print(typeAnnotation, Some(node), printId)
         case TSSatisfiesExpression(_, typeAnnotation) => print(typeAnnotation, Some(node), printId)
         case TSTypeAssertion(typeAnnotation, _) => print(typeAnnotation, Some(node), printId)
@@ -302,7 +437,7 @@ class Printer(map: SourceMapBuilder) {
       previous :+ Token("#") // TODO: add settings
     case PipelinePrimaryTopicReference() =>
       previous :+ Token("#")
-    case RestElement(arg, _) =>
+    case RestElement(arg, _, _, _) =>
       print(arg, Some(node), previous :+ Token("..."))
     case ArrayExpression(elements) =>
       elements.iterator.zipWithIndex.foldLeft(previous :+ Token("["))((prev, pair) => pair match {
@@ -534,6 +669,153 @@ class Printer(map: SourceMapBuilder) {
   )(implicit indentLevel: Int, stack: List[Node] = List()): List[PrintCommand] =
     members.foldLeft(previous ::: List(Token("{"), Newline()(indentLevel + 1)))(
       (prev, mem) => print(mem, node, prev)(indentLevel + 1, stack) :+ Newline()(indentLevel + 1)) :+ Token("}")
+
+  private def printJoin(
+    nodes: List[Node],
+    parent: Option[Node],
+    previous: List[PrintCommand],
+    separator: List[PrintCommand] = List(),
+    statement: Boolean = false,
+    indent: Boolean = false
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] = {
+    val newIndent = if (indent) indentLevel + 1 else indentLevel
+    nodes.iterator.zipWithIndex.foldLeft(previous)((prev, pair) => pair match {
+      case (node, i) =>
+        val prefix = if (statement && i == 0) List(Newline()(newIndent)) else List()
+        val printNode = print(node, parent, prev ::: prefix)(newIndent, stack)
+        val printSep = if (i + 1 < nodes.length) printNode ::: indentCommands(separator, newIndent) else printNode
+        if (statement) printSep :+ Newline()(newIndent) else printSep
+    })
+  }
+
+  private def param(
+    parameter: Node,
+    parent: Option[Node],
+    previous: List[PrintCommand],
+    decorators: List[Decorator] = List(),
+    optional: Boolean = false,
+    typeAnnotation: Option[TSTypeAnnotation] = None,
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] = {
+    val printDecoractors = printJoin(decorators, Some(parameter), previous)
+    val printParam =
+      if (optional) print(parameter, parent, printDecoractors) :+ Token("?")
+      else print(parameter, parent, printDecoractors)
+    typeAnnotation match {
+        case Some(typeAnnotation) =>
+          print(typeAnnotation, Some(parameter), printParam)
+        case _ => printParam
+      }
+  }
+
+  private def parameters(
+    params: List[Identifier | RestElement | Node with Pattern | TSParameterProperty],
+    parent: Option[Node],
+    previous: List[PrintCommand] = List(),
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] =
+    params.iterator.zipWithIndex.foldLeft(previous)((prev, pair) => pair match {
+      case (p, i) =>
+        val suffix = if (i + 1 < params.length) List(Token(","), Space()) else List()
+        (p match {
+          case id @ Identifier(_, typeAnnotation) =>
+            param(id, parent, prev, List(), false, typeAnnotation)
+          case rest @ RestElement(_, typeAnnotation, decorators, optional) =>
+            param(rest, parent, prev, decorators, optional, typeAnnotation)
+          case ap @ ArrayPattern(_, typeAnnotation, decorators, optional) =>
+            param(ap, parent, prev, decorators, optional, typeAnnotation)
+          case op @ ObjectPattern(_, typeAnnotation, decorators) =>
+            param(op, parent, prev, decorators, false, typeAnnotation)
+          case pp @ TSParameterProperty(_, _, decorators, _, _) =>
+            param(pp, parent, prev, decorators)
+          case p: Node with Pattern => param(p, parent, prev)
+        }) ::: suffix
+    })
+
+  private def params(
+    typeParameter: Option[Node],
+    params: List[Identifier | RestElement | Node with Pattern | TSParameterProperty],
+    returnType: Option[Node],
+    parent: Option[Node] = None,
+    previous: List[PrintCommand]
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] =
+    (typeParameter, returnType) match {
+      case (Some(typeParameter), Some(returnType)) =>
+        print(returnType, parent, parameters(params, parent, print(typeParameter, parent, previous) :+ Token("(")) :+ Token(")"))
+      case (None, Some(returnType)) =>
+        print(returnType, parent, parameters(params, parent, previous :+ Token("(")) :+ Token(")"))
+      case (Some(typeParameter), None) =>
+        parameters(params, parent, print(typeParameter, parent, previous) :+ Token("(")) :+ Token(")")
+      case _ => parameters(params, parent, previous :+ Token("(")) :+ Token(")")
+    }
+    
+  
+  private def methodHead(
+    typeParameter: Option[Node],
+    parameters: List[Identifier | RestElement | Node with Pattern | TSParameterProperty],
+    returnType: Option[Node],
+    parent: Option[Node],
+    previous: List[PrintCommand],
+    kind: "get" | "set" | "method" | "init" | "constructor",
+    key: Node,
+    async: Boolean = false,
+    generator: Boolean = false,
+    computed: Boolean = false,
+    optional: Boolean = false
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] = {
+    val printKind =
+      if (kind.equals("get") || kind.equals("set")) List(Word(kind), Space())
+      else List()
+    val printAsync =
+      if (async) List(Word("async"), Space())
+      else List()
+    val printGenerator =
+      if ((kind.equals("method") || kind.equals("init")) && generator) (printKind ::: printAsync) :+ Token("*")
+      else printKind ::: printAsync
+    val printKey =
+      if (computed) print(key, parent, printGenerator :+ Token("[")) :+ Token("]")
+      else print(key, parent, printGenerator)
+    params(typeParameter, parameters, returnType, parent, if (optional) printKey :+ Token("?") else printKey)
+  }
+
+  private def classMethodHead(
+    node: ClassMethod | ClassPrivateMethod | TSDeclareMethod,
+    previous: List[PrintCommand]
+  )(implicit indentLevel: Int, stack: List[Node]): List[PrintCommand] = node match {
+    case ClassMethod(kind, key, params, _, computed, static, generator, async, abs, access,
+      decorators, optional, overrided, returnType, typeParameter) =>
+        methodHead(typeParameter, params, returnType, Some(node),
+          printJoin(decorators, Some(node), previous) ::: tsPrintClassMemberModifiers(false, false, access, static, overrided, abs, false),
+          kind match {
+            case ClassMethodKind.Method => "method"
+            case ClassMethodKind.Constructor => "constructor"
+            case ClassMethodKind.Getter => "get"
+            case ClassMethodKind.Setter => "set"
+          },
+          key, async, generator, computed, optional
+        )
+    case ClassPrivateMethod(kind, key, params, _, static, abs, access, async, computed, decorators, generator,
+       optional, overrided, returnType, typeParameter) =>
+        methodHead(typeParameter, params, returnType, Some(node),
+          printJoin(decorators, Some(node), previous) ::: tsPrintClassMemberModifiers(false, false, access, static, overrided, abs, false),
+          kind match {
+            case ClassPrivateMethodKind.Method => "method"
+            case ClassPrivateMethodKind.Getter => "get"
+            case ClassPrivateMethodKind.Setter => "set"
+          },
+          key, async, generator, computed, optional
+        )
+    case TSDeclareMethod(decorators, key, typeParameter, params, returnType, abs, access,
+      async, computed, generator, kind, optional, overrided, static) =>
+        methodHead(typeParameter, params, returnType, Some(node),
+          printJoin(decorators, Some(node), previous) ::: tsPrintClassMemberModifiers(false, false, access, static, overrided, abs, false),
+          kind match {
+            case TSDeclareMethodKind.Method => "method"
+            case TSDeclareMethodKind.Constructor => "constructor"
+            case TSDeclareMethodKind.Getter => "get"
+            case TSDeclareMethodKind.Setter => "set"
+          },
+          key, async, generator, computed, optional
+        )
+  }
 }
 
 object Printer {
@@ -562,5 +844,33 @@ object Printer {
     case Some("+") => List(Token("+"))
     case Some("-") => List(Token("-"))
     case _ => List()
+  }
+
+  private def indentCommands(cmd: List[PrintCommand], newIndent: Int) =
+    cmd.map(pc => pc match {
+      case Semicolon(force) => Semicolon(force)(newIndent)
+      case Space(force) => Space(force)(newIndent)
+      case Word(str) => Word(str)(newIndent)
+      case Number(str) => Number(str)(newIndent)
+      case Token(str, maybeNewline) => Token(str, maybeNewline)(newIndent)
+      case Newline(i, force) => Newline(i, force)(newIndent)
+    })
+
+  private def tsPrintClassMemberModifiers(
+    isField: Boolean, declare: Boolean, access: Option[AccessModifier], static: Boolean, overrided: Boolean, abs: Boolean, readonly: Boolean
+  ) = {
+    val printDeclare = if (isField && declare) List(Word("declare"), Space()) else List()
+    val printAccess = access match {
+      case Some(AccessModifier.Public) => List(Word("public"), Space())
+      case Some(AccessModifier.Private) => List(Word("private"), Space())
+      case Some(AccessModifier.Protected) => List(Word("protected"), Space())
+      case _ => List()
+    }
+    val printStatic = if (static) List(Word("static"), Space()) else List()
+    val printOverride = if (overrided) List(Word("override"), Space()) else List()
+    val printAbs = if (abs) List(Word("abstract"), Space()) else List()
+    val printReadonly = if (isField && readonly) List(Word("readonly"), Space()) else List()
+
+    printDeclare ::: printAccess ::: printStatic ::: printOverride ::: printAbs ::: printReadonly
   }
 }
