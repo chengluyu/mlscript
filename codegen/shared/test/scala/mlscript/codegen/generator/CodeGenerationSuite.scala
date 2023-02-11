@@ -21,60 +21,57 @@ class CodeGenerationSuite extends munit.FunSuite:
   private val sourceMap = new SourceMapBuilder(None, None, Left(""))
 
   test("Basic Test") {
-    val printer = Printer(sourceMap)
     {
       val generator = CodeGenerator(format, sourceMap)
-      generator.generate(printer.print(Import()(None, None, None))(0))
+      generator.print(Import()(None, None, None))(0)
       assertEquals(generator.get.code, "import")
     }
     {
       val generator = CodeGenerator(format, sourceMap)
-      generator.generate(printer.print(EmptyStatement()(None, None, None))(0))
+      generator.print(EmptyStatement()(None, None, None))(0)
       assertEquals(generator.get.code, ";")
     }
     {
       val generator = CodeGenerator(format, sourceMap)
-      generator.generate(printer.print(StringLiteral("abc")(None, None, None))(0))
+      generator.print(StringLiteral("abc")(None, None, None))(0)
       assertEquals(generator.get.code, "\"abc\"")
     }
     {
       val generator = CodeGenerator(format, sourceMap)
-      generator.generate(printer.print(NumericLiteral(114.514)(None, None, None))(0))
+      generator.print(NumericLiteral(114.514)(None, None, None))(0)
       assertEquals(generator.get.code, "114.514")
     }
   }
 
   test("Composed Test") {
-    val printer = Printer(sourceMap)
     {
       val generator = CodeGenerator(format, sourceMap)
-      generator.generate(printer.print(ImportSpecifier(Some(Identifier("bar")(None, None, None)), Identifier("foo")(None, None, None), ImportKind.Value)(None, None, None))(0))
+      generator.print(ImportSpecifier(Some(Identifier("bar")(None, None, None)), Identifier("foo")(None, None, None), ImportKind.Value)(None, None, None))(0)
       assertEquals(generator.get.code, "foo as bar")
     }
     {
       val generator = CodeGenerator(format, sourceMap)
-      generator.generate(printer.print(ReturnStatement(Some(BinaryExpression(
+      generator.print(ReturnStatement(Some(BinaryExpression(
         BinaryOperator.Plus, Identifier("foo")(None, None, None), Identifier("bar")(None, None, None)
-      )(None, None, None)))(None, None, None))(0))
+      )(None, None, None)))(None, None, None))(0)
       assertEquals(generator.get.code, "return foo + bar;")
     }
     {
       val generator = CodeGenerator(format, sourceMap)
-      generator.generate(printer.print(
+      generator.print(
         OptionalCallExpression(
           Identifier("foo")(None, None, None),
           List(NumericLiteral(114)(None, None, None), NumericLiteral(514)(None, None, None),
             NumericLiteral(1919)(None, None, None), NumericLiteral(810)(None, None, None)),
           true
         )(None, None, None)
-      )(0))
+      )(0)
       assertEquals(generator.get.code, "foo?.(114, 514, 1919, 810)")
     }
   }
   test("Comprehensive Test") {
-    val printer = Printer(sourceMap)
     val generator = CodeGenerator(format, sourceMap)
-    generator.generate(printer.print(File(
+    generator.print(File(
       Program(
         List(
           ClassDeclaration(
@@ -175,7 +172,7 @@ class CodeGenerationSuite extends munit.FunSuite:
         ),
         SourceType.Script, "foo.js"
       )(None, None, None)
-    )(None, None, None))(0))
+    )(None, None, None))(0)
     assertEquals(generator.get.code,
 """class option {
   type;
