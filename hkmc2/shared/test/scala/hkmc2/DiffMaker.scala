@@ -87,13 +87,6 @@ class DiffMaker(file: os.Path, relativeName: Str):
   val output = Outputter(out)
   val report = ReportFormatter(output.apply)
   
-  // val typer = new Typer {
-  //   dbg = false
-  //   verbose = false
-  //   explainErrors = false
-  //   override def emitDbg(str: String): Unit = output(str)
-  // }
-  // var ctx: typer.Ctx = typer.Ctx.init
   val failures = mutable.Buffer.empty[Int]
   
   var _onlyParse = false

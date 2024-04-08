@@ -8,7 +8,6 @@ class ReportFormatter(output: Str => Unit):
   // report errors and warnings
   def apply(blockLineNum: Int, diags: Ls[Diagnostic], showRelativeLineNums: Bool): Unit =
     diags.foreach { diag =>
-      val sctx = Message.mkCtx(diag.allMsgs.iterator.map(_._1), "?")
       val headStr = diag match
         case ErrorReport(msg, loco, src) =>
           src match
@@ -28,7 +27,7 @@ class ReportFormatter(output: Str => Unit):
       var globalLineNum = blockLineNum
       diag.allMsgs.zipWithIndex.foreach { case ((msg, loco), msgNum) =>
         val isLast = msgNum =:= lastMsgNum
-        val msgStr = msg.showIn(sctx)
+        val msgStr = msg.show
         if msgNum =:= 0 then output(headStr + msgStr)
         else output(s"${if isLast && loco.isEmpty then "╙──" else "╟──"} ${msgStr}")
         if loco.isEmpty && diag.allMsgs.size =:= 1 then output("╙──")

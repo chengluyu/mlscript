@@ -1,18 +1,12 @@
 package hkmc2
 
 import scala.language.implicitConversions
+import syntax.Tree
 import mlscript.utils._, shorthands._
 
 final case class Message(bits: Ls[Message.Bit]):
-  def show(newDefs: Bool): Str =
-    val ctx = ShowCtx.mk(typeBits)
-    showIn(ctx)
-  def typeBits: Ls[TypeLike] = bits.collect{ case Message.Code(t) => t }
-  def showIn(implicit ctx: ShowCtx): Str =
-    bits.map {
-      case Message.Code(ty) => ty.showIn(0)
-      case Message.Text(txt) => txt
-    }.mkString
+  def show: Str = showDbg
+  def typeBits: Ls[Tree] = bits.collect{ case Message.Code(t) => t }
   def showDbg: Str =
     bits.iterator.map {
       case Message.Code(trm) => s"$trm"
@@ -20,16 +14,12 @@ final case class Message(bits: Ls[Message.Bit]):
     }.mkString
   def +(that: Message): Message = Message(bits ++ that.bits)
 object Message:
-  
-  def mkCtx(msgs: IterableOnce[Message],pre: Str = "'"): ShowCtx =
-    ShowCtx.mk(msgs.iterator.flatMap(_.typeBits), pre)
-  
   def join(msgs: Seq[Message]): Message = Message(msgs.iterator.flatMap(_.bits).toList)
   
   sealed abstract class Bit
   final case class Text(str: Str) extends Bit
-  final case class Code(ty: TypeLike) extends Bit
-  implicit def fromType(ty: TypeLike): Message = Message(Code(ty)::Nil)
+  final case class Code(tree: Tree) extends Bit
+  implicit def fromType(tree: Tree): Message = Message(Code(tree)::Nil)
   implicit def fromStr(str: Str): Message = Message(Text(str)::Nil)
   
   implicit class MessageContext(private val ctx: StringContext):
