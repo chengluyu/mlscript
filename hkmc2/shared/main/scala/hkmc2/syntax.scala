@@ -16,6 +16,10 @@ trait Located:
   
   def withLoc(s: Int, e: Int, ori: Origin): this.type =
     withLoc(S(Loc(s, e, ori)))
+  def withLoc(loc: Loc): this.type =
+    require(this.loc.isEmpty)
+    this.loc = S(loc)
+    this
   def withLoc(loco: Opt[Loc]): this.type =
     require(loc.isEmpty)
     loc = loco

@@ -20,16 +20,44 @@ x
 //│ Keywords: ~>, =>, define, x, keyword, ::=
 //│ Rules: 
 
+keyword inc
+define Inc ::= inc Expr ~> ($1 + 1)
+inc x
+inc 1 + 2
+//│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |Expr| |~>| |(|$1| |+| |1|)|↵|inc| |x|↵|inc| |1| |+| |2|
+//│ AST: List(App(App(Var(+),Var(x)),Atom(IntLit(1))), App(App(Var(+),App(App(Var(+),Atom(IntLit(1))),Atom(IntLit(2)))),Atom(IntLit(1))))
+//│ Keywords: ~>, =>, define, keyword, ::=, Inc, inc
+//│ Rules: Inc
+
+// Warn about wrong indices
+:w
+keyword dec
+define Dec ::= dec Expr ~> ($2 - 1)
+dec x
+//│ |keyword| |dec|↵|define| |Dec| |::=| |dec| |Expr| |~>| |(|$2| |-| |1|)|↵|dec| |x|
+//│ ╔══[WARNING] Invalid meta-variable reference $2
+//│ ║  l.35: 	define Dec ::= dec Expr ~> ($2 - 1)
+//│ ╙──      	                            ^^
+//│ AST: List(App(App(Var(-),Var($2)),Atom(IntLit(1))))
+//│ Keywords: ~>, =>, Dec, dec, define, keyword, ::=
+//│ Rules: Dec
+
 :pe
 keyword let
 keyword =
 keyword in
  
-define LetIn ::= let Expr = Expr in Expr ~> ($1 => $3) $2
-//│ |keyword| |let|↵|keyword| |=|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Expr| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)| |$2|
-//│ ╔══[PARSE ERROR] Expected end of input; found parenthesis section instead
-//│ ║  l.28: 	define LetIn ::= let Expr = Expr in Expr ~> ($1 => $3) $2
-//│ ╙──      	                                            ^^^^^^^^^^
-//│ AST: List()
-//│ Keywords: ~>, =>, in, define, let, keyword, =, ::=, LetIn
-//│ Rules: 
+define LetIn ::= let Expr = Expr in Expr ~> ($1 => $3)($2)
+let x = 1 in x
+//│ |keyword| |let|↵|keyword| |=|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Expr| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |=| |1| |in| |x|
+//│ /!!!\ Uncaught error: java.lang.Exception: Internal Error: keyword '=' does not have right precedence
+//│ 	at: mlscript.utils.package$.lastWords(package.scala:209)
+//│ 	at: hkmc2.syntax.Keyword.assumeRightPrec$$anonfun$1(Keyword.scala:11)
+//│ 	at: scala.Option.getOrElse(Option.scala:201)
+//│ 	at: hkmc2.syntax.Keyword.assumeRightPrec(Keyword.scala:11)
+//│ 	at: hkmc2.syntax.Parser.parseRule$$anonfun$2(Parser.scala:376)
+//│ 	at: hkmc2.syntax.Parser.wrap(Parser.scala:111)
+//│ 	at: hkmc2.syntax.Parser.parseRule(Parser.scala:431)
+//│ 	at: hkmc2.syntax.Parser.tryParseExp(Parser.scala:338)
+//│ 	at: hkmc2.syntax.Parser.parseRule$$anonfun$2(Parser.scala:391)
+//│ 	at: hkmc2.syntax.Parser.wrap(Parser.scala:111)

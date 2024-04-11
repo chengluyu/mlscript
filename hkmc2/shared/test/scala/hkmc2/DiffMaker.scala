@@ -157,7 +157,12 @@ class DiffMaker(file: os.Path, relativeName: Str):
             case Diagnostic.Source.Runtime =>
               TODO(d.source)
           case Diagnostic.Kind.Warning =>
-            TODO(d.kind)
+            // TODO(d.kind)
+            if expectWarnings.isUnset && fixme.isUnset then
+              failures += allLines.size - lines.size + 1
+              // doFail(fileName, blockLineNum, "unexpected parse error at ")
+              unexpected("warning", blockLineNum)
+              // report(blockLineNum, d :: Nil, showRelativeLineNums.isSet)
           report(blockLineNum, d :: Nil, showRelativeLineNums.isSet)
         val lexer = new syntax.Lexer(origin, raise, dbg = dbgParsing.isSet)
         val tokens = lexer.bracketedTokens

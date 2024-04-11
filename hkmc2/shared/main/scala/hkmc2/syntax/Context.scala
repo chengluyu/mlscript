@@ -40,11 +40,10 @@ class Context:
     val kw = Keyword(name, None, None)
     keywords += name -> kw
 
-  def +=(alt: Alt[Tree]): Unit =
+  def +=(rule: (String, Alt[Tree])): Unit =
+    val (name, alt) = rule
+    rules += name -> ParseRule(name)(alt)
     topLevelRules += alt
-
-  def +=(alt: ParseRule[Tree]): Unit =
-    rules += alt.name -> alt
 
   // Getters
 
