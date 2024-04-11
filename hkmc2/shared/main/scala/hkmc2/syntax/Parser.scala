@@ -41,7 +41,9 @@ object Parser:
       "", // Precedence of application
       ".",
     ).zipWithIndex.flatMap {
-      case (cs, i) => cs.filterNot(_ === ' ').map(_ -> (i + Keyword.maxPrec.get))
+      // case (cs, i) => cs.filterNot(_ === ' ').map(_ -> (i + Keyword.maxPrec.get))
+      // Well, unable to have a constant `maxPrec` becuase keywords can be introduced.
+      case (cs, i) => cs.filterNot(_ === ' ').map(_ -> (i + 1000))
     }.toMap.withDefaultValue(Int.MaxValue)
   
   // private val CommaPrec = prec(',')
@@ -54,28 +56,29 @@ object Parser:
     case "+." | "-." | "*." =>
       (prec(opStr.head), prec(opStr.head))
     case _ if opStr.exists(_.isLetter) =>
-      (Keyword.maxPrec.get, Keyword.maxPrec.get)
+      // (Keyword.maxPrec.get, Keyword.maxPrec.get)
+      (Int.MaxValue, Int.MaxValue)
     case _ =>
       val r = opStr.last
       (prec(opStr.head), prec(r) - (if r === '@' || r === '/' || r === ',' || r === ':' then 1 else 0))
   }
   
-  object KEYWORD:
-    def unapply(t: Token): Opt[Keyword] = t match
-      case IDENT(nme, sym) => Keyword.all.get(nme)
-      // case IDENT(nme, sym) => Keyword.all.get(nme).map(_.name)
-      // case IDENT(nme, sym) if Keyword.all.contains(nme) => S(nme)
-      case _ => N
+  // object KEYWORD:
+  //   def unapply(t: Token): Opt[Keyword] = t match
+  //     case IDENT(nme, sym) => Keyword.all.get(nme)
+  //     // case IDENT(nme, sym) => Keyword.all.get(nme).map(_.name)
+  //     // case IDENT(nme, sym) if Keyword.all.contains(nme) => S(nme)
+  //     case _ => N
   
-  object OP:
-    def unapply(t: Token): Opt[Str] = t match
-      case IDENT(nme, true) if !Keyword.all.contains(nme) => S(nme)
-      case _ => N
+  // object OP:
+  //   def unapply(t: Token): Opt[Str] = t match
+  //     case IDENT(nme, true) if !Keyword.all.contains(nme) => S(nme)
+  //     case _ => N
   
-  object ALPHA:
-    def unapply(t: Token): Opt[Str] = t match
-      case IDENT(nme, false) if !Keyword.all.contains(nme) => S(nme)
-      case _ => N
+  // object ALPHA:
+  //   def unapply(t: Token): Opt[Str] = t match
+  //     case IDENT(nme, false) if !Keyword.all.contains(nme) => S(nme)
+  //     case _ => N
   
 end Parser
 import Parser._
@@ -86,7 +89,7 @@ abstract class Parser(
   raiseFun: Diagnostic => Unit,
   val dbg: Bool,
   // fallbackLoc: Opt[Loc], description: Str = "input",
-):
+)(using context: Context):
   outer =>
   
   protected def doPrintDbg(msg: => Str): Unit
@@ -185,15 +188,79 @@ abstract class Parser(
   final def blockMaybeIndented: Ls[Tree] =
     maybeIndented(_.block)
   
-  def block: Ls[Tree] = blockOf(ParseRule.prefixRules)
+  def block: Ls[Tree] = blockOf(context.prefixRules)
+
+  def parseDefine(name: String): ParseRule[Tree] =
+    def parseRhs: Ls[Tree] => Tree = wrap("define rhs"):
+      (x) => Tree.Empty
+    def parseLhs: ParseRule[Ls[Tree]] = wrap("define lhs"):
+      ParseRule(""):
+        yeetSpaces match
+        case (tok @ context.KW(context.`~>`), loc) :: _ =>
+          consume
+          Alt.End(Nil)
+        case (tok @ (id: IDENT), loc) :: _ =>
+          consume
+          context.getKeyword(id.name) match
+          case S(kw) =>
+            Alt.Kw(kw)(parseLhs)
+          case N =>
+            if id.name.isCapitalized then
+              id.name match
+              // case "Ident" => ??? // Overlaps with Expr
+              // case "Lit" => ??? // Overlaps with Expr
+              case "Expr" => Alt.Expr(parseLhs)(_ :: _)
+              case _ =>
+                err((msg"Expected a keyword or `~>` after `define`; found ${id.name} instead" -> S(loc) :: Nil))
+                Alt.End(Nil: List[Tree])
+            else
+              err((msg"Expected a keyword or `~>` after `define`; found ${id.name} instead" -> S(loc) :: Nil))
+              Alt.End(Nil: List[Tree])
+        case (tok, loc) :: _ =>
+          err((msg"Expected an identifier or `~>` after `define`; found ${tok.describe} instead" -> S(loc) :: Nil))
+          consume
+          Alt.End(Nil: List[Tree])
+        case Nil =>
+          err((msg"Expected an identifier or `~>` after `define`; found end of input instead" -> lastLoc :: Nil))
+          Alt.End(Nil: List[Tree])
+    parseLhs.map(parseRhs)
   
   def blockOf(rule: ParseRule[Tree]): Ls[Tree] = wrap(rule.name):
     cur match
     case Nil => Nil
     case (NEWLINE, _) :: _ => consume; blockOf(rule)
     case (SPACE, _) :: _ => consume; blockOf(rule)
+    // keyword
+    case (tok @ context.KW(context.`keyword`), loc) :: _ =>
+      consume
+      yeetSpaces match
+      case (tok @ (id: IDENT), loc) :: _ =>
+        consume
+        context += id.name
+        blockContOf(rule)
+      case _ => 
+        err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> S(loc) :: Nil))
+        errExpr :: blockContOf(rule)
+    // define
+    case (tok @ context.KW(context.`define`), loc) :: _ =>
+      consume
+      yeetSpaces match
+      case (tok @ (id: IDENT), loc) :: _ =>
+        consume
+        context += id.name
+        yeetSpaces match
+        case (tok @ context.KW(context.`::=`), loc) :: _ =>
+          consume
+          context += parseDefine(id.name)
+          blockContOf(rule)
+        case _ =>
+          err((msg"Expected `::=` after ${rule.name}; found ${tok.describe} instead" -> S(loc) :: Nil))
+          errExpr :: blockContOf(rule)
+      case _ =>
+        err((msg"Expected an identifier after ${rule.name}; found ${tok.describe} instead" -> S(loc) :: Nil))
+        errExpr :: blockContOf(rule)
     case (tok @ (id: IDENT), loc) :: _ =>
-      Keyword.all.get(id.name) match
+      context.getKeyword(id.name) match
       case S(kw) =>
         consume
         rule.kwAlts.get(kw.name) match
@@ -213,7 +280,7 @@ abstract class Parser(
             yeetSpaces match
             case (tok @ BRACKETS(Indent, toks), loc) :: _ /* if subRule.blkAlt.isEmpty */ =>
               consume
-              ParseRule.prefixRules.kwAlts.get(kw.name) match
+              context.prefixRules.kwAlts.get(kw.name) match
               case S(subRule) if subRule.blkAlt.isEmpty =>
                 rec(toks, S(tok.innerLoc), tok.describe).concludeWith { p =>
                   p.blockOf(subRule.map(e => parseRule(CommaPrecNext, exprAlt.rest).map(res => exprAlt.k(e, res)).getOrElse(errExpr)))
@@ -221,7 +288,7 @@ abstract class Parser(
               case _ =>
                 TODO(cur)
             case _ =>
-              ParseRule.prefixRules.kwAlts.get(kw.name) match
+              context.prefixRules.kwAlts.get(kw.name) match
               case S(subRule) =>
                 val e = parseRule(CommaPrecNext, subRule).getOrElse(errExpr)
                 parseRule(CommaPrecNext, exprAlt.rest).map(res => exprAlt.k(e, res)).getOrElse(errExpr) :: blockContOf(rule)
@@ -255,7 +322,7 @@ abstract class Parser(
         case S(res) =>
           S(res)
         case N =>
-          err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> S(loc) :: Nil))
+          err((msg"Expected 1 ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> S(loc) :: Nil))
           N
   
   /** A result of None means there was an error (already reported) and nothing could be parsed. */
@@ -277,7 +344,7 @@ abstract class Parser(
     //       err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found end of phrase instead" -> S(loc.left) :: Nil))
     //       N
     case (tok @ (id: IDENT), loc) :: _ =>
-      Keyword.all.get(id.name) match
+      context.getKeyword(id.name) match
       case S(kw) =>
         rule.kwAlts.get(id.name) match
         case S(subRule) =>
@@ -292,7 +359,7 @@ abstract class Parser(
           rule.exprAlt match
           case S(exprAlt) =>
             consume
-            ParseRule.prefixRules.kwAlts.get(id.name) match
+            context.prefixRules.kwAlts.get(id.name) match
             case S(subRule) =>
               // parse(subRule)
               val e = parseRule(kw.assumeRightPrec, subRule).getOrElse(errExpr)
@@ -313,26 +380,26 @@ abstract class Parser(
         case N =>
           err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> lastLoc :: Nil))
           N
-    case (tok @ BRACKETS(Indent, toks), loc) :: _ =>
-      // rule.blkAlt match
-      //   case S(res) => S(res)
-      //   case N =>
-      //     err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> lastLoc :: Nil))
-      //     N
-      consume
-      rule.blkAlt match
-        case S(exprAlt) =>
-          val e = rec(toks, S(tok.innerLoc), tok.describe).concludeWith(_.block)
-            |> Tree.Block.apply
-          parseRule(prec, exprAlt.rest).map(res => exprAlt.k(e, res))
-        case N =>
+    // case (tok @ BRACKETS(Indent, toks), loc) :: _ =>
+    //   // rule.blkAlt match
+    //   //   case S(res) => S(res)
+    //   //   case N =>
+    //   //     err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> lastLoc :: Nil))
+    //   //     N
+    //   consume
+    //   rule.blkAlt match
+    //     case S(exprAlt) =>
+    //       val e = rec(context, toks, S(tok.innerLoc), tok.describe).concludeWith(_.block)
+    //         |> Tree.Block.apply
+    //       parseRule(prec, exprAlt.rest).map(res => exprAlt.k(e, res))
+    //     case N =>
           
-          // TODO... [todo:0]
-          // toks match
-          //   case 
+    //       // TODO... [todo:0]
+    //       // toks match
+    //       //   case 
           
-          err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> S(loc) :: Nil))
-          N
+    //       err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${tok.describe} instead" -> S(loc) :: Nil))
+    //       N
     case (tok, loc) :: _ =>
       tryParseExp(prec, tok, loc, rule)
       // TODO(tok)
@@ -349,13 +416,13 @@ abstract class Parser(
     yeetSpaces match
     case (IDENT(nme, sym), loc) :: _ =>
       consume
-      exprCont(Tree.Ident(nme), prec, allowNewlines = true)
+      exprCont(Tree.Var(nme), prec, allowNewlines = true)
     case (LITVAL(lit), loc) :: _ =>
       consume
       exprCont(lit.asTree, prec, allowNewlines = true)
     case (BRACKETS(Round, toks), loc) :: _ if toks.forall(_ is SPACE) =>
       consume
-      val res = Tree.UnitLit(false).withLoc(S(loc))
+      val res = Tree.Atom(Literal.UnitLit(false)).withLoc(S(loc))
       exprCont(res, prec, allowNewlines = true)
     case (BRACKETS(Round, toks), loc) :: _ =>
       consume
@@ -380,43 +447,43 @@ abstract class Parser(
   
   final def exprCont(acc: Tree, prec: Int, allowNewlines: Bool): Tree = wrap(prec, s"`$acc`", allowNewlines):
     cur match {
-      case (QUOTE, l) :: _ => cur match {
-        case _ :: (KEYWORD(kw @ Keyword.`=>`), l0) :: _ if kw.leftPrecOrMin > prec =>
-          consume
-          consume
-          exprCont(Quoted(Lam(acc match {
-            case t: Tup => t
-            case _ => PlainTup(acc)
-          }, Unquoted(expr(kw.rightPrecOrMin)))), prec, allowNewlines)
-        case _ :: (br @ BRACKETS(Round, toks), loc) :: _ =>
-          consume
-          consume
-          val as = rec(toks, S(br.innerLoc), br.describe).concludeWith(_.blockMaybeIndented)
-          val res = App(Unquoted(acc), Tup(as).withLoc(S(loc)))
-          exprCont(Quoted(res), prec, allowNewlines)
-        case _ :: (OP(opStr), l0) :: _ =>
-          if opPrec(opStr)._1 > prec then {
-            consume
-            consume
-            val v = Ident(opStr).withLoc(S(l0))
-            yeetSpaces match {
-              case (NEWLINE, l0) :: _ => consume
-              case _ =>
-            }
-            val rhs = expr(opPrec(opStr)._2)
-            exprCont(opStr match {
-                case "with" => unsupportedQuote(S(l0))
-                case _ => Quoted(App(v, PlainTup(Unquoted(acc), Unquoted(rhs))))
-              }, prec, allowNewlines)
-          }
-          else acc
-        case _ :: (KEYWORD(Keyword("in")), _) :: _ =>
-          acc
-        case _ =>
-          consume
-          unsupportedQuote(acc.toLoc)
-          acc
-      }
+      // case (QUOTE, l) :: _ => cur match {
+      //   case _ :: (KEYWORD(kw @ Keyword.`=>`), l0) :: _ if kw.leftPrecOrMin > prec =>
+      //     consume
+      //     consume
+      //     exprCont(Quoted(Lam(acc match {
+      //       case t: Tup => t
+      //       case _ => PlainTup(acc)
+      //     }, Unquoted(expr(kw.rightPrecOrMin)))), prec, allowNewlines)
+      //   case _ :: (br @ BRACKETS(Round, toks), loc) :: _ =>
+      //     consume
+      //     consume
+      //     val as = rec(context, toks, S(br.innerLoc), br.describe).concludeWith(_.blockMaybeIndented)
+      //     val res = App(Unquoted(acc), Tup(as).withLoc(S(loc)))
+      //     exprCont(Quoted(res), prec, allowNewlines)
+      //   case _ :: (OP(opStr), l0) :: _ =>
+      //     if opPrec(opStr)._1 > prec then {
+      //       consume
+      //       consume
+      //       val v = Ident(opStr).withLoc(S(l0))
+      //       yeetSpaces match {
+      //         case (NEWLINE, l0) :: _ => consume
+      //         case _ =>
+      //       }
+      //       val rhs = expr(opPrec(opStr)._2)
+      //       exprCont(opStr match {
+      //           case "with" => unsupportedQuote(S(l0))
+      //           case _ => Quoted(App(v, PlainTup(Unquoted(acc), Unquoted(rhs))))
+      //         }, prec, allowNewlines)
+      //     }
+      //     else acc
+      //   case _ :: (KEYWORD(Keyword("in")), _) :: _ =>
+      //     acc
+      //   case _ =>
+      //     consume
+      //     unsupportedQuote(acc.toLoc)
+      //     acc
+      // }
       case (COMMA, l0) :: _ if prec === 0 =>
         consume
         yeetSpaces match {
@@ -424,17 +491,18 @@ abstract class Parser(
           case _ =>
         }
         val rhs = expr(prec)
-        App(Ident(",").withLoc(S(l0)), PlainTup(acc, rhs))
+        Apps(Var(",").withLoc(S(l0)), acc, rhs)
+        // App(Var(",").withLoc(S(l0)), PlainTup(acc, rhs))
         /* 
       case (KEYWORD(opStr @ "=>"), l0) :: (NEWLINE, l1) :: _ if opPrec(opStr)._1 > prec =>
         consume
         val rhs = Blk(typingUnit.entities)
         R(Lam(PlainTup(acc), rhs))
         */
-      case (KEYWORD(kw @ Keyword.`=>`), l0) :: _ if kw.leftPrecOrMin > prec =>
+      case (context.KW(kw @ context.`=>`), l0) :: _ if kw.leftPrecOrMin > prec =>
         consume
         val rhs = expr(kw.rightPrecOrMin)
-        val res = Lam(PlainTup(acc), rhs)
+        val res = Lam(acc, rhs)
         exprCont(res, prec, allowNewlines)
         /* 
       case (IDENT(".", _), l0) :: (br @ BRACKETS(Square, toks), l1) :: _ =>
@@ -445,9 +513,9 @@ abstract class Parser(
         val newAcc = Subs(acc, idx).withLoc(S(l0 ++ l1 ++ idx.toLoc))
         exprCont(newAcc, prec, allowNewlines)
         */
-      case (OP(opStr), l0) :: _ if /* isInfix(opStr) && */ opPrec(opStr)._1 > prec =>
+      case (context.OP(opStr), l0) :: _ if /* isInfix(opStr) && */ opPrec(opStr)._1 > prec =>
         consume
-        val v = Ident(opStr).withLoc(S(l0))
+        val v = Var(opStr).withLoc(S(l0))
         yeetSpaces match {
           case (NEWLINE, l0) :: _ => consume
           case _ =>
@@ -465,7 +533,7 @@ abstract class Parser(
                 err(msg"record literal expected here; found ${rhs.describe}" -> rhs.toLoc :: Nil)
                 acc
             }
-          case _ => App(v, PlainTup(acc, rhs))
+          case _ => Apps(v, acc, rhs) // App(v, PlainTup(acc, rhs))
         }, prec, allowNewlines)
         /*
       case (KEYWORD(":"), l0) :: _ if prec <= NewParser.prec(':') =>
@@ -580,13 +648,13 @@ abstract class Parser(
       case (br @ BRACKETS(Round, toks), loc) :: _ if prec <= AppPrec =>
         consume
         val as = rec(toks, S(br.innerLoc), br.describe).concludeWith(_.blockMaybeIndented)
-        val res = App(acc, Tup(as).withLoc(S(loc)))
+        val res = Apps(acc, as: _*)
         exprCont(res, prec, allowNewlines)
-      case (KEYWORD(Keyword.`of`), _) :: _ =>
-        consume
-        val as = blockMaybeIndented
-        val res = App(acc, Tup(as))
-        exprCont(res, prec, allowNewlines)
+      // case (KEYWORD(Keyword.`of`), _) :: _ =>
+      //   consume
+      //   val as = blockMaybeIndented
+      //   val res = App(acc, Tup(as))
+      //   exprCont(res, prec, allowNewlines)
       /*
       case c @ (h :: _) if (h._1 match {
         case KEYWORD(":" | "of" | "where" | "extends") | SEMI | BRACKETS(Round | Square, _)
@@ -605,26 +673,27 @@ abstract class Parser(
         exprCont(res, prec, allowNewlines)
         */
         
-      case (KEYWORD(kw), l0) :: _ if kw.leftPrecOrMin > prec =>
-        ParseRule.infixRules.kwAlts.get(kw.name) match
-          case S(rule) =>
-            consume
-            rule.exprAlt match
-              case S(exprAlt) =>
-                yeetSpaces match
-                  case (NEWLINE, l0) :: _ =>
-                    consume
-                    ???
-                  case _ =>
-                val rhs = expr(kw.rightPrecOrMin)
-                parseRule(kw.rightPrecOrMin, exprAlt.rest).map: rest =>
-                  exprCont(exprAlt.k(rhs, rest)(acc), prec, allowNewlines) // FIXME prec??
-                .getOrElse(errExpr)
-              case N =>
-                // TODO other alts...?
-                err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${kw.name} instead" -> S(l0) :: Nil))
-                acc
-          case _ => acc
+      // No need for now because infix operators are handled by `opPrec` for now.
+      // case (KEYWORD(kw), l0) :: _ if kw.leftPrecOrMin > prec =>
+      //   ParseRule.infixRules.kwAlts.get(kw.name) match
+      //     case S(rule) =>
+      //       consume
+      //       rule.exprAlt match
+      //         case S(exprAlt) =>
+      //           yeetSpaces match
+      //             case (NEWLINE, l0) :: _ =>
+      //               consume
+      //               ???
+      //             case _ =>
+      //           val rhs = expr(kw.rightPrecOrMin)
+      //           parseRule(kw.rightPrecOrMin, exprAlt.rest).map: rest =>
+      //             exprCont(exprAlt.k(rhs, rest)(acc), prec, allowNewlines) // FIXME prec??
+      //           .getOrElse(errExpr)
+      //         case N =>
+      //           // TODO other alts...?
+      //           err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${kw.name} instead" -> S(l0) :: Nil))
+      //           acc
+      //     case _ => acc
       case _ => acc
     }
   

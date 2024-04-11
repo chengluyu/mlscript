@@ -6,7 +6,7 @@ import mlscript.utils._, shorthands._
 
 /** Type of general Tokens */
 sealed abstract class Token:
-  def describe: Str = this match
+  def describe(using context: Context): Str = this match
     case SPACE => "space"
     case COMMA => "comma"
     case SEMI => "semicolon"
@@ -19,7 +19,7 @@ sealed abstract class Token:
     // case KEYWRD(name) =>
     //   if name.headOption.exists(_.isLetter) then s"'$name' keyword" else s"'$name'"
     case IDENT(name, symbolic) =>
-      if Keyword.all.contains(name) then s"'$name' keyword"
+      if context.hasKeyword(name) then s"'$name' keyword"
       else if symbolic then "operator" else "identifier"
     case SELECT(name) => "selector"
     case OPEN_BRACKET(k) => s"opening ${k.name}"
