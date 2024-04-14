@@ -65,6 +65,7 @@ class DiffMaker(file: os.Path, relativeName: Str):
   val debug = NullaryCommand("d")
   val dbgParsing = NullaryCommand("dp")
   
+  val noParse = NullaryCommand("np")
   val expectParseError = NullaryCommand("pe") // TODO handle lack of errors
   val expectTypeErrors = NullaryCommand("e") // TODO handle lack of errors
   val expectWarnings = NullaryCommand("w")
@@ -170,18 +171,19 @@ class DiffMaker(file: os.Path, relativeName: Str):
         if showParse.isSet || showParse.isSet || dbgParsing.isSet then
           output(syntax.Lexer.printTokens(tokens))
         
-        given context: syntax.Context = new syntax.Context
-        val p = new syntax.Parser(origin, tokens, raise, dbg = dbgParsing.isSet):
-          def doPrintDbg(msg: => Str): Unit = if dbg then output(msg)
-        val res = p.parseAll(p.block)
-        
-        // if (parseOnly)
-        //   output(s"Parsed: ${res.showDbg}")
-        
-        if showParse.isSet then
-          output(s"AST: $res")
-          output(s"Keywords: ${context.listKeywords.mkString(", ")}")
-          output(s"Rules: ${context.listRules.map(_.name).mkString(", ")}")
+        if noParse.isUnset then
+          given context: syntax.Context = new syntax.Context
+          val p = new syntax.Parser(origin, tokens, raise, dbg = dbgParsing.isSet):
+            def doPrintDbg(msg: => Str): Unit = if dbg then output(msg)
+          val res = p.parseAll(p.block)
+          
+          // if (parseOnly)
+          //   output(s"Parsed: ${res.showDbg}")
+          
+          if showParse.isSet then
+            output(s"AST: $res")
+            output(s"Keywords: ${context.listKeywords.mkString(", ")}")
+            output(s"Rules: ${context.listRules.map(_.toString).mkString(",")}")
         
         catch
           case oh_noes: ThreadDeath => throw oh_noes

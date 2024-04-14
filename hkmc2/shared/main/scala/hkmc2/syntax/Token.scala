@@ -11,8 +11,6 @@ sealed abstract class Token:
     case COMMA => "comma"
     case SEMI => "semicolon"
     case NEWLINE => "newline"
-    case INDENT => "indentation"
-    case DEINDENT => "deindentation"
     case ERROR => "error"
     case QUOTE => "quote"
     case LITVAL(value) => "literal"
@@ -24,7 +22,6 @@ sealed abstract class Token:
     case SELECT(name) => "selector"
     case OPEN_BRACKET(k) => s"opening ${k.name}"
     case CLOSE_BRACKET(k) => s"closing ${k.name}"
-    case BRACKETS(BracketKind.Indent, contents) => s"indented block"
     case BRACKETS(k, contents) => s"${k.name} section"
     case COMMENT(text) => "comment"
 
@@ -35,13 +32,10 @@ sealed trait Stroken extends Token
 case object SPACE extends Token with Stroken
 case object COMMA extends Token with Stroken
 case object SEMI extends Token with Stroken
-case object NEWLINE extends Token with Stroken // TODO rm
-case object INDENT extends Token
-case object DEINDENT extends Token
+case object NEWLINE extends Token with Stroken
 case object ERROR extends Token with Stroken
 case object QUOTE extends Token with Stroken
 final case class LITVAL(value: Literal) extends Token with Stroken
-// final case class KEYWRD(name: String) extends Token with Stroken
 final case class IDENT(name: String, symbolic: Bool) extends Token with Stroken
 final case class SELECT(name: String) extends Token with Stroken
 final case class OPEN_BRACKET(k: BracketKind) extends Token
@@ -57,29 +51,17 @@ sealed abstract class BracketKind:
     case Curly => "{" -> "}"
     case Square => "[" -> "]"
     case Angle => "‹" -> "›"
-    case Indent => "→" -> "←"
-    case Quasiquote => "code\"" -> "\""
-    case QuasiquoteTriple => "code\"\"\"" -> "\"\"\""
-    case Unquote => "${" -> "}"
   def name: Str = this match
     case Round => "parenthesis"
     case Curly => "curly brace"
     case Square => "square bracket"
     case Angle => "angle bracket"
-    case Indent => "indentation"
-    case Quasiquote => "quasiquote"
-    case QuasiquoteTriple => "quasiquote triple"
-    case Unquote => "unquote"
 
 object BracketKind:
   case object Round extends BracketKind
   case object Curly extends BracketKind
   case object Square extends BracketKind
   case object Angle extends BracketKind
-  case object Indent extends BracketKind
-  case object Quasiquote extends BracketKind
-  case object QuasiquoteTriple extends BracketKind
-  case object Unquote extends BracketKind
   
   def unapply(c: Char): Opt[Either[BracketKind, BracketKind]] = c `|>?` :
     case '(' => Left(Round)

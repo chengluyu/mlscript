@@ -1,0 +1,40 @@
+:global
+:p
+
+define Program ::= Expr ~> $1
+0
+1
+x => x
+(x => x + 1)(2)
+//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|0|↵|1|↵|x| |=>| |x|↵|(|x| |=>| |x| |+| |1|)|(|2|)|
+//│ AST: List(Const(IntLit(0)), Const(IntLit(1)), Lam(Var(x),Var(x)), App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(2))))
+//│ Keywords: ~>, =>, define, keyword, ::=
+//│ Rules: Program ::= Expr End 
+
+define Program ::= Expr Expr ~> $1 + $2
+0 1
+2 3
+4 5
+//│ |define| |Program| |::=| |Expr| |Expr| |~>| |$1| |+| |$2|↵|0| |1|↵|2| |3|↵|4| |5|
+//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))), App(App(Var(+),Const(IntLit(2))),Const(IntLit(3))), App(App(Var(+),Const(IntLit(4))),Const(IntLit(5))))
+//│ Keywords: ~>, =>, define, keyword, ::=
+//│ Rules: Program ::= Expr Expr End 
+
+define Program ::= Expr ~> $1
+f(
+  1,
+  2,
+  3,
+)
+//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|f|(| |1|,|↵|2|,|↵|3|,|↵|)|
+//│ ╔══[PARSE ERROR] Expected an expression; found newline instead
+//│ ║  l.28: 	)
+//│ ╙──      	^
+//│ ╔══[PARSE ERROR] Unexpected newline here
+//│ ║  l.25: 	  1,
+//│ ║        	    ^
+//│ ║  l.26: 	  2,
+//│ ╙──      	^^
+//│ AST: List(App(Var(f),App(App(Var(,),Const(IntLit(1))),Empty)))
+//│ Keywords: ~>, =>, define, keyword, ::=
+//│ Rules: Program ::= Expr End 

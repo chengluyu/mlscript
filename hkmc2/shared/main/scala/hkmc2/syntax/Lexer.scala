@@ -34,6 +34,8 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
     c === '0' || c === '1'
   def isDigit(c: Char): Bool =
     c >= '0' && c <= '9'
+  def isWhiteSpace(c: Char): Bool =
+    c === ' ' | c === '\n' | c === '\r' | c === '\t'
   def matches(i: Int, syntax: Str, start: Int): Bool =
     if start < syntax.length && i + start < length && bytes(i + start) === syntax(start) then matches(i, syntax, start + 1)
     else start >= syntax.length
@@ -200,7 +202,7 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
   def loc(start: Int, end: Int): Loc = Loc(start, end, origin)
   
   @tailrec final
-  def lex(i: Int, ind: Ls[Int], acc: Ls[TokLoc])(implicit qqList: Ls[BracketKind]): Ls[TokLoc] = if i >= length then acc.reverse else
+  def lex(i: Int, ind: Ls[Int], acc: Ls[TokLoc]): Ls[TokLoc] = if i >= length then acc.reverse else
     
     val c = bytes(i)
     
@@ -208,17 +210,12 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
       // raise(ParseError(false, msg -> S(loc(i, i + 1)) :: Nil))
       raise(ErrorReport(msg -> S(loc(i, i + 1)) :: Nil, newDefs = true, source = Lexing))
     
-    def isQuasiquoteOpening(i: Int): Bool = matches(i, BracketKind.Quasiquote.beg, 0)
-    def isQuasiquoteTripleOpening(i: Int): Bool =  matches(i, BracketKind.QuasiquoteTriple.beg, 0)
-    def isUnquoteOpening(i: Int): Bool = matches(i, BracketKind.Unquote.beg, 0)
-    def isQuasiquoteTripleClosing(i: Int): Bool = matches(i, BracketKind.QuasiquoteTriple.end, 0)
-    
     inline def go(j: Int, tok: Token) = lex(j, ind, (tok, loc(i, j)) :: acc)
     inline def next(j: Int, tok: Token) = (tok, loc(i, j)) :: acc
     
     c match
-      case ' ' =>
-        val (_, j) = takeWhile(i)(_ === ' ')
+      case ' ' | '\r' | '\t' =>
+        val (_, j) = takeWhile(i)(isWhiteSpace)
         // go(j, SPACE)
         lex(j, ind, next(j, SPACE))
       case ',' =>
@@ -227,42 +224,14 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
         lex(j, ind, next(j, COMMA))
       case '`' =>
         lex(i + 1, ind, next(i + 1, QUOTE))
-      case 'c' if isQuasiquoteOpening(i) || isQuasiquoteTripleOpening(i) =>
-        val isTripleQuoteQQ = isQuasiquoteTripleOpening(i)
-        val bracket_kind = if isTripleQuoteQQ then
-          BracketKind.QuasiquoteTriple
-        else
-          BracketKind.Quasiquote
-        val len = bracket_kind.beg.length
-        lex(i + len, ind, next(i + len, OPEN_BRACKET(bracket_kind)))(bracket_kind :: qqList)
-      case '$' if isUnquoteOpening(i) =>
-        lex(i + 2, ind, next(i + 2, OPEN_BRACKET(BracketKind.Unquote)))
-      case '$' if i + 1 < length && isIdentFirstChar(bytes(i + 1)) =>
-        val (n, j) = takeWhile(i + 1)(isIdentChar)
-        lex(j, ind, next(j, BRACKETS(BracketKind.Unquote, (
-            // if keywords.contains(n) then KEYWRD(n) else IDENT(n, isAlphaOp(n)),
-            IDENT(n, isAlphaOp(n)),
-            loc(i + 1, j)
-          ) :: Nil)(loc(i, j))))
       case ';' =>
         val j = i + 1
         lex(j, ind, next(j, SEMI))
       case '"' =>
-        val (isTripleQQ, cons) = qqList match
-          case h :: t => (h === BracketKind.QuasiquoteTriple, t)
-          case Nil => (false, Nil)
-        if isTripleQQ && isQuasiquoteTripleClosing(i) then
-          val length = BracketKind.QuasiquoteTriple.end.length
-          lex(i + length, ind, next(i + length, CLOSE_BRACKET(BracketKind.QuasiquoteTriple)))(cons)
-        else if !isTripleQQ && qqList.nonEmpty then
-          lex(i + 1, ind, next(i + 1, CLOSE_BRACKET(BracketKind.Quasiquote)))(cons)
-        else
-          val isTriple = matches(i, "\"\"\"", 0)
-          val j = i + (if isTriple then 3 else 1)
-          val (chars, k) = str(j, false)(isTriple)
-          val k2 = closeStr(k, isTriple)
-          // go(k2, LITVAL(StrLit(chars)))
-          lex(k2, ind, next(k2, LITVAL(StrLit(chars))))
+        val (chars, k) = str(i + 1, false)(false)
+        val k2 = closeStr(k, false)
+        // go(k2, LITVAL(StrLit(chars)))
+        lex(k2, ind, next(k2, LITVAL(StrLit(chars))))
       case '/' if bytes.lift(i + 1).contains('/') =>
         val j = i + 2
         val (txt, k) =
@@ -290,7 +259,7 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
           takeWhile(j)(c => c === ' ' || c === '\n')
         val nextInd = space.reverseIterator.takeWhile(_ =/= '\n').size
         if ind.headOption.forall(_ < nextInd) && nextInd > 0 then
-          lex(k, nextInd :: ind, (INDENT, loc(j, k)) :: acc)
+          lex(k, nextInd :: ind, (SPACE, loc(j, k)) :: acc)
         else
           val newIndBase = ind.dropWhile(_ > nextInd)
           val droppedNum = ind.size - newIndBase.size
@@ -300,11 +269,12 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
             println("dbg: " + bytes.drop(i).take(10).map(escapeChar).mkString+"...")
             println((ind, nextInd, newIndBase, droppedNum, hasNewIndent, newInd))
           lex(k, newInd,
-            if droppedNum > 0 then {
-              if hasNewIndent then (INDENT, loc(j, k))
-              else (NEWLINE, loc(i, k))
-            } :: List.fill(droppedNum)((DEINDENT, loc(j-1, k))) ::: acc
-            else (NEWLINE, loc(i, k)) :: acc
+            // if droppedNum > 0 then {
+            //   if hasNewIndent then (INDENT, loc(j, k))
+            //   else (NEWLINE, loc(i, k))
+            // } :: List.fill(droppedNum)((DEINDENT, loc(j-1, k))) ::: acc
+            // else
+            (NEWLINE, loc(i, k)) :: acc
           )
       case _ if isIdentFirstChar(c) =>
         val (n, j) = takeWhile(i)(isIdentChar)
@@ -346,22 +316,8 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
         pe(msg"unexpected character '${escapeChar(c)}'")
         // go(i + 1, ERROR)
         lex(i + 1, ind, next(i + 1, ERROR))
- 
-  def escapeChar(ch: Char): String = ch match
-    case '\b' => "\\b"
-    case '\t' => "\\t"
-    case '\n' => "\\n"
-    case '\f' => "\\f"
-    case '\r' => "\\r"
-    case '"'  => "\\\""
-    case '\'' => "\\\'"
-    case '\\' => "\\\\"
-    case _    => if ch.isControl
-      then "\\0" + Integer.toOctalString(ch.toInt) 
-      else String.valueOf(ch)
   
-  
-  lazy val tokens: Ls[Token -> Loc] = lex(0, Nil, Nil)(Nil)
+  lazy val tokens: Ls[Token -> Loc] = lex(0, Nil, Nil)
   
   /** Converts the lexed tokens into structured tokens. */
   lazy val bracketedTokens: Ls[Stroken -> Loc] =
@@ -376,14 +332,8 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
           go(rest, false, k -> l0 -> acc :: stack, Nil)
         case (CLOSE_BRACKET(k1), l1) :: rest =>
           stack match
-            case ((Indent, loc), oldAcc) :: _ if k1 =/= Indent =>
-              go(CLOSE_BRACKET(Indent) -> l1.left :: toks, false, stack, acc)
-            case ((Indent, loc), oldAcc) :: stack
-            if k1 === Indent && acc.forall { case (SPACE | NEWLINE, _) => true; case _ => false } =>
-              // * Ignore empty indented blocks:
-              go(rest, false, stack, oldAcc)
             case ((k0, l0), oldAcc) :: stack =>
-              if k0 =/= k1 && !(k0 === Unquote && k1 === Curly) then
+              if k0 =/= k1 && !(k1 === Curly) then
                 raise(ErrorReport(msg"Mistmatched closing ${k1.name}" -> S(l1) ::
                   msg"does not correspond to opening ${k0.name}" -> S(l0) :: Nil, newDefs = true,
                   source = Parsing))
@@ -392,10 +342,6 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
               raise(ErrorReport(msg"Unexpected closing ${k1.name}" -> S(l1) :: Nil,
                 newDefs = true, source = Parsing))
               go(rest, false, stack, acc)
-        case (INDENT, loc) :: rest =>
-          go(OPEN_BRACKET(Indent) -> loc :: rest, false, stack, acc)
-        case (DEINDENT, loc) :: rest =>
-          go(CLOSE_BRACKET(Indent) -> loc :: rest, false, stack, acc)
         case (IDENT("<", true), loc) :: rest if canStartAngles =>
           go(OPEN_BRACKET(Angle) -> loc :: rest, false, stack, acc)
         case (IDENT(">", true), loc) :: rest if canStartAngles && (stack match {
@@ -417,13 +363,11 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
           go(rest, false, stack, tk -> loc :: acc)
         case (tk: Stroken, loc) :: rest =>
           go(rest, tk match {
-            case SPACE | NEWLINE => false
+            case SPACE => false
             case _ => true
           }, stack, tk -> loc :: acc)
         case Nil =>
           stack match
-            case ((Indent, loc), oldAcc) :: _ =>
-              go(CLOSE_BRACKET(Indent) -> loc/*FIXME not proper loc...*/ :: Nil, false, stack, acc)
             case ((k, l0), oldAcc) :: stack =>
               raise(ErrorReport(msg"Unmatched opening ${k.name}" -> S(l0) :: (
                 if k === Angle then
@@ -492,8 +436,6 @@ object Lexer:
     case (COMMA, _) => ","
     case (SEMI, _) => ";"
     case (NEWLINE, _) => "↵"
-    case (INDENT, _) => "→"
-    case (DEINDENT, _) => "←"
     case (ERROR, _) => "<error>"
     case (QUOTE, _) => "`"
     case (LITVAL(lv), _) => lv.idStr
@@ -502,13 +444,21 @@ object Lexer:
     case (SELECT(name: String), _) => "." + name
     case (OPEN_BRACKET(k), _) => k.beg
     case (CLOSE_BRACKET(k), _) => k.end
-    case (BRACKETS(k @ BracketKind.Indent, contents), _) =>
-      k.beg + printTokens(contents) + k.end
     case (BRACKETS(k, contents), _) =>
       k.beg + printTokens(contents) + k.end
     case (COMMENT(text: String), _) => "/*" + text + "*/"
   def printTokens(ts: Ls[TokLoc]): Str =
     ts.iterator.map(printToken).mkString("|", "|", "|")
   
-  
-
+  def escapeChar(ch: Char): String = ch match
+    case '\b' => "\\b"
+    case '\t' => "\\t"
+    case '\n' => "\\n"
+    case '\f' => "\\f"
+    case '\r' => "\\r"
+    case '"'  => "\\\""
+    case '\'' => "\\\'"
+    case '\\' => "\\\\"
+    case _    => if ch.isControl
+      then "\\0" + Integer.toOctalString(ch.toInt) 
+      else String.valueOf(ch)

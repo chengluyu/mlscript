@@ -9,16 +9,40 @@ import BracketKind._
 
 enum Alt[+A]:
   case Kw[Rest](kw: Keyword)(val rest: ParseRule[Rest]) extends Alt[Rest]
+  case Ident[Rest, +Res](val rest: ParseRule[Rest])(val k: (Tree.Var, Rest) => Res) extends Alt[Res]
+  // Const is less useful than Ident.
+  // case Const[Rest, +Res](val rest: ParseRule[Rest])(val k: (Tree.Const, Rest) => Res) extends Alt[Res]
   case Expr[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
   case Blk[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
   case End(a: A)
+
+  def restOption: Option[ParseRule[?]] = this match
+    case k: Kw[?] => Some(k.rest)
+    case Ident(rest) => Some(rest)
+    // case Const(rest) => Some(rest)
+    case Expr(rest) => Some(rest)
+    case Blk(rest) => Some(rest)
+    case End(_) => None
   
   def map[B](f: A => B): Alt[B] = 
     this match
     case k: Kw[?] => Kw(k.kw)(k.rest.map(f))
+    case i: Ident[?, ?] => Ident(i.rest)((str, rest) => f(i.k(str, rest)))
+    // case c: Const[?, ?] => Const(c.rest)((lit, rest) => f(c.k(lit, rest)))
     case e: Expr[rest, A] => Expr(e.rest)((tree, rest) => f(e.k(tree, rest)))
     case End(a) => End(f(a))
     case b: Blk[rest, A] => Blk(b.rest)((tree, rest) => f(b.k(tree, rest)))
+
+  override def toString(): String =
+    val head = this match 
+      case alt @ Kw(kw) => s"`${kw.name}`"
+      case alt @ Ident(_) => "Ident"
+      // case alt @ Const(_) => "Const"
+      case alt @ Expr(_) => "Expr"
+      case alt @ Blk(_) => "Block"
+      case End(_) => "End"
+    head + " " + restOption.fold("")(_.altsToString)
+    
 
 class ParseRule[+A](val name: Str)(alts: Alt[A]*):
   def map[B](f: A => B): ParseRule[B] =
@@ -26,17 +50,22 @@ class ParseRule[+A](val name: Str)(alts: Alt[A]*):
 
   def |[B >: A](that: Alt[B]): ParseRule[B] =
     ParseRule(name)(this.alts :+ that: _*)
+
+  def altsToString: String = alts.mkString(" | ")
   
-  override def toString: Str = s"$name ::= " + alts.mkString(" | ")
+  override def toString: Str = s"$name ::= " + altsToString
   
   lazy val emptyAlt = alts.collectFirst { case Alt.End(a) => a }
   lazy val kwAlts = alts.collect { case k @ Alt.Kw(kw) => kw.name -> k.rest }.toMap
+  lazy val identAlt = alts.collectFirst { case alt: Alt.Ident[rst, A] => alt }
   lazy val exprAlt = alts.collectFirst { case alt: Alt.Expr[rst, A] => alt }
   lazy val blkAlt = alts.collectFirst { case alt: Alt.Blk[rst, A] => alt }
   
   def whatComesAfter: Str =
     alts.map:
       case Alt.Kw(kw) => s"'${kw.name}' keyword"
+      case Alt.Ident(rest) => "identifier"
+      // case Alt.Const(rest) => "constant"
       case Alt.Expr(rest) => "expression"
       case Alt.Blk(rest) => "indented block"
       case Alt.End(_) => "end of input"
@@ -46,112 +75,3 @@ class ParseRule[+A](val name: Str)(alts: Alt[A]*):
       case str :: Nil => str
       case str1 :: str2 :: Nil => s"$str1 or $str2"
       case strs => strs.init.mkString(", ") + ", or " + strs.last
-
-object ParseRule:
-  import Keyword.*
-  import Alt.*
-  import Tree.*
-  
-  // val standaloneExpr =
-  //   Expr(ParseRule("expression")(End(())))((l, _: Unit) => l)
-  
-  // def modified(kw: Keyword) =
-  //   Kw(kw)(ParseRule(s"modifier keyword '${kw.name}'")(standaloneExpr)).map(Tree.Modified(kw, _))
-  
-  // val typeDeclTemplate: Alt[Opt[Tree]] =
-  //   Kw(`with`):
-  //     ParseRule("type declaration body")(
-  //       Blk(
-  //         ParseRule("type declaration block"):
-  //           End(())
-  //       ) { case (res, ()) => S(res) }
-  //     )
-  
-  // val typeDeclBody: ParseRule[TypeDecl] = 
-  //   ParseRule("type declaration start"):
-  //     Expr(
-  //       ParseRule("type declaration head")(
-  //         End((N, N)),
-  //         Kw(`extends`):
-  //           ParseRule("extension clause")(
-  //             // End((N, N)),
-  //             Expr(
-  //               ParseRule("parent specification")(
-  //                 typeDeclTemplate,
-  //                 End(N),
-  //               )
-  //             ) { case (ext, bod) => (S(ext), bod) }
-  //           ),
-  //         typeDeclTemplate.map(bod => (N, bod)),
-  //       )
-  //     // ) { case (head, ext, bod) => TypeDecl(head, ext, bod) }
-  //     ) { case (head, (ext, bod)) => TypeDecl(head, ext, bod) }
-  
-  // val prefixRules: ParseRule[Tree] = ParseRule("start of statement")(
-  //   Kw(`val`):
-  //     ParseRule("'val' binding keyword")(
-  //       Expr(ParseRule("'val' head")(End(())))((body, _: Unit) => body),
-  //       // Expr(ParseRule("'val' head")(End(())))((body, _) => body),
-  //       Blk(
-  //         ParseRule("'val' block"):
-  //           End(())
-  //       ) { case (res, ()) => res }
-  //     ).map(Val.apply),
-  //   Kw(`let`):
-  //     ParseRule("'let' binding keyword")(
-  //       Expr(
-  //         ParseRule("let binding head"):
-  //           Kw(`=`):
-  //             ParseRule("let binding equals sign"):
-  //               Expr(
-  //                 ParseRule("let binding right-hand side")(
-  //                   Kw(`in`):
-  //                     ParseRule("let binding `in` clause"):
-  //                       Expr(ParseRule("let binding body")(End(())))((body, _: Unit) => S(body))
-  //                   ,
-  //                   End(N)
-  //                 )
-  //               ) { (rhs, body) => (rhs, body) }
-  //       ) { case (lhs, (rhs, body)) => Let(lhs, rhs, body) }
-  //       ,
-  //       // Blk(
-  //       //   ParseRule("let block"):
-  //       //     Kw(`class`):
-  //       //       typeDeclBody
-  //       // ) { case (lhs, body) => Let(lhs, lhs, body) }
-  //     )
-  //   ,
-  //   Kw(`type`)(typeDeclBody),
-  //   Kw(`class`)(typeDeclBody),
-  //   Kw(`trait`)(typeDeclBody),
-  //   Kw(`module`)(typeDeclBody),
-  //   modified(`abstract`),
-  //   modified(`mut`),
-  //   modified(`virtual`),
-  //   modified(`override`),
-  //   modified(`declare`),
-  //   modified(`public`),
-  //   modified(`private`),
-  //   standaloneExpr,
-  // )
-  
-  // val infixRules: ParseRule[Tree => Tree] = ParseRule("continuation of statement")(
-  //   // TODO dedup:
-  //   Kw(`and`):
-  //     ParseRule("'and' operator")(
-  //       Expr(ParseRule("'and' operator right-hand side")(End(())))(
-  //         (rhs, _: Unit) => lhs => InfixApp(lhs, `and`, rhs))
-  //     ),
-  //   Kw(`or`):
-  //     ParseRule("'or' operator")(
-  //       Expr(ParseRule("'or' operator right-hand side")(End(())))(
-  //         (rhs, _: Unit) => lhs => InfixApp(lhs, `or`, rhs))
-  //     ),
-  //   Kw(`then`):
-  //     ParseRule("'then' operator")(
-  //       Expr(ParseRule("'then' operator right-hand side")(End(())))(
-  //         (rhs, _: Unit) => lhs => InfixApp(lhs, `then`, rhs))
-  //     ),
-  // )
-
-
