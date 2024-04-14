@@ -1,14 +1,12 @@
 package hkmc2.syntax
 
-import collection.mutable.Map as MutMap
+import collection.mutable.SortedMap as MutSortedMap
 import collection.mutable.Set as MutSet
 import scala.collection.mutable.ListBuffer
 
 class Context:
-  private val keywords: MutMap[String, Keyword] = MutMap.empty
-  private val rules: MutMap[String, ParseRule[Tree]] = MutMap.empty
-  private val topLevelRules: ListBuffer[Alt[Tree]] = ListBuffer.empty
-  private val atomicSymbols: MutSet[String] = MutSet.empty
+  private val keywords: MutSortedMap[String, Keyword] = MutSortedMap.empty
+  private val rules: MutSortedMap[String, ParseRule[Tree]] = MutSortedMap.empty
 
   private var _curPrec = 2
   private def curPrec: Some[Int] = Some(_curPrec)
@@ -30,20 +28,12 @@ class Context:
   this += `~>`
   this += `=>`
 
-  atomicSymbols += "Ident"
-  atomicSymbols += "Expr"
+  def +=(kw: Keyword): Unit = keywords += kw.name -> kw
 
-  def +=(kw: Keyword): Unit =
-    keywords += kw.name -> kw
-
-  def +=(name: String): Unit =
-    val kw = Keyword(name, None, None)
-    keywords += name -> kw
+  def +=(name: String): Unit = this += Keyword(name, None, None)
 
   def +=(rule: (String, Alt[Tree])): Unit =
-    val (name, alt) = rule
-    rules += name -> ParseRule(name)(alt)
-    topLevelRules += alt
+    rules += rule._1 -> ParseRule(rule._1)(rule._2)
 
   // Getters
 
@@ -52,7 +42,8 @@ class Context:
   def listKeywords: Iterator[String] = keywords.keysIterator
   def listRules: Iterator[ParseRule[Tree]] = rules.valuesIterator
 
-  def prefixRules: ParseRule[Tree] = ParseRule("start of statement")(topLevelRules.toSeq: _*)
+  def prefixRules: ParseRule[Tree] =
+    ParseRule("all prefix rules")(rules.valuesIterator.flatMap(_.alts).toSeq: _*)
 
   object KW:
     def unapply(t: Token): Option[Keyword] = t match
@@ -61,7 +52,12 @@ class Context:
   
   object OP:
     def unapply(t: Token): Option[String] = t match
-      case IDENT(nme, true) if !keywords.contains(nme) => Some(nme)
+      case IDENT(name, true) if !keywords.contains(name) => Some(name)
+      case _ => None
+
+  object RULE:
+    def unapply(t: Token): Option[ParseRule[Tree]] = t match
+      case IDENT(name, false) => rules.get(name)
       case _ => None
 
 end Context

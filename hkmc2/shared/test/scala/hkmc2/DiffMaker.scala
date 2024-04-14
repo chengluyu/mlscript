@@ -72,6 +72,7 @@ class DiffMaker(file: os.Path, relativeName: Str):
   val showRelativeLineNums = NullaryCommand("showRelativeLineNums")
   
   val showParse = NullaryCommand("p")
+  val keepContext = NullaryCommand("keepContext")
   
   
   val tests = Command("tests"){ case "" =>
@@ -93,6 +94,8 @@ class DiffMaker(file: os.Path, relativeName: Str):
   var _onlyParse = false
   var _allowTypeErrors = false
   var _showRelativeLineNums = false
+
+  private var lastContext: Option[syntax.Context] = None
   
   @annotation.tailrec
   final def rec(lines: List[String]): Unit = lines match
@@ -172,10 +175,14 @@ class DiffMaker(file: os.Path, relativeName: Str):
           output(syntax.Lexer.printTokens(tokens))
         
         if noParse.isUnset then
-          given context: syntax.Context = new syntax.Context
+          given context: syntax.Context =
+            if keepContext.isSet
+            then lastContext.getOrElse(new syntax.Context)
+            else new syntax.Context
           val p = new syntax.Parser(origin, tokens, raise, dbg = dbgParsing.isSet):
             def doPrintDbg(msg: => Str): Unit = if dbg then output(msg)
           val res = p.parseAll(p.block)
+          lastContext = Some(context)
           
           // if (parseOnly)
           //   output(s"Parsed: ${res.showDbg}")

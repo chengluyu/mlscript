@@ -26,8 +26,9 @@ define LetIn ::= let Ident = Expr in Expr ~> ($1 => $3)($2)
 define FunDecl ::= fun Ident Ident = Expr in Expr ~> ($1 => $4)($2 => $3)
 fun f x = x in
   fun g y = y in
-    f(g(y))
-//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|keyword| |let|,| |=|,| |in|,| |fun|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|define| |FunDecl| |::=| |fun| |Ident| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$4|)|(|$2| |=>| |$3|)|↵|fun| |f| |x| |=| |x| |in| |fun| |g| |y| |=| |y| |in| |f|(|g|(|y|)|)|
-//│ AST: List(App(Lam(Var(f),App(Lam(Var(g),App(Var(f),App(Var(g),Var(y)))),Lam(Var(y),Var(y)))),Lam(Var(x),Var(x))))
+    let z = 0 in
+      f(g(z))
+//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|keyword| |let|,| |=|,| |in|,| |fun|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|define| |FunDecl| |::=| |fun| |Ident| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$4|)|(|$2| |=>| |$3|)|↵|fun| |f| |x| |=| |x| |in| |fun| |g| |y| |=| |y| |in| |let| |z| |=| |0| |in| |f|(|g|(|z|)|)|
+//│ AST: List(App(Lam(Var(f),App(Lam(Var(g),App(Lam(Var(z),App(Var(f),App(Var(g),Var(z)))),Const(IntLit(0)))),Lam(Var(y),Var(y)))),Lam(Var(x),Var(x))))
 //│ Keywords: ~>, =>, in, define, let, keyword, =, ::=, fun
 //│ Rules: FunDecl ::= `fun` Ident Ident `=` Expr `in` Expr End ,Program ::= Expr End ,LetIn ::= `let` Ident `=` Expr `in` Expr End 
