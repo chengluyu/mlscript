@@ -373,13 +373,15 @@ abstract class Parser(
       consume
       exprCont(lit.asTree, prec, allowNewlines = true)
     case (OPEN_BRACKET(Round), loc) :: _ =>
+      printDbg("found an opening bracket")
       consume
-      yeetSpaces match
-      case (CLOSE_BRACKET(Round), loc) :: _ =>
-        consume
-        exprCont(Literal.UnitLit.asTree.withLoc(loc), prec, allowNewlines = true)
-      case _ =>
-        closeBracket(exprCont(expr(0), prec, allowNewlines = true))
+      val res = yeetSpaces match
+        case (CLOSE_BRACKET(Round), loc) :: _ =>
+          consume
+          Literal.UnitLit.asTree.withLoc(loc)
+        case _ =>
+          closeBracket(expr(0))
+      exprCont(res, prec, allowNewlines = true)
     case (tok, loc) :: _ => unexpected("an expression", tok, loc)
     case Nil => unexpected("an expression")
   
@@ -409,7 +411,9 @@ abstract class Parser(
       case (br @ OPEN_BRACKET(Round), loc) :: _ if prec <= AppPrec =>
         consume
         closeBracket(exprCont(App(acc, expr(0)), prec, allowNewlines))
-      case (CLOSE_BRACKET(Round), loc) :: _ => acc
+      case (CLOSE_BRACKET(Round), loc) :: _ =>
+        printDbg("found a closing bracket")
+        acc
       // case (KW(kw), l0) :: _ if kw.leftPrecOrMin > prec =>
       //   ParseRule.infixRules.kwAlts.get(kw.name) match
       //     case S(rule) =>
