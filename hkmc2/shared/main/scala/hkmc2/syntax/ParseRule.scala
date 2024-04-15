@@ -53,10 +53,14 @@ class ParseRule[+A](val name: Str)(val alts: Alt[A]*):
   override def toString: Str = s"$name ::= " + altsToString
   
   lazy val emptyAlt: Option[A] = alts.collectFirst { case Alt.End(a) => a }
-  lazy val kwAlts = alts.collect { case k @ Alt.Kw(kw) => kw.name -> k.rest }.toMap
-  lazy val identAlt = alts.collectFirst { case alt: Alt.Ident[rst, A] => alt }
-  lazy val exprAlt = alts.collectFirst { case alt: Alt.Expr[rst, A] => alt }
-  lazy val blkAlt = alts.collectFirst { case alt: Alt.Blk[rst, A] => alt }
+  lazy val kwAlts: Map[String, ParseRule[A]] =
+    alts.collect { case k @ Alt.Kw(kw) => kw.name -> k.rest }.toMap
+  lazy val identAlt: Option[Alt.Ident[?, A]] =
+    alts.collectFirst { case alt: Alt.Ident[rst, A] => alt }
+  lazy val exprAlt: Option[Alt.Expr[?, A]] =
+    alts.collectFirst { case alt: Alt.Expr[rst, A] => alt }
+  lazy val blkAlt: Option[Alt.Blk[?, A]] =
+    alts.collectFirst { case alt: Alt.Blk[rst, A] => alt }
   
   def whatComesAfter: Str =
     alts.map:
