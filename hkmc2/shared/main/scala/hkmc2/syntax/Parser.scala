@@ -145,6 +145,19 @@ abstract class Parser(
   final def warn(msgs: Ls[Message -> Opt[Loc]])(implicit l: Line, n: Name): Unit =
     printDbg(s"Warning    [at syntax/Parser.scala:${l.value}]")
     raise(WarningReport(msgs, newDefs = true, source = Diagnostic.Source.Parsing))
+
+  // Report unexpected tokens in various ways.
+
+  def unexpected[A](expected: String, actual: String, loc: Option[Loc], res: A): A =
+    err((msg"Expected $expected; found $actual instead" -> loc :: Nil)); res
+
+  def unexpected(expected: String, tok: Stroken, loc: Loc): Tree =
+    unexpected(expected, tok.describe, S(loc))
+
+  def unexpected(expected: String, actual: String, loc: Option[Loc]): Tree =
+    unexpected(expected, actual, loc, errExpr)
+
+  def unexpected(expected: String): Tree = unexpected(expected, "end of input", lastLoc)
   
   final def parseAll[R](parser: => R): R =
     val res = parser
@@ -167,41 +180,30 @@ abstract class Parser(
   
   def block: Ls[Tree] = blockOf(context.prefixRules)
 
+  /** Expect the next token is an identifier */
   def expectIdent[A](previous: String, failure: => A)(success: (IDENT, Loc) => A): A =
     yeetSpaces match
-    case (tok @ (id: IDENT), loc) :: _ =>
-      consume
-      success(id, loc)
-    case (tok, loc) :: _ => 
-      err((msg"Expected identifiers after ${previous}; found ${tok.describe} instead" -> S(loc) :: Nil))
-      failure
-    case Nil => 
-      err((msg"Expected identifiers after ${previous}; found end of input instead" -> lastLoc :: Nil))
-      failure
+    case (tok @ (id: IDENT), loc) :: _ => consume; success(id, loc)
+    case (tok, loc) :: _ => unexpected(s"an identifier after $previous", tok.describe, S(loc), failure)
+    case Nil => unexpected(s"an identifier after $previous", "end of input", lastLoc, failure)
 
+  /** Expect the next token is the given keyword */
   def expectKeyword[A](keyword: Keyword, previous: String, failure: => A)(success: (Stroken, Loc) => A): A =
     yeetSpaces match
-    case (tok @ context.KW(keyword), loc) :: _ =>
-      consume
-      success(tok, loc)
-    case (tok, loc) :: _ => 
-      err((msg"Expected `${keyword.name}` after ${previous}; found ${tok.describe} instead" -> S(loc) :: Nil))
-      failure
-    case Nil => 
-      err((msg"Expected `${keyword.name}` after ${previous}; found end of input instead" -> lastLoc :: Nil))
-      failure
+    case (tok @ context.KW(keyword), loc) :: _ => consume; success(tok, loc)
+    case (tok, loc) :: _ => unexpected(s"${keyword.name} after $previous", tok.describe, S(loc), failure)
+    case Nil => unexpected(s"${keyword.name} after $previous", "end of input", lastLoc, failure)
   
   def blockOf(rule: ParseRule[Tree]): Ls[Tree] = wrap(rule.name):
     cur match
     case Nil => Nil
     case (SPACE, _) :: _ => consume; blockOf(rule)
     case (tok @ context.KW(context.`keyword`), loc) :: _ =>
-      lazy val rest = blockContOf(context.prefixRules)
-      parseKeyword.fold(rest)(_ :: rest)
+      consume; parseKeyword; blockContOf(context.prefixRules)
     case (tok @ context.KW(context.`define`), loc) :: _ =>
-      lazy val rest = blockContOf(context.prefixRules)
-      parseDefine.fold(rest)(_ :: rest)
-    case (tok @ (id: IDENT), loc) :: _ => parseIdent(id, loc, rule) :: blockContOf(context.prefixRules)
+      consume; parseDefine; blockContOf(context.prefixRules)
+    case (tok @ (id: IDENT), loc) :: _ =>
+      parseIdent(id, loc, rule, errExpr) :: blockContOf(context.prefixRules)
     case (tok, loc) :: _ =>
       tryParseExp(CommaPrecNext, tok, loc, rule).getOrElse(errExpr) :: blockContOf(context.prefixRules)
   
@@ -216,101 +218,82 @@ abstract class Parser(
       case (NEWLINE, _) :: _ => consume; blockOf(rule)
       case _ => Nil
 
-  def parseKeyword: Option[Tree] =
-    @tailrec
-    def parseKeywordCont: Unit = yeetSpaces match
-      case (COMMA, _) :: _ =>
+  /** Parse a keyword declaration */
+  def parseKeyword: Unit =
+    def kw: Unit = yeetSpaces match
+      case (id: IDENT, _) :: _ =>
         consume
-        yeetSpaces match
-        case (id: IDENT, _) :: _ => consume; context += id.name; parseKeywordCont
-        case _ => ()
+        yeetSpaces match // the left precedence
+        case (tok @ LITVAL(Literal.IntLit(leftPrec)), loc) :: _ =>
+          consume
+          yeetSpaces match // the right precedence
+          case (tok @ LITVAL(Literal.IntLit(rightPrec)), loc) :: _ =>
+            consume; context += Keyword(id.name, Some(leftPrec.toInt), Some(rightPrec.toInt))
+          case _ => context += Keyword(id.name, Some(leftPrec.toInt), None)
+        case _ => context += Keyword(id.name, None, None)
+      case (tok, loc) :: _ => unexpected("an identifier", tok, loc)
+      case Nil => unexpected("an identifier")
+    def kwCont: Unit = yeetSpaces match
+      case (COMMA, _) :: _ => consume; kw
       case _ => ()
-    consume
-    expectIdent("`keyword`", Some(errExpr)): (id, loc) =>
-      context += id.name
-      parseKeywordCont
-      None
+    kw
+    kwCont
 
-  def parseDefine: Option[Tree] =
+  /** Parse a define declaration */
+  def parseDefine: Unit =
     def parseRhs: Ls[Tree] => Tree =
       val tree = expr(0)
       (args) => subst(tree, args.toArray)
+    def badEnd(found: String, loco: Option[Loc]): Alt[Ls[Tree]] =
+      unexpected("`Ident`, `Expr`, or other non-terminal symbol in rule definitions", found, loco, Alt.End(Nil: List[Tree]))
+    def symbol(id: IDENT, loc: Loc): Alt[Ls[Tree]] =
+      context.getKeyword(id.name) match
+        case S(kw) => Alt.Kw(kw)(ParseRule(s"after ${kw.name}")(parseLhs))
+        case N => id.name match
+          case "Ident" => Alt.Ident(ParseRule(s"after Ident")(parseLhs))(_ :: _)
+          case "Expr" => Alt.Expr(ParseRule(s"after Expr")(parseLhs))(_ :: _)
+          case _ => badEnd(id.describe, Some(loc))
     def parseLhs: Alt[Ls[Tree]] = wrap("define lhs"):
       yeetSpaces match
-      case (tok @ context.KW(context.`~>`), loc) :: _ =>
-        consume
-        Alt.End(Nil)
+      case (tok @ context.KW(context.`~>`), loc) :: _ => consume; Alt.End(Nil)
       case (tok @ context.RULE(rule), loc) :: _ =>
         consume
         Alt.Ref(rule.name, rule)(ParseRule(s"after Ref")(parseLhs))(_ :: _)
-      case (tok @ (id: IDENT), loc) :: _ =>
-        consume
-        context.getKeyword(id.name) match
-        case S(kw) =>
-          Alt.Kw(kw)(ParseRule(s"after ${kw.name}")(parseLhs))
-        case N =>
-          if id.name.isCapitalized then
-            id.name match
-            case "Ident" => Alt.Ident(ParseRule(s"after Ident")(parseLhs))(_ :: _)
-            // case "Lit" => Alt.Const(ParseRule(s"after Ident")(parseLhs))(_ :: _)
-            case "Expr" => Alt.Expr(ParseRule(s"after Expr")(parseLhs))(_ :: _)
-            case _ =>
-              err((msg"Expected `Ident`, `Expr`, or other non-terminal symbol in rule definitions; found ${id.name} instead" -> S(loc) :: Nil))
-              Alt.End(Nil: List[Tree])
-          else
-            err((msg"Expected a keyword or `~>` after `define`; found ${id.name} instead" -> S(loc) :: Nil))
-            Alt.End(Nil: List[Tree])
-      case (tok, loc) :: _ =>
-        err((msg"Expected an identifier or `~>` after `define`; found ${tok.describe} instead" -> S(loc) :: Nil))
-        consume
-        Alt.End(Nil: List[Tree])
-      case Nil =>
-        err((msg"Expected an identifier or `~>` after `define`; found end of input instead" -> lastLoc :: Nil))
-        Alt.End(Nil: List[Tree])
-    consume
-    expectIdent("`define`", Some(errExpr)): (id, loc) =>
-      expectKeyword(context.`::=`, "the name", Some(errExpr)): (tok, loc) =>
+      case (id: IDENT, loc) :: _ => consume; symbol(id, loc)
+      case (tok, loc) :: _ => badEnd(tok.describe, Some(loc))
+      case Nil => badEnd("end of input", lastLoc)
+    expectIdent("`define`", ()): (id, loc) =>
+      expectKeyword(context.`::=`, "the name", ()): (tok, loc) =>
         context += id.name -> parseLhs.map(parseRhs)
-        None
 
-  def tryKwAlt[A <: Tree](id: IDENT, loc: Loc, rule: ParseRule[A])(otherwise: => Tree): Tree =
+  private def tryKwAlt[A](id: IDENT, loc: Loc, rule: ParseRule[A], failure: => A)(otherwise: => A): A =
     context.getKeyword(id.name) match
       case S(kw) =>
         rule.kwAlts.get(kw.name) match
           case S(subRule) =>
             consume
-            parseRule(CommaPrecNext, subRule).getOrElse(errExpr)
+            parseRule(CommaPrecNext, subRule).getOrElse(failure)
           case N => otherwise
       case N =>
         otherwise
 
-  def tryIdentAlt[A <: Tree](id: IDENT, loc: Loc, rule: ParseRule[A])(otherwise: => Tree): Tree =
+  private def tryIdentAlt[A](id: IDENT, loc: Loc, rule: ParseRule[A], failure: => A)(otherwise: => A): A =
     rule.identAlt match
       case S(identAlt) =>
         consume
         parseRule(CommaPrecNext, identAlt.rest)
           .map(res => identAlt.k(Tree.Var(id.name), res))
-          .getOrElse(errExpr)
+          .getOrElse(failure)
       case N =>
         otherwise
 
-  def tryExprAlt[A <: Tree](id: IDENT, loc: Loc, rule: ParseRule[A])(otherwise: => Tree): Tree =
+  private def tryExprAlt[A](id: IDENT, loc: Loc, rule: ParseRule[A], failure: => A)(otherwise: => A): A =
     // No rules begin with an identifer. Try `exprAlt`.
     rule.exprAlt match
       case S(exprAlt) =>
         val e = expr(0) // which prec?
-        parseRule(CommaPrecNext, exprAlt.rest).map(res => exprAlt.k(e, res)).getOrElse(errExpr)
+        parseRule(CommaPrecNext, exprAlt.rest).map(res => exprAlt.k(e, res)).getOrElse(failure)
       case N => otherwise
-  
-  def undesireable[A <: Tree](id: IDENT, loc: Loc, rule: ParseRule[A]): Tree =
-    err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found ${id.describe} instead" -> S(loc) :: Nil))
-    errExpr
-
-  def parseIdent[A <: Tree](id: IDENT, loc: Loc, rule: ParseRule[A]): Tree = wrap("parseIdent"):
-    tryKwAlt(id, loc, rule):
-      tryIdentAlt(id, loc, rule):
-        tryExprAlt(id, loc, rule):
-          undesireable(id, loc, rule)
   
   private def tryParseExp[A](prec: Int, tok: Token, loc: Loc, rule: ParseRule[A]): Opt[A] =
     rule.exprAlt match
@@ -325,6 +308,12 @@ abstract class Parser(
       consume
       err((msg"Expected ${rule.whatComesAfter} after ${rule.name}; found $found instead" -> S(loc) :: Nil))
       N
+
+  def parseIdent[A](id: IDENT, loc: Loc, rule: ParseRule[A], failure: => A): A = wrap("parseIdent"):
+    tryKwAlt(id, loc, rule, failure):
+      tryIdentAlt(id, loc, rule, failure):
+        tryExprAlt(id, loc, rule, failure):
+          unexpected(s"${rule.whatComesAfter} after ${rule.name}", id.describe, S(loc), failure)
   
   /** A result of None means there was an error (already reported) and nothing could be parsed. */
   def parseRule[A](prec: Int, rule: ParseRule[A]): Opt[A] = wrap(prec, rule):
@@ -370,8 +359,7 @@ abstract class Parser(
     case (tok, loc) :: _ => tryParseExp(prec, tok, loc, rule)
     case Nil => tryEmpty(rule, "end of input", lastLoc.get)
   
-  def expr(prec: Int)(using Line): Tree = wrap(prec)(exprImpl(prec))
-  def exprImpl(prec: Int): Tree =
+  def expr(prec: Int)(using Line): Tree = wrap(prec):
     yeetSpaces match
     case (IDENT(nme, sym), loc) :: _ =>
       consume
@@ -387,12 +375,8 @@ abstract class Parser(
       else
         val res = rec(toks, S(loc), "parenthesized expression").concludeWith(_.expr(0))
         exprCont(res, prec, allowNewlines = true)
-    case (tok, loc) :: _ =>
-      err((msg"Expected an expression; found ${tok.describe} instead" -> lastLoc :: Nil))
-      errExpr
-    case Nil =>
-      err((msg"Expected an expression; found end of input instead" -> lastLoc :: Nil))
-      errExpr
+    case (tok, loc) :: _ => unexpected("an expression", tok, loc)
+    case Nil => unexpected("an expression")
   
   import Tree.*
   
