@@ -15,7 +15,7 @@ sealed abstract class Token:
     case QUOTE => "quote"
     case LITVAL(value) => "literal"
     case IDENT(name, symbolic) =>
-      if context.hasKeyword(name) then s"'$name' keyword"
+      if context.keywords.contains(name) then s"'$name' keyword"
       else if symbolic then "operator" else "identifier"
     case SELECT(name) => "selector"
     case OPEN_BRACKET(k) => s"opening ${k.name}"

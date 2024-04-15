@@ -43,8 +43,8 @@ enum Tree extends Located:
     case Empty => "?"
     case Var(name) => name
     case Const(value) => value.idStr
-    case Lam(Var(name), rhs) => s"$name => ${rhs.print}"
-    case Lam(lhs, rhs) => s"(${lhs.print}) => ${rhs.print}"
+    case Lam(Var(name), rhs) => s"$name => $rhs.print"
+    case Lam(lhs, rhs) => s"(${lhs.print}) => $rhs.print"
     case App(App(Var(op), lhs), rhs) if Lexer.isOp(op) =>
       val (leftPrec, rightPrec) = Parser.opPrec(op)
       s"${lhs.bracketed(Left(leftPrec))} $op ${rhs.bracketed(Right(rightPrec))}"

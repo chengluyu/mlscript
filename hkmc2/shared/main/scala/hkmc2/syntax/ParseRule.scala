@@ -47,6 +47,9 @@ enum Alt[+A]:
 class ParseRule[+A](val name: Str)(val alts: Alt[A]*):
   def map[B](f: A => B): ParseRule[B] =
     ParseRule(name)(alts.map(_.map(f))*)
+  
+  def extend[B >: A](alt: Alt[B]): ParseRule[B] =
+    ParseRule(name)((alts :+ alt)*)
 
   def altsToString: String = alts.mkString(" | ")
   

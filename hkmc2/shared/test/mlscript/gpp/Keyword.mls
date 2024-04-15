@@ -4,17 +4,20 @@
 keyword a
 //│ |keyword| |a|
 //│ AST: List()
-//│ Keywords: ::=, =>, a, define, keyword, ~>
-//│ Rules: 
+//│ Pretty-print: 
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: default ::= Expr End 
 
 keyword a, b
 //│ |keyword| |a|,| |b|
 //│ AST: List()
-//│ Keywords: ::=, =>, a, b, define, keyword, ~>
-//│ Rules: 
+//│ Pretty-print: 
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: default ::= Expr End 
 
 keyword a, b, c
 //│ |keyword| |a|,| |b|,| |c|
 //│ AST: List()
-//│ Keywords: ::=, =>, a, b, c, define, keyword, ~>
-//│ Rules: 
+//│ Pretty-print: 
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: default ::= Expr End 

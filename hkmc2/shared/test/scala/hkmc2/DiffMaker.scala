@@ -2,6 +2,7 @@ package hkmc2
 
 import scala.collection.mutable
 import mlscript.utils.*, shorthands.*
+import hkmc2.syntax.WithContext
 
 
 class Outputter(val out: java.io.PrintWriter):
@@ -177,21 +178,21 @@ class DiffMaker(file: os.Path, relativeName: Str):
         if noParse.isUnset then
           given context: syntax.Context =
             if keepContext.isSet
-            then lastContext.getOrElse(new syntax.Context)
-            else new syntax.Context
+            then lastContext.getOrElse(syntax.Context.default)
+            else syntax.Context.default
           val p = new syntax.Parser(origin, tokens, raise, dbg = dbgParsing.isSet):
             def doPrintDbg(msg: => Str): Unit = if dbg then output(msg)
           val res = p.parseAll(p.block)
-          lastContext = Some(context)
+          lastContext = Some(res.context)
           
           // if (parseOnly)
           //   output(s"Parsed: ${res.showDbg}")
           
           if showParse.isSet then
-            output(s"AST: $res")
-            output(s"Pretty-print: ${res.iterator.map(_.print).mkString(", ")}")
-            output(s"Keywords: ${context.listKeywords.mkString(", ")}")
-            output(s"Rules: ${context.listRules.map(_.toString).mkString(",")}")
+            output(s"AST: ${res.content}")
+            output(s"Pretty-print: ${res.content.iterator.map(_.print).mkString(", ")}")
+            output(s"Keywords: ${context.keywords.keysIterator.mkString(", ")}")
+            output(s"Rules: ${context.rules.valuesIterator.map(_.toString).mkString(",")}")
         
         catch
           case oh_noes: ThreadDeath => throw oh_noes
