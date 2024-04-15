@@ -5,20 +5,22 @@ define Program ::= Expr ~> $1
 (x => x + 1)(0)
 //│ |define| |Program| |::=| |Expr| |~>| |$1|↵|(|x| |=>| |x| |+| |1|)|(|0|)|
 //│ AST: List(App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(0))))
-//│ Keywords: ~>, =>, define, keyword, ::=
+//│ Keywords: ::=, =>, define, keyword, ~>
 //│ Rules: Program ::= Expr End 
 
 define Program ::= Expr ~> $1
-keyword let, =, in
+keyword let
+keyword =
+keyword in
 define LetIn ::= let Ident = Expr in Expr ~> ($1 => $3)($2)
 let x = 0 in x
 let x = 0 in let y = 1 in x + y
 let x = 0 in let y = 1 in let z = 2 in x + y + z
 let f = (x => x) in f(0)
-//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|keyword| |let|,| |=|,| |in|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |=| |0| |in| |x|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |x| |+| |y|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |let| |z| |=| |2| |in| |x| |+| |y| |+| |z|↵|let| |f| |=| |(|x| |=>| |x|)| |in| |f|(|0|)|
+//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|keyword| |let|↵|keyword| |=|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |=| |0| |in| |x|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |x| |+| |y|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |let| |z| |=| |2| |in| |x| |+| |y| |+| |z|↵|let| |f| |=| |(|x| |=>| |x|)| |in| |f|(|0|)|
 //│ AST: List(App(Lam(Var(x),Var(x)),Const(IntLit(0))), App(Lam(Var(x),App(Lam(Var(y),App(App(Var(+),Var(x)),Var(y))),Const(IntLit(1)))),Const(IntLit(0))), App(Lam(Var(x),App(Lam(Var(y),App(Lam(Var(z),App(App(Var(+),App(App(Var(+),Var(x)),Var(y))),Var(z))),Const(IntLit(2)))),Const(IntLit(1)))),Const(IntLit(0))), App(Lam(Var(f),App(Var(f),Const(IntLit(0)))),Lam(Var(x),Var(x))))
-//│ Keywords: ~>, =>, in, define, let, keyword, =, ::=
-//│ Rules: Program ::= Expr End ,LetIn ::= `let` Ident `=` Expr `in` Expr End 
+//│ Keywords: ::=, =, =>, define, in, keyword, let, ~>
+//│ Rules: LetIn ::= `let` Ident `=` Expr `in` Expr End ,Program ::= Expr End 
 
 define Program ::= Expr ~> $1
 keyword let, =, in, fun
@@ -30,5 +32,5 @@ fun f x = x in
       f(g(z))
 //│ |define| |Program| |::=| |Expr| |~>| |$1|↵|keyword| |let|,| |=|,| |in|,| |fun|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|define| |FunDecl| |::=| |fun| |Ident| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$4|)|(|$2| |=>| |$3|)|↵|fun| |f| |x| |=| |x| |in| |fun| |g| |y| |=| |y| |in| |let| |z| |=| |0| |in| |f|(|g|(|z|)|)|
 //│ AST: List(App(Lam(Var(f),App(Lam(Var(g),App(Lam(Var(z),App(Var(f),App(Var(g),Var(z)))),Const(IntLit(0)))),Lam(Var(y),Var(y)))),Lam(Var(x),Var(x))))
-//│ Keywords: ~>, =>, in, define, let, keyword, =, ::=, fun
-//│ Rules: FunDecl ::= `fun` Ident Ident `=` Expr `in` Expr End ,Program ::= Expr End ,LetIn ::= `let` Ident `=` Expr `in` Expr End 
+//│ Keywords: ::=, =, =>, define, fun, in, keyword, let, ~>
+//│ Rules: FunDecl ::= `fun` Ident Ident `=` Expr `in` Expr End ,LetIn ::= `let` Ident `=` Expr `in` Expr End ,Program ::= Expr End 
