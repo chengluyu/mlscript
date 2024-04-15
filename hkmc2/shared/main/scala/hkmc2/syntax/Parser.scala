@@ -378,7 +378,8 @@ abstract class Parser(
       case (CLOSE_BRACKET(Round), loc) :: _ =>
         consume
         exprCont(Literal.UnitLit.asTree.withLoc(loc), prec, allowNewlines = true)
-      case _ => exprCont(expr(0), prec, allowNewlines = true)
+      case _ =>
+        closeBracket(exprCont(expr(0), prec, allowNewlines = true))
     case (tok, loc) :: _ => unexpected("an expression", tok, loc)
     case Nil => unexpected("an expression")
   
@@ -407,8 +408,8 @@ abstract class Parser(
         exprCont(Apps(Var("."), acc, Var(name).withLoc(S(l0))), prec, allowNewlines)
       case (br @ OPEN_BRACKET(Round), loc) :: _ if prec <= AppPrec =>
         consume
-        exprCont(App(acc, expr(0)), prec, allowNewlines)
-      case (CLOSE_BRACKET(Round), loc) :: _ => consume; acc
+        closeBracket(exprCont(App(acc, expr(0)), prec, allowNewlines))
+      case (CLOSE_BRACKET(Round), loc) :: _ => acc
       // case (KW(kw), l0) :: _ if kw.leftPrecOrMin > prec =>
       //   ParseRule.infixRules.kwAlts.get(kw.name) match
       //     case S(rule) =>
@@ -430,6 +431,12 @@ abstract class Parser(
       //           acc
       //     case _ => acc
       case _ => acc
+
+  private def closeBracket(e: Tree)(using Context): Tree =
+    yeetSpaces match
+    case (CLOSE_BRACKET(Round), loc) :: _ => consume; e
+    case (tok, loc) :: _ => unexpected("a closing parenthesis", tok.describe, S(loc), e)
+    case Nil => unexpected("a closing parenthesis", "end of input", lastLoc, e)
 
   /** A brute-force substitution disregarding any existing abstractions */
   private def subst(t: Tree, args: Array[Tree]): Tree = t match

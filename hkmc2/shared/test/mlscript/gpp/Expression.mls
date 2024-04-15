@@ -18,8 +18,11 @@
 
 (1 + 2) * 3
 //│ |(|1| |+| |2|)| |*| |3|
-//│ AST: List(App(App(Var(*),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3))))
-//│ Pretty-print: (1 + 2) * 3
+//│ ╔══[PARSE ERROR] Expected end of input; found operator instead
+//│ ║  l.19: 	(1 + 2) * 3
+//│ ╙──      	        ^
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),Const(IntLit(2))))
+//│ Pretty-print: 1 + 2
 //│ Keywords: ::=, =>, define, keyword, ~>
 //│ Rules: default ::= Expr End 
 
@@ -27,6 +30,31 @@
 //│ |1| |*| |(|2| |+| |3|)|
 //│ AST: List(App(App(Var(*),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3)))))
 //│ Pretty-print: 1 * (2 + 3)
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: default ::= Expr End 
+
+:pe
+1 + (2 * 3 "str"
+//│ |1| |+| |(|2| |*| |3| |"str"|
+//│ ╔══[PARSE ERROR] Expected a closing parenthesis; found literal instead
+//│ ║  l.37: 	1 + (2 * 3 "str"
+//│ ╙──      	           ^^^^^
+//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
+//│ ║  l.37: 	1 + (2 * 3 "str"
+//│ ╙──      	           ^^^^^
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3)))))
+//│ Pretty-print: 1 + 2 * 3
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: default ::= Expr End 
+
+:pe
+1 + (2 * 3
+//│ |1| |+| |(|2| |*| |3|
+//│ ╔══[PARSE ERROR] Expected a closing parenthesis; found end of input instead
+//│ ║  l.51: 	1 + (2 * 3
+//│ ╙──      	          ^
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3)))))
+//│ Pretty-print: 1 + 2 * 3
 //│ Keywords: ::=, =>, define, keyword, ~>
 //│ Rules: default ::= Expr End 
 
@@ -43,23 +71,24 @@
 2
 //│ |1| |+|↵|2|
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.42: 	1 +
+//│ ║  l.70: 	1 +
 //│ ║        	   ^
-//│ ║  l.43: 	2
+//│ ║  l.71: 	2
 //│ ╙──      	
 //│ AST: List(App(App(Var(+),Const(IntLit(1))),Empty), Const(IntLit(2)))
 //│ Pretty-print: 1 + ?, 2
 //│ Keywords: ::=, =>, define, keyword, ~>
 //│ Rules: default ::= Expr End 
 
+:pe
 1 +
   2 +
   3
 //│ |1| |+| |2| |+|↵|3|
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.56: 	  2 +
+//│ ║  l.85: 	  2 +
 //│ ║        	     ^
-//│ ║  l.57: 	  3
+//│ ║  l.86: 	  3
 //│ ╙──      	^^
 //│ AST: List(App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Empty), Const(IntLit(3)))
 //│ Pretty-print: 1 + 2 + ?, 3
