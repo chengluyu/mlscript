@@ -1,0 +1,74 @@
+:global
+:p
+:keepContext
+
+define Program ::= Expr ~> $1
+//│ |define| |Program| |::=| |Expr| |~>| |$1|
+//│ AST: List()
+//│ Pretty-print: 
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 
+
+1 + 2
+//│ |1| |+| |2|
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),Const(IntLit(2))))
+//│ Pretty-print: 1 + 2
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 
+
+1 + 2 * 3
+//│ |1| |+| |2| |*| |3|
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3)))))
+//│ Pretty-print: 1 + 2 * 3
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 
+
+(1 + 2) * 3
+//│ |(|1| |+| |2|)| |*| |3|
+//│ AST: List(App(App(Var(*),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3))))
+//│ Pretty-print: (1 + 2) * 3
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 
+
+1 * (2 + 3)
+//│ |1| |*| |(|2| |+| |3|)|
+//│ AST: List(App(App(Var(*),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3)))))
+//│ Pretty-print: 1 * (2 + 3)
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 
+
+1 +
+  2
+//│ |1| |+| |2|
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),Const(IntLit(2))))
+//│ Pretty-print: 1 + 2
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 
+
+:pe
+1 +
+2
+//│ |1| |+|↵|2|
+//│ ╔══[PARSE ERROR] Expected an expression; found newline instead
+//│ ║  l.49: 	1 +
+//│ ║        	   ^
+//│ ║  l.50: 	2
+//│ ╙──      	
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),Empty), Const(IntLit(2)))
+//│ Pretty-print: 1 + ?, 2
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 
+
+1 +
+  2 +
+  3
+//│ |1| |+| |2| |+|↵|3|
+//│ ╔══[PARSE ERROR] Expected an expression; found newline instead
+//│ ║  l.63: 	  2 +
+//│ ║        	     ^
+//│ ║  l.64: 	  3
+//│ ╙──      	^^
+//│ AST: List(App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Empty), Const(IntLit(3)))
+//│ Pretty-print: 1 + 2 + ?, 3
+//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Rules: Program ::= Expr End 

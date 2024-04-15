@@ -14,7 +14,7 @@ import scala.annotation.tailrec
 
 object Parser:
   
-  type TokLoc = (Stroken, Loc)
+  type TokLoc = (Token, Loc)
   
   type LTL = Ls[TokLoc]
   
@@ -96,12 +96,6 @@ abstract class Parser(
     printDbg(s"= $res")
     res
   
-  final def rec(tokens: Ls[Stroken -> Loc], fallbackLoc: Opt[Loc], description: Str): Parser =
-    new Parser(origin, tokens, raiseFun, dbg
-        // , fallbackLoc, description
-    ):
-      def doPrintDbg(msg: => Str): Unit = outer.printDbg("> " + msg)
-  
   def resetCur(newCur: Ls[TokLoc]): Unit =
     _cur = newCur
     // _modifiersCache = ModifierSet.empty
@@ -151,7 +145,7 @@ abstract class Parser(
   def unexpected[A](expected: String, actual: String, loc: Option[Loc], res: A): A =
     err((msg"Expected $expected; found $actual instead" -> loc :: Nil)); res
 
-  def unexpected(expected: String, tok: Stroken, loc: Loc): Tree =
+  def unexpected(expected: String, tok: Token, loc: Loc): Tree =
     unexpected(expected, tok.describe, S(loc))
 
   def unexpected(expected: String, actual: String, loc: Option[Loc]): Tree =
@@ -188,7 +182,7 @@ abstract class Parser(
     case Nil => unexpected(s"an identifier after $previous", "end of input", lastLoc, failure)
 
   /** Expect the next token is the given keyword */
-  def expectKeyword[A](keyword: Keyword, previous: String, failure: => A)(success: (Stroken, Loc) => A): A =
+  def expectKeyword[A](keyword: Keyword, previous: String, failure: => A)(success: (Token, Loc) => A): A =
     yeetSpaces match
     case (tok @ context.KW(keyword), loc) :: _ => consume; success(tok, loc)
     case (tok, loc) :: _ => unexpected(s"${keyword.name} after $previous", tok.describe, S(loc), failure)
@@ -351,14 +345,13 @@ abstract class Parser(
     case (LITVAL(lit), loc) :: _ =>
       consume
       exprCont(lit.asTree, prec, allowNewlines = true)
-    case (BRACKETS(Round, toks), loc) :: _ =>
+    case (OPEN_BRACKET(Round), loc) :: _ =>
       consume
-      if toks.forall(_ is SPACE) then
-        val res = Literal.UnitLit.asTree.withLoc(loc)
-        exprCont(res, prec, allowNewlines = true)
-      else
-        val res = rec(toks, S(loc), "parenthesized expression").concludeWith(_.expr(0))
-        exprCont(res, prec, allowNewlines = true)
+      yeetSpaces match
+      case (CLOSE_BRACKET(Round), loc) :: _ =>
+        consume
+        exprCont(Literal.UnitLit.asTree.withLoc(loc), prec, allowNewlines = true)
+      case _ => exprCont(expr(0), prec, allowNewlines = true)
     case (tok, loc) :: _ => unexpected("an expression", tok, loc)
     case Nil => unexpected("an expression")
   
@@ -385,12 +378,10 @@ abstract class Parser(
       case (SELECT(name), l0) :: _ => // TODO precedence?
         consume
         exprCont(Apps(Var("."), acc, Var(name).withLoc(S(l0))), prec, allowNewlines)
-      case (br @ BRACKETS(Round, toks), loc) :: _ if prec <= AppPrec =>
+      case (br @ OPEN_BRACKET(Round), loc) :: _ if prec <= AppPrec =>
         consume
-        // val as = rec(toks, S(br.innerLoc), br.describe).concludeWith(_.blockMaybeIndented)
-        val as = rec(toks, S(br.innerLoc), br.describe).concludeWith(_.expr(0))
-        val res = Apps(acc, as)
-        exprCont(res, prec, allowNewlines)
+        exprCont(App(acc, expr(0)), prec, allowNewlines)
+      case (CLOSE_BRACKET(Round), loc) :: _ => consume; acc
       // case (context.KW(kw), l0) :: _ if kw.leftPrecOrMin > prec =>
       //   ParseRule.infixRules.kwAlts.get(kw.name) match
       //     case S(rule) =>

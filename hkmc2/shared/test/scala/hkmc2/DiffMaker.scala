@@ -169,7 +169,7 @@ class DiffMaker(file: os.Path, relativeName: Str):
               // report(blockLineNum, d :: Nil, showRelativeLineNums.isSet)
           report(blockLineNum, d :: Nil, showRelativeLineNums.isSet)
         val lexer = new syntax.Lexer(origin, raise, dbg = dbgParsing.isSet)
-        val tokens = lexer.bracketedTokens
+        val tokens = lexer.tokens
         
         if showParse.isSet || showParse.isSet || dbgParsing.isSet then
           output(syntax.Lexer.printTokens(tokens))
@@ -189,6 +189,7 @@ class DiffMaker(file: os.Path, relativeName: Str):
           
           if showParse.isSet then
             output(s"AST: $res")
+            output(s"Pretty-print: ${res.iterator.map(_.print).mkString(", ")}")
             output(s"Keywords: ${context.listKeywords.mkString(", ")}")
             output(s"Rules: ${context.listRules.map(_.toString).mkString(",")}")
         

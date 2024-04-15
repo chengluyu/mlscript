@@ -38,6 +38,26 @@ enum Tree extends Located:
     case Const(value) => s"constant ${value.idStr}"
     case Lam(lhs, rhs) => s"lambda abstraction"
     case App(lhs, rhs) => s"application"
+
+  def print: String = this match
+    case Empty => "?"
+    case Var(name) => name
+    case Const(value) => value.idStr
+    case Lam(Var(name), rhs) => s"$name => ${rhs.print}"
+    case Lam(lhs, rhs) => s"(${lhs.print}) => ${rhs.print}"
+    case App(App(Var(op), lhs), rhs) if Lexer.isOp(op) =>
+      val (leftPrec, rightPrec) = Parser.opPrec(op)
+      s"${lhs.bracketed(Left(leftPrec))} $op ${rhs.bracketed(Right(rightPrec))}"
+    case App(lhs, rhs) => s"(${lhs.print})(${rhs.print})"
+
+  def bracketed(outerPrec: Either[Int, Int]): String = this match
+    case App(App(Var(op), lhs), rhs) if Lexer.isOp(op) =>
+      val (leftPrec, rightPrec) = Parser.opPrec(op)
+      val should = outerPrec match
+        case Left(prec) => prec > leftPrec
+        case Right(prec) => prec > rightPrec
+      if should then s"($print)" else print
+    case _ => print
 end Tree
 
 object Tree:

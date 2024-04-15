@@ -14,34 +14,26 @@ sealed abstract class Token:
     case ERROR => "error"
     case QUOTE => "quote"
     case LITVAL(value) => "literal"
-    // case KEYWRD(name) =>
-    //   if name.headOption.exists(_.isLetter) then s"'$name' keyword" else s"'$name'"
     case IDENT(name, symbolic) =>
       if context.hasKeyword(name) then s"'$name' keyword"
       else if symbolic then "operator" else "identifier"
     case SELECT(name) => "selector"
     case OPEN_BRACKET(k) => s"opening ${k.name}"
     case CLOSE_BRACKET(k) => s"closing ${k.name}"
-    case BRACKETS(k, contents) => s"${k.name} section"
     case COMMENT(text) => "comment"
 
-/** Type of 'Structured Tokens' aka 'Strokens',
-  * which use a `BRACKETS` construct instead of `OPEN_BRACKET`/`CLOSE_BRACKET` and `INDENT`/`DEINDENT` */
-sealed trait Stroken extends Token
-
-case object SPACE extends Token with Stroken
-case object COMMA extends Token with Stroken
-case object SEMI extends Token with Stroken
-case object NEWLINE extends Token with Stroken
-case object ERROR extends Token with Stroken
-case object QUOTE extends Token with Stroken
-final case class LITVAL(value: Literal) extends Token with Stroken
-final case class IDENT(name: String, symbolic: Bool) extends Token with Stroken
-final case class SELECT(name: String) extends Token with Stroken
+case object SPACE extends Token
+case object COMMA extends Token
+case object SEMI extends Token
+case object NEWLINE extends Token
+case object ERROR extends Token
+case object QUOTE extends Token
+final case class LITVAL(value: Literal) extends Token
+final case class IDENT(name: String, symbolic: Bool) extends Token
+final case class SELECT(name: String) extends Token
 final case class OPEN_BRACKET(k: BracketKind) extends Token
 final case class CLOSE_BRACKET(k: BracketKind) extends Token
-final case class BRACKETS(k: BracketKind, contents: Ls[Stroken -> Loc])(val innerLoc: Loc) extends Token with Stroken
-final case class COMMENT(text: String) extends Token with Stroken
+final case class COMMENT(text: String) extends Token
 
 
 sealed abstract class BracketKind:

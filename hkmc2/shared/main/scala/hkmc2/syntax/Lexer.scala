@@ -11,31 +11,15 @@ import Diagnostic.Source.{Lexing, Parsing}
 import Lexer._
 import Literal.{IntLit, DecLit, StrLit}
 
+
 class Lexer(origin: Origin, raise: Raise, dbg: Bool):
+  import Lexer.*
   
   val bytes: Array[Char] = origin.fph.blockStr.toArray
   private val length = bytes.length
   type State = Int
   
-  private val isOpChar = Set(
-    '!', '#', '%', '&', '*', '+', '-', '/', ':', '<', '=', '>', '?', '@', '\\', '^', '|', '~' , '.',
-    // ',', 
-    // ';'
-  )
-  def isIdentFirstChar(c: Char): Bool =
-    c.isLetter || c === '_' || c === '\'' || c === '$'
-  def isIdentChar(c: Char): Bool =
-    isIdentFirstChar(c) || isDigit(c) || c === '\''
-  def isHexDigit(c: Char): Bool =
-    isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
-  def isOctDigit(c: Char): Bool =
-    c >= '0' && c <= '7'
-  def isBinDigit(c: Char): Bool =
-    c === '0' || c === '1'
-  def isDigit(c: Char): Bool =
-    c >= '0' && c <= '9'
-  def isWhiteSpace(c: Char): Bool =
-    c === ' ' | c === '\n' | c === '\r' | c === '\t'
+  
   def matches(i: Int, syntax: Str, start: Int): Bool =
     if start < syntax.length && i + start < length && bytes(i + start) === syntax(start) then matches(i, syntax, start + 1)
     else start >= syntax.length
@@ -318,68 +302,6 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
         lex(i + 1, ind, next(i + 1, ERROR))
   
   lazy val tokens: Ls[Token -> Loc] = lex(0, Nil, Nil)
-  
-  /** Converts the lexed tokens into structured tokens. */
-  lazy val bracketedTokens: Ls[Stroken -> Loc] =
-    import BracketKind._
-    def go(toks: Ls[Token -> Loc], canStartAngles: Bool, stack: Ls[BracketKind -> Loc -> Ls[Stroken -> Loc]], acc: Ls[Stroken -> Loc]): Ls[Stroken -> Loc] =
-      toks match
-        case (QUOTE, l0) :: (IDENT("<", true), l1) :: rest =>
-          go(rest, false, stack, (IDENT("<", true), l1) :: (QUOTE, l0) :: acc)
-        case (QUOTE, l0) :: (IDENT(">", true), l1) :: rest =>
-          go(rest, false, stack, (IDENT(">", true), l1) :: (QUOTE, l0) :: acc)
-        case (OPEN_BRACKET(k), l0) :: rest =>
-          go(rest, false, k -> l0 -> acc :: stack, Nil)
-        case (CLOSE_BRACKET(k1), l1) :: rest =>
-          stack match
-            case ((k0, l0), oldAcc) :: stack =>
-              if k0 =/= k1 && !(k1 === Curly) then
-                raise(ErrorReport(msg"Mistmatched closing ${k1.name}" -> S(l1) ::
-                  msg"does not correspond to opening ${k0.name}" -> S(l0) :: Nil, newDefs = true,
-                  source = Parsing))
-              go(rest, true, stack, BRACKETS(k0, acc.reverse)(l0.right ++ l1.left) -> (l0 ++ l1) :: oldAcc)
-            case Nil =>
-              raise(ErrorReport(msg"Unexpected closing ${k1.name}" -> S(l1) :: Nil,
-                newDefs = true, source = Parsing))
-              go(rest, false, stack, acc)
-        case (IDENT("<", true), loc) :: rest if canStartAngles =>
-          go(OPEN_BRACKET(Angle) -> loc :: rest, false, stack, acc)
-        case (IDENT(">", true), loc) :: rest if canStartAngles && (stack match {
-          case ((Angle, _), _) :: _ => true
-          case _ => false
-        }) =>
-          go(CLOSE_BRACKET(Angle) -> loc :: rest, false, stack, acc)
-        case (IDENT(id, true), loc) :: rest
-        if (canStartAngles && id.forall(_ == '>') && id.length > 1 && (stack match {
-          case ((Angle, _), _) :: _ => true
-          case _ => false
-        })) => // split  `>>` to `>` and `>` so that code like `A<B<C>>` can be parsed correctly
-          go((CLOSE_BRACKET(Angle) -> loc.left) :: (IDENT(id.drop(1), true) -> loc) :: rest, false, stack, acc)
-        case ((tk @ IDENT(">", true), loc)) :: rest if canStartAngles =>
-          raise(WarningReport(
-            msg"This looks like an angle bracket, but it does not close any angle bracket section" -> S(loc) ::
-            msg"Add spaces around it if you intended to use `<` as an operator" -> N :: Nil,
-            newDefs = true, source = Parsing))
-          go(rest, false, stack, tk -> loc :: acc)
-        case (tk: Stroken, loc) :: rest =>
-          go(rest, tk match {
-            case SPACE => false
-            case _ => true
-          }, stack, tk -> loc :: acc)
-        case Nil =>
-          stack match
-            case ((k, l0), oldAcc) :: stack =>
-              raise(ErrorReport(msg"Unmatched opening ${k.name}" -> S(l0) :: (
-                if k === Angle then
-                  msg"Note that `<` without spaces around it is considered as an angle bracket and not as an operator" -> N :: Nil
-                else Nil
-              ), newDefs = true, source = Parsing))
-              (oldAcc ::: acc).reverse
-            case Nil => acc.reverse
-    
-    go(tokens, false, Nil, Nil)
-    
-  
 
 object Lexer:
   
@@ -444,8 +366,6 @@ object Lexer:
     case (SELECT(name: String), _) => "." + name
     case (OPEN_BRACKET(k), _) => k.beg
     case (CLOSE_BRACKET(k), _) => k.end
-    case (BRACKETS(k, contents), _) =>
-      k.beg + printTokens(contents) + k.end
     case (COMMENT(text: String), _) => "/*" + text + "*/"
   def printTokens(ts: Ls[TokLoc]): Str =
     ts.iterator.map(printToken).mkString("|", "|", "|")
@@ -462,3 +382,26 @@ object Lexer:
     case _    => if ch.isControl
       then "\\0" + Integer.toOctalString(ch.toInt) 
       else String.valueOf(ch)
+
+  val isOpChar = Set(
+    '!', '#', '%', '&', '*', '+', '-', '/', ':', '<', '=', '>', '?', '@', '\\', '^', '|', '~' , '.',
+    // ',', 
+    // ';'
+  )
+
+  def isOp(name: String): Bool = name.forall(isOpChar)
+
+  def isIdentFirstChar(c: Char): Bool =
+    c.isLetter || c === '_' || c === '\'' || c === '$'
+  def isIdentChar(c: Char): Bool =
+    isIdentFirstChar(c) || isDigit(c) || c === '\''
+  def isHexDigit(c: Char): Bool =
+    isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+  def isOctDigit(c: Char): Bool =
+    c >= '0' && c <= '7'
+  def isBinDigit(c: Char): Bool =
+    c === '0' || c === '1'
+  def isDigit(c: Char): Bool =
+    c >= '0' && c <= '9'
+  def isWhiteSpace(c: Char): Bool =
+    c === ' ' | c === '\n' | c === '\r' | c === '\t'
