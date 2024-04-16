@@ -1,0 +1,55 @@
+:global
+:p
+
+keyword inc
+define Inc ::= inc Expr ~> $1 + 1
+inc 0
+//│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |Expr| |~>| |$1| |+| |1|↵|inc| |0|
+//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))))
+//│ Pretty-print: 0 + 1
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
+//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+
+:pe
+keyword inc
+define Inc ::= inc Expr ~> $2 + 1
+inc 0
+//│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |Expr| |~>| |$2| |+| |1|↵|inc| |0|
+//│ ╔══[WARNING] Invalid meta-variable index 2
+//│ ║  l.15: 	define Inc ::= inc Expr ~> $2 + 1
+//│ ╙──      	                           ^^
+//│ AST: List(App(App(Var(+),Var($2)),Const(IntLit(1))))
+//│ Pretty-print: $2 + 1
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
+//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+
+keyword inc
+define Inc ::= inc ‹Expr› ~> $1 + 1
+inc 0
+//│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |‹|Expr|›| |~>| |$1| |+| |1|↵|inc| |0|
+//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))))
+//│ Pretty-print: 0 + 1
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
+//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+
+keyword inc
+define Inc ::= inc ‹x: Expr› ~> $x + 1
+inc 0
+//│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |‹|x|:| |Expr|›| |~>| |$x| |+| |1|↵|inc| |0|
+//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))))
+//│ Pretty-print: 0 + 1
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
+//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+
+:pe
+keyword inc
+define Inc ::= inc ‹x: Expr› ~> $y + 1
+inc 0
+//│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |‹|x|:| |Expr|›| |~>| |$y| |+| |1|↵|inc| |0|
+//│ ╔══[WARNING] Invalid meta-variable name $y
+//│ ║  l.46: 	define Inc ::= inc ‹x: Expr› ~> $y + 1
+//│ ╙──      	                                ^^
+//│ AST: List(App(App(Var(+),Var($y)),Const(IntLit(1))))
+//│ Pretty-print: $y + 1
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
+//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  

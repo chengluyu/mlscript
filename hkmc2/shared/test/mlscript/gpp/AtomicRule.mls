@@ -1,0 +1,29 @@
+:global
+:p
+:keepContext
+
+keyword zero
+define A ::= zero ~> 0
+//│ |keyword| |zero|↵|define| |A| |::=| |zero| |~>| |0|
+//│ AST: List()
+//│ Pretty-print: 
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `zero`, `~>` 2 2
+//│ Rules: A ::= zero, default ::= ‹Expr›
+
+// Currently, the leading keyword is handled by block.
+zero
+//│ |zero|
+//│ AST: List(Const(IntLit(0)))
+//│ Pretty-print: 0
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `zero`, `~>` 2 2
+//│ Rules: A ::= zero, default ::= ‹Expr›
+
+1 + zero
+//│ |1| |+| |zero|
+//│ ╔══[PARSE ERROR] Expected an expression; found `zero` instead
+//│ ║  l.21: 	1 + zero
+//│ ╙──      	    ^^^^
+//│ AST: List(App(App(Var(+),Const(IntLit(1))),Empty))
+//│ Pretty-print: 1 + ?
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `zero`, `~>` 2 2
+//│ Rules: A ::= zero, default ::= ‹Expr›

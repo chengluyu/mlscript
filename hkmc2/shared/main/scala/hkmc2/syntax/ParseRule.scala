@@ -5,6 +5,7 @@ import sourcecode.{Name, Line}
 import mlscript.utils.*, shorthands.*
 import hkmc2.Message._
 import BracketKind._
+import scala.annotation.tailrec
 
 
 enum Alt[+A]:
@@ -13,13 +14,6 @@ enum Alt[+A]:
   case Expr[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
   case Blk[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
   case End(a: A)
-
-  def restOption: Option[ParseRule[?]] = this match
-    case k: Kw[?] => Some(k.rest)
-    case Ident(rest) => Some(rest)
-    case Expr(rest) => Some(rest)
-    case Blk(rest) => Some(rest)
-    case End(_) => None
   
   def map[B](f: A => B): Alt[B] = 
     this match
@@ -29,14 +23,17 @@ enum Alt[+A]:
     case End(a) => End(f(a))
     case b: Blk[rest, A] => Blk(b.rest)((tree, rest) => f(b.k(tree, rest)))
 
-  override def toString(): String =
-    val head = this match 
-      case alt @ Kw(kw) => s"`${kw.name}`"
-      case alt @ Ident(_) => "Ident"
-      case alt @ Expr(_) => "Expr"
-      case alt @ Blk(_) => "Block"
-      case End(_) => "End"
-    head + " " + restOption.fold("")(_.altsToString)
+  override def toString: String =
+    def rec[X](first: Bool)(a: Alt[X]): String =
+      val h = if first then "" else " "
+      def t[Y](a: ParseRule[Y]) = a.alts.iterator.map(rec(false)).mkString(" | ")
+      a match 
+        case a @ Kw(kw) => h + kw.name + t(a.rest)
+        case a @ Ident(_) => h + "‹Ident›" + t(a.rest)
+        case a @ Expr(_) => h + "‹Expr›" + t(a.rest)
+        case a @ Blk(_) => h + "‹Block›" + t(a.rest)
+        case End(_) => ""
+    rec(true)(this)
     
 
 class ParseRule[+A](val name: Str)(val alts: Alt[A]*):
@@ -45,10 +42,8 @@ class ParseRule[+A](val name: Str)(val alts: Alt[A]*):
   
   def extend[B >: A](alt: Alt[B]): ParseRule[B] =
     ParseRule(name)((alts :+ alt)*)
-
-  def altsToString: String = alts.mkString(" | ")
   
-  override def toString: Str = s"$name ::= " + altsToString
+  override def toString: Str = s"$name ::= " + alts.mkString(" | ")
   
   lazy val emptyAlt: Option[A] = alts.collectFirst { case Alt.End(a) => a }
   lazy val kwAlts: Map[String, ParseRule[A]] =

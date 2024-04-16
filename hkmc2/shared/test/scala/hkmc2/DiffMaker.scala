@@ -185,10 +185,16 @@ class DiffMaker(file: os.Path, relativeName: Str):
           lastContext = Some(res.context)
           
           if showParse.isSet then
-            output(s"AST: ${res.content}")
-            output(s"Pretty-print: ${res.content.iterator.map(_.print).mkString(", ")}")
+            res.content match
+              case Nil => output("Pretty-print: Nil")
+              case head :: Nil => output(s"Pretty-print: ${head.print}")
+              case list => output("Pretty-print:"); list.foreach(x => output(s"  ${x.print}"))
+            res.content match
+              case Nil => output("AST: Nil")
+              case head :: Nil => output(s"AST: ${head}")
+              case list => output("AST:"); list.foreach(x => output(s"  $x"))
             output(s"Keywords: ${res.context.keywords.valuesIterator.mkString(", ")}")
-            output(s"Rules: ${res.context.rules.valuesIterator.map(_.toString).mkString(",")}")
+            output(s"Rules: ${res.context.rules.valuesIterator.map(_.toString).mkString(", ")}")
         
         catch
           case oh_noes: ThreadDeath => throw oh_noes

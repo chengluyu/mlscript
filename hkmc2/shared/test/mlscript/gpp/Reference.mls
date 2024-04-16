@@ -9,39 +9,37 @@ double 2 + 3
 //│ |keyword| |double|↵|define| |Double| |::=| |double| |Expr| |~>| |$1| |*| |2|↵|double| |1|↵|double| |2| |+| |3|
 //│ AST: List(App(App(Var(*),Const(IntLit(1))),Const(IntLit(2))), App(App(Var(*),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3)))),Const(IntLit(2))))
 //│ Pretty-print: 1 * 2, (2 + 3) * 2
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `double`, `keyword`, `~>` 2 2
+//│ Rules: Double ::= `double` after double ::= Expr after Expr ::= ,default ::= Expr the expression ::= 
 
 :pe
 define DoubleProduct ::= Double Double ~> $1 * $2
 // Because `Double` and `DoubleProduct` shares the same prefix.
 double 1 double 2
 //│ |define| |DoubleProduct| |::=| |Double| |Double| |~>| |$1| |*| |$2|↵|/* Because `Double` and `DoubleProduct` shares the same prefix.*/|↵|double| |1| |double| |2|
-//│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.17: 	// Because `Double` and `DoubleProduct` shares the same prefix.
-//│ ║        	                                                               ^
-//│ ║  l.18: 	double 1 double 2
-//│ ╙──      	
-//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
-//│ ║  l.18: 	double 1 double 2
-//│ ╙──      	                ^
-//│ AST: List(Empty, App(App(Var(*),Const(IntLit(1))),Const(IntLit(2))))
-//│ Pretty-print: ?, 1 * 2
-//│ Keywords: ::=, =>, define, double, keyword, ~>
-//│ Rules: Double ::= `double` Expr End ,default ::= Expr End 
+//│ ╔══[PARSE ERROR] Expected keywords, `Ident`, `Expr`, or other non-terminal symbol in rule definitions; found identifier instead
+//│ ║  l.16: 	define DoubleProduct ::= Double Double ~> $1 * $2
+//│ ╙──      	                         ^^^^^^
+//│ ╔══[PARSE ERROR] Expected end of input; found '~>' keyword instead
+//│ ║  l.16: 	define DoubleProduct ::= Double Double ~> $1 * $2
+//│ ╙──      	                                       ^^
+//│ AST: List()
+//│ Pretty-print: 
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `double`, `keyword`, `~>` 2 2
+//│ Rules: Double ::= `double` after double ::= Expr after Expr ::= ,DoubleProduct ::= ,default ::= Expr the expression ::= 
 
 :pe
 keyword product
 define DoubleProduct ::= product Double Double ~> $1 * $2
 product double 1 double 2
 //│ |keyword| |product|↵|define| |DoubleProduct| |::=| |product| |Double| |Double| |~>| |$1| |*| |$2|↵|product| |double| |1| |double| |2|
-//│ ╔══[PARSE ERROR] Expected reference to Double after after product; found 'double' keyword instead
-//│ ║  l.36: 	product double 1 double 2
-//│ ╙──      	        ^^^^^^
-//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
-//│ ║  l.36: 	product double 1 double 2
-//│ ╙──      	               ^
-//│ AST: List(Empty)
-//│ Pretty-print: ?
-//│ Keywords: ::=, =>, define, double, keyword, ~>
-//│ Rules: Double ::= `double` Expr End ,DoubleProduct ::= Double Double End ,default ::= Expr End 
+//│ ╔══[PARSE ERROR] Expected keywords, `Ident`, `Expr`, or other non-terminal symbol in rule definitions; found identifier instead
+//│ ║  l.33: 	define DoubleProduct ::= product Double Double ~> $1 * $2
+//│ ╙──      	                                 ^^^^^^
+//│ ╔══[PARSE ERROR] Expected end of input; found '~>' keyword instead
+//│ ║  l.33: 	define DoubleProduct ::= product Double Double ~> $1 * $2
+//│ ╙──      	                                               ^^
+//│ AST: List()
+//│ Pretty-print: 
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `double`, `keyword`, `product`, `~>` 2 2
+//│ Rules: Double ::= `double` after double ::= Expr after Expr ::= ,DoubleProduct ::= `product` after product ::= ,default ::= Expr the expression ::= 
