@@ -1,0 +1,33 @@
+:global
+:p
+:keepContext
+
+keyword 0 class 1
+keyword 1 extends 1
+keyword 1 with 1
+define A ::= class Ident ~> declare("$1")
+define B ::= Expr extends Expr ~> extend($1, $2)
+define C ::= Expr with Expr ~> ($1 | $2)
+//│ |keyword| |0| |class| |1|↵|keyword| |1| |extends| |1|↵|keyword| |1| |with| |1|↵|define| |A| |::=| |class| |Ident| |~>| |declare|(|"$1"|)|↵|define| |B| |::=| |Expr| |extends| |Expr| |~>| |extend|(|$1|,| |$2|)|↵|define| |C| |::=| |Expr| |with| |Expr| |~>| |(|$1| ||| |$2|)|
+//│ Pretty-print: Nil
+//│ AST: Nil
+//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `with` 1 1, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, A ::= class ‹Ident›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
+
+class Option
+//│ |class| |Option|
+//│ Pretty-print: declare("Option")
+//│ AST: App(Var(declare),Const(StrLit(Option)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `with` 1 1, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, A ::= class ‹Ident›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
+
+:pe
+A extends B
+//│ |A| |extends| |B|
+//│ ╔══[PARSE ERROR] Expected end of input; found 'extends' keyword instead
+//│ ║  l.25: 	A extends B
+//│ ╙──      	  ^^^^^^^
+//│ Pretty-print: A
+//│ AST: Var(A)
+//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `with` 1 1, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, A ::= class ‹Ident›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›

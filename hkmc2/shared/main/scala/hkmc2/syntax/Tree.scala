@@ -48,7 +48,11 @@ enum Tree extends Located:
     case App(App(Var(op), lhs), rhs) if Lexer.isOp(op) =>
       val (leftPrec, rightPrec) = Parser.opPrec(op)
       s"${lhs.bracketed(Left(leftPrec))} $op ${rhs.bracketed(Right(rightPrec))}"
-    case App(lhs, rhs) => s"(${lhs.print})(${rhs.print})"
+    case App(lhs, rhs) =>
+      val left = lhs match
+        case Var(name) => name
+        case _ => s"(${lhs.print})"
+      left + s"(${rhs.print})"
 
   def bracketed(outerPrec: Either[Int, Int]): String = this match
     case App(App(Var(op), lhs), rhs) if Lexer.isOp(op) =>

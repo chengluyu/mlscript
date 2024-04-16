@@ -71,6 +71,7 @@ object Parser:
     val `~>` = Keyword("~>", Some(BASE), Some(BASE))
     val `keyword` = Keyword("keyword", None, None)
     val `define` = Keyword("define", None, None)
+    val `syntax` = Keyword("syntax", None, None)
     val `=>` = Keyword("=>", Some(BASE + 1), Some(BASE))
 
     def unapply(t: Token)(using context: Context): Option[Keyword] = t match
@@ -81,6 +82,14 @@ object Parser:
     def unapply(t: Token)(using context: Context): Option[String] = t match
       case IDENT(name, true) if !context.keywords.contains(name) => Some(name)
       case _ => None
+
+  private val captureNamePattern = """\$([a-zA-Z_][a-zA-Z0-9_]*|\d+)""".r
+
+  def interpolate(text: String, args: Array[Tree], nameMap: Map[String, Int]): String =
+    captureNamePattern.replaceAllIn(text, _.group(1) match
+      case n => n.toIntOption match
+        case Some(i) => args(i - 1).print
+        case None => args(nameMap(n)).print)
 end Parser
 
 import Parser._
@@ -208,7 +217,12 @@ abstract class Parser(
     case (tok @ KW(KW.`keyword`), loc) :: _ =>
       consume; blockCont(using parseKeyword)
     case (tok @ KW(KW.`define`), loc) :: _ =>
-      consume; blockCont(using parseDefine)
+      consume
+      expectIdent("`define`", blockCont): (id, loc) =>
+        expectKeyword(KW.`::=`, "the name", blockCont): (tok, loc) =>
+          blockCont(using context + (id.name -> parseDefine))
+    case (tok @ KW(KW.`syntax`), loc) :: _ =>
+      consume; blockCont(using context + parseDefine)
     case (tok @ (id: IDENT), loc) :: _ =>
       val head = tryKwAlt(id, loc, context.prefixRules, errExpr):
         tryIdentAlt(id, loc, context.prefixRules, errExpr):
@@ -263,7 +277,7 @@ abstract class Parser(
     badDef(acc, "keywords, `Ident`, `Expr`, or other non-terminal symbol in rule definitions", actual, loco)
 
   /** Parse a define declaration */
-  def parseDefine(using context: Context): Context =
+  def parseDefine(using context: Context): Alt[Tree] =
     def parseRhs(nameMap: Map[String, Int]): Ls[Tree] => Tree =
       val tree = expr(0)
       (args) => subst(tree, args.toArray, nameMap)
@@ -306,12 +320,10 @@ abstract class Parser(
         case Nil => badDef(acc, "an identifier", "end of input", lastLoc)
       case (tok, loc) :: _ => badDef(acc, tok.describe, Some(loc))
       case Nil => badDef(acc, "end of input", lastLoc)
-    expectIdent("`define`", context): (id, loc) =>
-      expectKeyword(KW.`::=`, "the name", context): (tok, loc) =>
-        val (alt, names) = parseLhs(Nil)
-        val namePairs = names.iterator.zipWithIndex.collect:
-          case (Some(n), i) => n -> i
-        context + (id.name -> alt.map(parseRhs(namePairs.toMap)))
+    val (alt, names) = parseLhs(Nil)
+    val namePairs = names.iterator.zipWithIndex.collect:
+      case (Some(n), i) => n -> i
+    alt.map(parseRhs(namePairs.toMap))
 
   private def tryKwAlt[A](id: IDENT, loc: Loc, rule: ParseRule[A], failure: => A)(otherwise: => A)(using context: Context): A =
     wrap(""):
@@ -384,6 +396,7 @@ abstract class Parser(
             case N => tryEmpty(rule, tok.describe, loc)
           case N => tryEmpty(rule, tok.describe, loc)
       case _ =>
+        printDbg(s"ruh $rule")
         rule.identAlt match
         case S(identAlt) =>
           consume
@@ -489,6 +502,8 @@ abstract class Parser(
         case None => warn(msg"Invalid meta-variable name ${nme}" -> t.toLoc :: Nil); t
     case Tree.App(f, a) => Tree.App(subst(f, args, nameMap), subst(a, args, nameMap))
     case Tree.Lam(lhs, rhs) => Tree.Lam(subst(lhs, args, nameMap), subst(rhs, args, nameMap))
+    case Tree.Const(Literal.StrLit(text)) =>
+      Tree.Const(Literal.StrLit(interpolate(text, args, nameMap)))
     case _ => t
 
 end Parser

@@ -8,7 +8,7 @@ keyword 3 in 1
 //│ |keyword| |10000| |let| |1|↵|keyword| |2| |=| |2|↵|keyword| |3| |in| |1|
 //│ Pretty-print: Nil
 //│ AST: Nil
-//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `in` 3 1, `keyword`, `let` 10000 1, `~>` 2 2
+//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `in` 3 1, `keyword`, `let` 10000 1, `syntax`, `~>` 2 2
 //│ Rules: default ::= ‹Expr›
 
 define LetIn ::=
@@ -18,8 +18,8 @@ define LetIn ::=
 //│ |define| |LetIn| |::=| |let| |‹|name|:| |Ident|›| |=| |‹|value|:| |Expr|›| |in| |‹|body|:| |Expr|›|↵|~>|↵|(|$name| |=>| |$body|)|(|$value|)|
 //│ Pretty-print: Nil
 //│ AST: Nil
-//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `in` 3 1, `keyword`, `let` 10000 1, `~>` 2 2
-//│ Rules: LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›, default ::= ‹Expr›
+//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `in` 3 1, `keyword`, `let` 10000 1, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
 
 let x = 0 in x + 1
 let x = 1 in let y = 2 in x + y
@@ -39,41 +39,41 @@ let x = 1 in let y = 2 in x + y
 //│   App(App(Var(+),Const(IntLit(1))),App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(0))))
 //│   App(App(Var(+),Const(IntLit(1))),App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(0))))
 //│   App(App(Var(+),Const(IntLit(1))),App(Lam(Var(x),App(Lam(Var(y),App(App(Var(+),Var(x)),Var(y))),Const(IntLit(2)))),Const(IntLit(1))))
-//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `in` 3 1, `keyword`, `let` 10000 1, `~>` 2 2
-//│ Rules: LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›, default ::= ‹Expr›
+//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `in` 3 1, `keyword`, `let` 10000 1, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
 
 keyword 10000 fun 1
 //│ |keyword| |10000| |fun| |1|
 //│ Pretty-print: Nil
 //│ AST: Nil
-//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `~>` 2 2
-//│ Rules: LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›, default ::= ‹Expr›
+//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
 
-define Fun ::=
+syntax
   fun ‹name: Ident› ‹arg: Ident› = ‹body: Expr› ‹program: Expr›
   ~>
   let $name = ($arg => $body) in $program
-//│ |define| |Fun| |::=| |fun| |‹|name|:| |Ident|›| |‹|arg|:| |Ident|›| |=| |‹|body|:| |Expr|›| |‹|program|:| |Expr|›|↵|~>|↵|let| |$name| |=| |(|$arg| |=>| |$body|)| |in| |$program|
+//│ |syntax| |fun| |‹|name|:| |Ident|›| |‹|arg|:| |Ident|›| |=| |‹|body|:| |Expr|›| |‹|program|:| |Expr|›|↵|~>|↵|let| |$name| |=| |(|$arg| |=>| |$body|)| |in| |$program|
 //│ Pretty-print: Nil
 //│ AST: Nil
-//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `~>` 2 2
-//│ Rules: Fun ::= fun ‹Ident› ‹Ident› = ‹Expr› ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›, default ::= ‹Expr›
+//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#2 ::= fun ‹Ident› ‹Ident› = ‹Expr› ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
 
 fun id x = x
 fun inc n = n + 1
 let z = 0 in id(inc(2))
 //│ |fun| |id| |x| |=| |x|↵|fun| |inc| |n| |=| |n| |+| |1|↵|let| |z| |=| |0| |in| |id|(|inc|(|2|)|)|
-//│ Pretty-print: (id => (inc => (z => (id)((inc)(2)))(0))(n => n + 1))(x => x)
+//│ Pretty-print: (id => (inc => (z => id(inc(2)))(0))(n => n + 1))(x => x)
 //│ AST: App(Lam(Var(id),App(Lam(Var(inc),App(Lam(Var(z),App(Var(id),App(Var(inc),Const(IntLit(2))))),Const(IntLit(0)))),Lam(Var(n),App(App(Var(+),Var(n)),Const(IntLit(1)))))),Lam(Var(x),Var(x)))
-//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `~>` 2 2
-//│ Rules: Fun ::= fun ‹Ident› ‹Ident› = ‹Expr› ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›, default ::= ‹Expr›
+//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#2 ::= fun ‹Ident› ‹Ident› = ‹Expr› ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
 
 let x = 0 in
   fun id x = x
   fun inc n = n + 1
   id(inc(2))
 //│ |let| |x| |=| |0| |in| |fun| |id| |x| |=| |x|↵|fun| |inc| |n| |=| |n| |+| |1|↵|id|(|inc|(|2|)|)|
-//│ Pretty-print: (x => (id => (inc => (id)((inc)(2)))(n => n + 1))(x => x))(0)
+//│ Pretty-print: (x => (id => (inc => id(inc(2)))(n => n + 1))(x => x))(0)
 //│ AST: App(Lam(Var(x),App(Lam(Var(id),App(Lam(Var(inc),App(Var(id),App(Var(inc),Const(IntLit(2))))),Lam(Var(n),App(App(Var(+),Var(n)),Const(IntLit(1)))))),Lam(Var(x),Var(x)))),Const(IntLit(0)))
-//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `~>` 2 2
-//│ Rules: Fun ::= fun ‹Ident› ‹Ident› = ‹Expr› ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›, default ::= ‹Expr›
+//│ Keywords: `::=` 2 2, `=` 2 2, `=>` 3 2, `define`, `fun` 10000 1, `in` 3 1, `keyword`, `let` 10000 1, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#2 ::= fun ‹Ident› ‹Ident› = ‹Expr› ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
