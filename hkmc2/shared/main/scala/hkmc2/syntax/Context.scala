@@ -11,6 +11,9 @@ case class Context(
   def +(rule: (String, Alt[Tree])): Context =
     copy(rules = rules + (rule._1 -> ParseRule(rule._1)(rule._2)))
 
+  def ++(kws: Iterable[Keyword]): Context =
+    copy(keywords = keywords ++ kws.map(kw => kw.name -> kw))
+
   lazy val prefixRules: ParseRule[Tree] =
     ParseRule("all prefix rules")(rules.valuesIterator.flatMap(_.alts).toSeq: _*)
 end Context

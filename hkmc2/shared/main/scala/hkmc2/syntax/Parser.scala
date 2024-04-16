@@ -81,11 +81,6 @@ object Parser:
     def unapply(t: Token)(using context: Context): Option[String] = t match
       case IDENT(name, true) if !context.keywords.contains(name) => Some(name)
       case _ => None
-
-  object RULE:
-    def unapply(t: Token)(using context: Context): Option[ParseRule[Tree]] = t match
-      case IDENT(name, false) => context.rules.get(name)
-      case _ => None
 end Parser
 
 import Parser._
@@ -95,10 +90,7 @@ abstract class Parser(
   tokens: Ls[TokLoc],
   raiseFun: Diagnostic => Unit,
   val dbg: Bool,
-  // fallbackLoc: Opt[Loc], description: Str = "input",
 ):
-  outer =>
-  
   protected def doPrintDbg(msg: => Str): Unit
   protected def printDbg(msg: => Any): Unit =
     doPrintDbg("│ " * this.indent + msg)
@@ -240,24 +232,30 @@ abstract class Parser(
       case _ => WithContext(Nil, context)
 
   /** Parse a keyword declaration */
-  def parseKeyword(using Context): Context =
-    def kw(using context: Context): Context = yeetSpaces match
-      case (id: IDENT, _) :: _ =>
-        consume
-        yeetSpaces match // the left precedence
-        case (tok @ LITVAL(Literal.IntLit(leftPrec)), loc) :: _ =>
-          consume
-          yeetSpaces match // the right precedence
-          case (tok @ LITVAL(Literal.IntLit(rightPrec)), loc) :: _ =>
-            consume; context + Keyword(id.name, Some(leftPrec.toInt), Some(rightPrec.toInt))
-          case _ => context + Keyword(id.name, Some(leftPrec.toInt), None)
-        case _ => context + Keyword(id.name, None, None)
-      case (tok, loc) :: _ => unexpected("an identifier", tok.describe, S(loc), context)
-      case Nil => unexpected("an identifier", "end of input", lastLoc, context)
-    def kwCont(using context: Context): Context = yeetSpaces match
-      case (COMMA, _) :: _ => consume; kwCont(using kw)
-      case _ => summon[Context]
-    kwCont(using kw)
+  def parseKeyword(using context: Context): Context =
+    /** Parse a keyword and its right precedence */
+    def kwr: Option[(String, Option[Int])] = yeetSpaces match
+      case (id: IDENT, _) :: _ => consume;
+        yeetSpaces match
+        case (tok @ LITVAL(Literal.IntLit(rightPrec)), loc) :: _ =>
+          consume; Some((id.name, Some(rightPrec.toInt)))
+        case _ => Some((id.name, None))
+      case (tok, loc) :: _ => unexpected("an identifier", tok.describe, S(loc), None)
+      case Nil => unexpected("an identifier", "end of input", lastLoc, None)
+    /** Parse a keyword starting with an optional left precedence */
+    def kw: Option[Keyword] = yeetSpaces match
+      case (LITVAL(Literal.IntLit(leftPrec)), _) :: _ => consume; kwr.map:
+        case(name, rightPrec) => Keyword(name, Some(leftPrec.toInt), rightPrec)
+      case (_: IDENT, _) :: _ => kwr.map:
+        case(name, rightPrec) => Keyword(name, None, rightPrec)
+      case (tok, loc) :: _ => unexpected("an identifier", tok.describe, S(loc), None)
+      case Nil => unexpected("an identifier", "end of input", lastLoc, None)
+    @tailrec def kwCont(acc: List[Keyword]): List[Keyword] = yeetSpaces match
+      case (COMMA, _) :: _ => consume; kw match
+        case Some(k) => kwCont(k :: acc)
+        case None => acc.reverse
+      case _ => acc.reverse
+    kw.fold(context)(k => context ++ kwCont(k :: Nil))
 
   /** Parse a define declaration */
   def parseDefine(using context: Context): Context =
@@ -275,9 +273,6 @@ abstract class Parser(
       case (tok @ KW(KW.`~>`), loc) :: _ => consume; Alt.End(Nil)
       case (tok @ KW(kw), loc) :: _ =>
         consume; Alt.Kw(kw)(ParseRule(s"after ${kw.name}")(parseLhs))
-      case (tok @ RULE(rule), loc) :: _ =>
-        consume
-        Alt.Ref(rule.name, rule)(ParseRule(s"after Ref")(parseLhs))(_ :: _)
       case (id: IDENT, loc) :: _ => consume; symbol(id, loc)
       case (tok, loc) :: _ => badEnd(tok.describe, Some(loc))
       case Nil => badEnd("end of input", lastLoc)

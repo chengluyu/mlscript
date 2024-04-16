@@ -10,7 +10,6 @@ import BracketKind._
 enum Alt[+A]:
   case Kw[Rest](kw: Keyword)(val rest: ParseRule[Rest]) extends Alt[Rest]
   case Ident[Rest, +Res](val rest: ParseRule[Rest])(val k: (Tree.Var, Rest) => Res) extends Alt[Res]
-  case Ref[First, Rest, +Res](name: String, rule: ParseRule[First])(val rest: ParseRule[Rest])(val k: (First, Rest) => Res) extends Alt[Res]
   case Expr[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
   case Blk[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
   case End(a: A)
@@ -18,7 +17,6 @@ enum Alt[+A]:
   def restOption: Option[ParseRule[?]] = this match
     case k: Kw[?] => Some(k.rest)
     case Ident(rest) => Some(rest)
-    case alt @ Ref(_, _) => Some(alt.rest)
     case Expr(rest) => Some(rest)
     case Blk(rest) => Some(rest)
     case End(_) => None
@@ -27,8 +25,6 @@ enum Alt[+A]:
     this match
     case k: Kw[?] => Kw(k.kw)(k.rest.map(f))
     case i: Ident[?, ?] => Ident(i.rest)((str, rest) => f(i.k(str, rest)))
-    case r: Ref[fst, rest, A] =>
-      Ref[fst, rest, B](r.name, r.rule)(r.rest)((tree, rest) => f(r.k(tree, rest)))
     case e: Expr[rest, A] => Expr(e.rest)((tree, rest) => f(e.k(tree, rest)))
     case End(a) => End(f(a))
     case b: Blk[rest, A] => Blk(b.rest)((tree, rest) => f(b.k(tree, rest)))
@@ -37,7 +33,6 @@ enum Alt[+A]:
     val head = this match 
       case alt @ Kw(kw) => s"`${kw.name}`"
       case alt @ Ident(_) => "Ident"
-      case alt @ Ref(name, _) => name
       case alt @ Expr(_) => "Expr"
       case alt @ Blk(_) => "Block"
       case End(_) => "End"
@@ -69,7 +64,6 @@ class ParseRule[+A](val name: Str)(val alts: Alt[A]*):
     alts.map:
       case Alt.Kw(kw) => s"'${kw.name}' keyword"
       case Alt.Ident(rest) => "identifier"
-      case Alt.Ref(name, _) => s"reference to $name"
       case Alt.Expr(rest) => "expression"
       case Alt.Blk(rest) => "indented block"
       case Alt.End(_) => "end of input"

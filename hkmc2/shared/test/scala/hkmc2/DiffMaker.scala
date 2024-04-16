@@ -176,8 +176,7 @@ class DiffMaker(file: os.Path, relativeName: Str):
           output(syntax.Lexer.printTokens(tokens))
         
         if noParse.isUnset then
-          given context: syntax.Context =
-            if keepContext.isSet
+          given context: syntax.Context = if keepContext.isSet
             then lastContext.getOrElse(syntax.Context.default)
             else syntax.Context.default
           val p = new syntax.Parser(origin, tokens, raise, dbg = dbgParsing.isSet):
@@ -185,14 +184,11 @@ class DiffMaker(file: os.Path, relativeName: Str):
           val res = p.parseAll(p.block)
           lastContext = Some(res.context)
           
-          // if (parseOnly)
-          //   output(s"Parsed: ${res.showDbg}")
-          
           if showParse.isSet then
             output(s"AST: ${res.content}")
             output(s"Pretty-print: ${res.content.iterator.map(_.print).mkString(", ")}")
-            output(s"Keywords: ${context.keywords.keysIterator.mkString(", ")}")
-            output(s"Rules: ${context.rules.valuesIterator.map(_.toString).mkString(",")}")
+            output(s"Keywords: ${res.context.keywords.valuesIterator.mkString(", ")}")
+            output(s"Rules: ${res.context.rules.valuesIterator.map(_.toString).mkString(",")}")
         
         catch
           case oh_noes: ThreadDeath => throw oh_noes

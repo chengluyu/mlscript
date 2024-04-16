@@ -5,19 +5,33 @@ keyword a
 //│ |keyword| |a|
 //│ AST: List()
 //│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Keywords: `::=` 2 2, `=>` 3 2, `a`, `define`, `keyword`, `~>` 2 2
 //│ Rules: default ::= Expr End 
 
 keyword a, b
 //│ |keyword| |a|,| |b|
 //│ AST: List()
 //│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Keywords: `::=` 2 2, `=>` 3 2, `a`, `b`, `define`, `keyword`, `~>` 2 2
 //│ Rules: default ::= Expr End 
 
 keyword a, b, c
 //│ |keyword| |a|,| |b|,| |c|
 //│ AST: List()
 //│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Keywords: `::=` 2 2, `=>` 3 2, `a`, `b`, `c`, `define`, `keyword`, `~>` 2 2
+//│ Rules: default ::= Expr End 
+
+keyword 0 a 0
+//│ |keyword| |0| |a| |0|
+//│ AST: List()
+//│ Pretty-print: 
+//│ Keywords: `::=` 2 2, `=>` 3 2, `a` 0 0, `define`, `keyword`, `~>` 2 2
+//│ Rules: default ::= Expr End 
+
+keyword 20 a
+//│ |keyword| |20| |a|
+//│ AST: List()
+//│ Pretty-print: 
+//│ Keywords: `::=` 2 2, `=>` 3 2, `a` 20, `define`, `keyword`, `~>` 2 2
 //│ Rules: default ::= Expr End 

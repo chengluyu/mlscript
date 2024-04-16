@@ -11,7 +11,7 @@ class Keyword(val name: String, val leftPrec: Opt[Int], val rightPrec: Opt[Int])
   def assumeRightPrec: Int = rightPrec.getOrElse(lastWords(s"$this does not have right precedence"))
   def leftPrecOrMin: Int = leftPrec.getOrElse(Int.MinValue)
   def rightPrecOrMin: Int = rightPrec.getOrElse(Int.MaxValue)
-  override def toString: Str = s"keyword '$name'"
+  override def toString: Str = s"`$name`" + leftPrec.fold("")(" " + _) + rightPrec.fold("")(" " + _)
 
 object Keyword:
   // def unapply(kw: Keyword): Opt[Str] = S(kw.name)
