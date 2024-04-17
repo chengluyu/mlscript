@@ -75,7 +75,7 @@ object Parser:
     val `=>` = Keyword("=>", Some(BASE + 1), Some(BASE))
 
     def unapply(t: Token)(using context: Context): Option[Keyword] = t match
-      case id: IDENT => context.keyword(id)
+      case id: IDENT if !id.escaped => context.keyword(id)
       case _ => None
   
   object OP:
@@ -220,23 +220,9 @@ abstract class Parser(
     case (tok, loc) :: _ => unexpected(s"${keyword.name} after $previous", tok.describe, S(loc), failure)
     case Nil => unexpected(s"${keyword.name} after $previous", "end of input", lastLoc, failure)
   
-  def block(using context: Context): WithContext[List[Tree]] = wrap("block"):
-    cur match
-    case Nil => WithContext(Nil, context)
-    case (SPACE, _) :: _ => consume; block
-    case (tok @ KW(KW.`keyword`), loc) :: _ =>
-      consume; blockCont(using parseKeyword)
-    case (tok @ KW(KW.`define`), loc) :: _ =>
-      consume
-      expectIdent("`define`", blockCont): (id, loc) =>
-        expectKeyword(KW.`::=`, "the name", blockCont): (tok, loc) =>
-          blockCont(using context + (id.name -> parseDefine))
-    case (tok @ KW(KW.`syntax`), loc) :: _ =>
-      consume; blockCont(using context + parseDefine)
-    case _ => val head = parseBlockItem; blockCont.map(head :: _)
-  
-  def blockCont(using context: Context): WithContext[List[Tree]] =
-    yeetSpaces match
+  final def block(using context: Context): WithContext[List[Tree]] = wrap("block"):
+    inline def blockCont(using context: Context): WithContext[List[Tree]] =
+      yeetSpaces match
       case (COMMA | SEMI, _) :: _ =>
         consume
         yeetSpaces match
@@ -245,6 +231,22 @@ abstract class Parser(
         block
       case (NEWLINE, _) :: _ => consume; block
       case _ => WithContext(Nil, context)
+    yeetSpaces match
+    case Nil => WithContext(Nil, context)
+    case (tok @ KW(KW.`keyword`), loc) :: _ =>
+      consume; blockCont(using parseKeyword)
+    case (tok @ KW(KW.`define`), loc) :: _ =>
+      consume
+      expectIdent(previous = "define", blockCont): (id, loc) =>
+        expectKeyword(KW.`::=`, previous = "rule name", blockCont): (tok, loc) =>
+          blockCont(using context + (id.name -> parseDefine))
+    case (tok @ KW(KW.`syntax`), loc) :: _ =>
+      consume; blockCont(using context + parseDefine)
+    case (tok, loc) :: _ => // Otherwise, parse expressions.
+      // Note: leading keywords will be handled in `expr`.
+      // Note: we don't try `IdentAlt` in the beginning.
+      val hd = expr(0)
+      blockCont.map(hd :: _)
 
   def parsePrecedence(isLeft: Bool)(using Context): Option[Int] = wrap(""):
     yeetSpaces match
@@ -264,7 +266,7 @@ abstract class Parser(
         case (tok, loc) :: _ => unexpected("than", tok.describe, S(loc), None)
         case Nil => unexpectedEOI("than", None)
       case (tok, loc) :: _ => unexpected("an integer, min, max or precedence relations", tok.describe, S(loc), None)
-      case Nil => unexpectedEOI("an integer, min, max or precedence relations", None)
+      // case Nil => unexpectedEOI("an integer, min, max or precedence relations", None) // TODO: why unreachable
     case _ :: _ | Nil => None
 
   /** Parse a keyword declaration */
@@ -304,7 +306,7 @@ abstract class Parser(
         case "Ident" =>
           val (alt, names) = parseLhs(name :: acc)
           (Alt.Ident(ParseRule(s"after Ident")(alt))(_ :: _), names)
-        case "Expr" =>
+        case "Expr" | "_" =>
           val (alt, names) = parseLhs(name :: acc)
           (Alt.Expr(ParseRule(s"after Expr")(alt))(_ :: _), names)
         case _  => badDef(acc, symbol.describe, Some(loc))
@@ -346,39 +348,39 @@ abstract class Parser(
   /** If the rule accepts an expression, continue subsequent rules. Otherwise, try the empty.  */
   private def tryExprThenEmpty[A](prec: Int, tok: Token, loc: Loc, rule: ParseRule[A], afterExpr: Bool)(using Context): Option[A] =
     wrap(s"$prec, ${tok.describe}"):
-      rule.exprAlt match
+      rule.exprAlts match
       // Allow an optional NEWLINE if the following is also an expression.
-      case S(exprAlt) =>
+      case exprAlts: ::[Alt.Expr[?, A]] =>
         if afterExpr then yeetSpaces match
           case (NEWLINE, _) :: _ => consume;
           case _ => ()
         val e = expr(prec)
-        parseRule(prec, exprAlt.rest, true).map(res => exprAlt.k(e, res))
-      case N => tryEmpty(rule, tok.describe, loc)
+        // Try each `exprAlt` by peeking its `rest`.
+        // This can be improved by pre-processing rules.
+        // It is mostly used in parsing optional symbols.
+        // Only `Kw` and `End` are implemented.
+        yeetSpaces match
+          case (KW(kw), _) :: _ =>
+            // Find the first `exprAlt` that accepts the keyword.
+            exprAlts.iterator.flatMap:
+              case alt: Alt.Expr[rst, A] =>
+                alt.rest.kwRules.get(kw).map:
+                  case rst => rst.map(res => alt.k(e, res))
+                  //   ^^^ `rst` is the rule after `kw`
+            .nextOption.flatMap:
+              case rule => parseRule(kw.rightPrecOrMin, rule, false)
+          case _ =>
+            tryEmpty(rule, tok.describe, loc)
+        // rule.exprAlts.iterator.map(_.rest).map(parseRule(prec, _, true)).collectFirst:
+        //   case Some(res) => res.map(rule.exprAlts.head.k(e, _))
+        //   case None => tryEmpty(rule, tok.describe, loc)
+        // parseRule(prec, exprAlt.rest, true).map(res => exprAlt.k(e, res))
+      case Nil => tryEmpty(rule, tok.describe, loc)
 
   /** If the rule accepts an empty, return the result, otherwise report the unexpectedness.  */
   private def tryEmpty[A](rule: ParseRule[A], toks: String, loc: Loc): Option[A] = rule.emptyAlt match
     case S(outcome) => S(outcome)
     case N => consume; unexpected(s"${rule.whatComesAfter} after ${rule.name}", toks, S(loc), N)
-
-  private def parseBlockItem(using context: Context): Tree = wrap("blockItem"):
-    cur match
-    // case (tok @ KW(kw), loc) :: _ =>
-    //   context.prefix(kw) match
-    //     case Some(rule) =>
-    //       consume
-    //       parseRule(CommaPrecNext, rule, false).getOrElse(errExpr)
-    //     case None =>
-    //       unexpected(s"${context.prefixRules.whatComesAfter} after ${kw.name}", tok.describe, S(loc), errExpr)
-    case (tok, loc) :: _ =>
-      // Note: we don't try `IdentAlt` in the beginning.
-      context.prefixRules.exprAlt match
-      case S(exprAlt) =>
-        val e = expr(0) // which prec?
-        parseRule(CommaPrecNext, exprAlt.rest, true).map(res => exprAlt.k(e, res)).getOrElse(errExpr)
-      case N =>
-        unexpected(s"${context.prefixRules.whatComesAfter} after ${context.prefixRules.name}", tok.describe, S(loc), errExpr)
-    case Nil => ??? // unreachable
   
   /** A result of None means there was an error (already reported) and nothing could be parsed. */
   def parseRule[A](prec: Int, rule: ParseRule[A], afterExpr: Bool)(using context: Context): Opt[A] = wrap(prec, rule):
@@ -389,21 +391,11 @@ abstract class Parser(
       // Note: we only check precedence when picking new rules.
       // If there is an existing rule, we don't need to check precedence.
       case S(kw) =>
-        rule.kwAlts.get(kw) match
+        rule.kwRules.get(kw) match
         case S(subRule) =>
           consume
           parseRule(kw.rightPrecOrMin, subRule, false)
-        case N =>
-          // No rules begin with an identifer. Try `exprAlt`.
-          rule.exprAlt match
-          case S(exprAlt) =>
-            consume
-            context.prefix(kw) match
-            case S(subRule) =>
-              val e = parseRule(kw.rightPrec.getOrElse(0), subRule, afterExpr).getOrElse(errExpr)
-              parseRule(prec, exprAlt.rest, true).map(res => exprAlt.k(e, res))
-            case N => tryEmpty(rule, tok.describe, loc)
-          case N => tryEmpty(rule, tok.describe, loc)
+        case N => tryExprThenEmpty(prec, tok, loc, rule, afterExpr)
       case _ =>
         rule.identAlt match
         case S(identAlt) =>
@@ -454,11 +446,11 @@ abstract class Parser(
         val rhs = expr(kw.rightPrecOrMin)
         val res = Lam(acc, rhs)
         exprCont(res, prec, allowNewlines)
-      case (KW(kw), loc) :: _ if kw.leftPrecOrMin > prec =>
+      case (KW(kw), loc) :: _ if kw.leftPrecOrMin > prec => // TODO: Using `leftPrecOrMin` or `leftPrecOrMax`?
         printDbg(s"looking for infix rules for $kw")
         consume
         context.infixRules.get(kw) match
-          case Some(rule) =>
+          case Some(rule) => // Suppose we're in `Expr KW rule`
             parseRule(kw.rightPrecOrMin, rule, true).map(_(acc)).getOrElse(errExpr)
           case None =>
             val legalKws = context.infixRules.keys.iterator
@@ -477,7 +469,8 @@ abstract class Parser(
         exprCont(Apps(Var("."), acc, Var(name).withLoc(S(l0))), prec, allowNewlines)
       case (br @ OPEN_BRACKET(Round), loc) :: _ if prec <= AppPrec =>
         consume
-        closeBracket(exprCont(App(acc, expr(0)), prec, allowNewlines))
+        val res = closeBracket(exprCont(App(acc, expr(0)), prec, allowNewlines))
+        exprCont(res, prec, allowNewlines)
       case _ => acc
 
   private def closeBracket[A](res: A)(using Context): A = closeBracket(res, res)

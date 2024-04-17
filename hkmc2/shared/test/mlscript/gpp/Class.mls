@@ -4,40 +4,40 @@
 
 keyword 0 class 1
 keyword 1 extends 1
-keyword 1 with 1
+keyword 2 with 1
 define A ::= class Expr ~> defineClass($1)
 define B ::= Expr extends Expr ~> $1 <: $2
 define C ::= Expr with Expr ~> ($1 | $2)
-//│ |keyword| |0| |class| |1|↵|keyword| |1| |extends| |1|↵|keyword| |1| |with| |1|↵|define| |A| |::=| |class| |Expr| |~>| |defineClass|(|$1|)|↵|define| |B| |::=| |Expr| |extends| |Expr| |~>| |$1| |<:| |$2|↵|define| |C| |::=| |Expr| |with| |Expr| |~>| |(|$1| ||| |$2|)|
-//│ Pretty-print: Nil
-//│ AST: Nil
-//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `syntax`, `with` 1 1, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, A ::= class ‹Expr›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
+//│ |keyword| |0| |class| |1|↵|keyword| |1| |extends| |1|↵|keyword| |2| |with| |1|↵|define| |A| |::=| |class| |Expr| |~>| |defineClass|(|$1|)|↵|define| |B| |::=| |Expr| |extends| |Expr| |~>| |$1| |<:| |$2|↵|define| |C| |::=| |Expr| |with| |Expr| |~>| |(|$1| ||| |$2|)|
+//│ Keywords: `class` 0 1, `extends` 1 1, `with` 2 1
+//│ Rules: A ::= class ‹Expr›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
 
 class Option
 //│ |class| |Option|
 //│ Pretty-print: defineClass(Option)
 //│ AST: App(Var(defineClass),Var(Option))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `syntax`, `with` 1 1, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, A ::= class ‹Expr›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
 
 A extends B
 //│ |A| |extends| |B|
 //│ Pretty-print: A <: B
 //│ AST: App(App(Var(<:),Var(A)),Var(B))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `syntax`, `with` 1 1, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, A ::= class ‹Expr›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
 
 A with B
 //│ |A| |with| |B|
 //│ Pretty-print: A | B
 //│ AST: App(App(Var(|),Var(A)),Var(B))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `syntax`, `with` 1 1, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, A ::= class ‹Expr›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
 
 class Some extends Option
 //│ |class| |Some| |extends| |Option|
 //│ Pretty-print: defineClass(Some) <: Option
 //│ AST: App(App(Var(<:),App(Var(defineClass),Var(Some))),Var(Option))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `class` 0 1, `define`, `extends` 1 1, `keyword`, `syntax`, `with` 1 1, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, A ::= class ‹Expr›, B ::= ‹Expr› extends ‹Expr›, C ::= ‹Expr› with ‹Expr›
+
+class Some extends Option with Serializable
+//│ |class| |Some| |extends| |Option| |with| |Serializable|
+//│ Pretty-print: defineClass(Some) <: Option | Serializable
+//│ AST: App(App(Var(<:),App(Var(defineClass),Var(Some))),App(App(Var(|),Var(Option)),Var(Serializable)))
+
+class Some extends Option with Serializable with Product
+//│ |class| |Some| |extends| |Option| |with| |Serializable| |with| |Product|
+//│ Pretty-print: defineClass(Some) <: Option | Serializable | Product
+//│ AST: App(App(Var(<:),App(Var(defineClass),Var(Some))),App(App(Var(|),Var(Option)),App(App(Var(|),Var(Serializable)),Var(Product))))

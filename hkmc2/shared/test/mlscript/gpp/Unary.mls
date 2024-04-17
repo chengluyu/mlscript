@@ -5,53 +5,39 @@
 keyword (stronger than *) negate (stronger than *)
 syntax negate Expr ~> (0 - $1)
 //│ |keyword| |(|stronger| |than| |*|)| |negate| |(|stronger| |than| |*|)|↵|syntax| |negate| |Expr| |~>| |(|0| |-| |$1|)|
-//│ Pretty-print: Nil
-//│ AST: Nil
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `negate` 14 14, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, unnamed#1 ::= negate ‹Expr›
+//│ Keywords: `negate` 14 14
+//│ Rules: unnamed#1 ::= negate ‹Expr›
 
 negate 1
 //│ |negate| |1|
 //│ Pretty-print: 0 - 1
 //│ AST: App(App(Var(-),Const(IntLit(0))),Const(IntLit(1)))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `negate` 14 14, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, unnamed#1 ::= negate ‹Expr›
 
 :pe
 negate -1
 //│ |negate| |-|1|
 //│ ╔══[PARSE ERROR] Expected end of input; found literal instead
-//│ ║  l.21: 	negate -1
+//│ ║  l.17: 	negate -1
 //│ ╙──      	        ^
 //│ Pretty-print: 0 - -
 //│ AST: App(App(Var(-),Const(IntLit(0))),Var(-))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `negate` 14 14, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, unnamed#1 ::= negate ‹Expr›
 
 negate 1 + 2
 //│ |negate| |1| |+| |2|
 //│ Pretty-print: 0 - 1 + 2
 //│ AST: App(App(Var(+),App(App(Var(-),Const(IntLit(0))),Const(IntLit(1)))),Const(IntLit(2)))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `negate` 14 14, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, unnamed#1 ::= negate ‹Expr›
 
 negate (1 + 2)
 //│ |negate| |(|1| |+| |2|)|
 //│ Pretty-print: 0 - 1 + 2
 //│ AST: App(App(Var(-),Const(IntLit(0))),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2))))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `negate` 14 14, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, unnamed#1 ::= negate ‹Expr›
 
 1 * negate 2
 //│ |1| |*| |negate| |2|
 //│ Pretty-print: 1 * (0 - 2)
 //│ AST: App(App(Var(*),Const(IntLit(1))),App(App(Var(-),Const(IntLit(0))),Const(IntLit(2))))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `negate` 14 14, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, unnamed#1 ::= negate ‹Expr›
 
 negate 2 * 1
 //│ |negate| |2| |*| |1|
 //│ Pretty-print: (0 - 2) * 1
 //│ AST: App(App(Var(*),App(App(Var(-),Const(IntLit(0))),Const(IntLit(2)))),Const(IntLit(1)))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `negate` 14 14, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, unnamed#1 ::= negate ‹Expr›

@@ -1,0 +1,20 @@
+:global
+:p
+:keepContext
+
+// syntax (42) += (43) (comp-op) (comp-tail)
+// syntax (comp-op) += <
+// syntax (comp-op) += <=
+// syntax (comp-op) += ==
+// syntax (comp-op) += >=
+// syntax (comp-op) += >
+// syntax (comp-tail) += (43)
+// syntax (comp-tail) += (43) (comp-op) (comp-tail)
+
+keyword (43) < (43)
+keyword (43) <= (43)
+keyword (43) == (43)
+keyword (43) >= (43)
+keyword (43) > (43)
+//│ |keyword| |(|43|)| |<| |(|43|)|↵|keyword| |(|43|)| |<=| |(|43|)|↵|keyword| |(|43|)| |==| |(|43|)|↵|keyword| |(|43|)| |>=| |(|43|)|↵|keyword| |(|43|)| |>| |(|43|)|
+//│ Keywords: `<` 43 43, `<=` 43 43, `==` 43 43, `>` 43 43, `>=` 43 43

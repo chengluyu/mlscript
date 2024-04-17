@@ -2,19 +2,19 @@
 :p
 :keepContext
 
-keyword double
+keyword (stronger than *) double
 define Double ::= double Expr ~> $1 * 2
 double 1
 double 2 + 3
-//│ |keyword| |double|↵|define| |Double| |::=| |double| |Expr| |~>| |$1| |*| |2|↵|double| |1|↵|double| |2| |+| |3|
+//│ |keyword| |(|stronger| |than| |*|)| |double|↵|define| |Double| |::=| |double| |Expr| |~>| |$1| |*| |2|↵|double| |1|↵|double| |2| |+| |3|
 //│ Pretty-print:
 //│   1 * 2
 //│   (2 + 3) * 2
 //│ AST:
 //│   App(App(Var(*),Const(IntLit(1))),Const(IntLit(2)))
 //│   App(App(Var(*),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3)))),Const(IntLit(2)))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `double`, `keyword`, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, Double ::= double ‹Expr›
+//│ Keywords: `double` 14
+//│ Rules: Double ::= double ‹Expr›
 
 :pe
 define DoubleProduct ::= Double Double ~> $1 * $2
@@ -30,10 +30,7 @@ double 1 double 2
 //│ ╔══[PARSE ERROR] Expected end of input; found identifier instead
 //│ ║  l.20: 	define DoubleProduct ::= Double Double ~> $1 * $2
 //│ ╙──      	                                          ^^
-//│ Pretty-print: Nil
-//│ AST: Nil
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `double`, `keyword`, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, Double ::= double ‹Expr›, DoubleProduct ::= 
+//│ Rules: DoubleProduct ::= 
 
 :pe
 keyword product
@@ -41,15 +38,12 @@ define DoubleProduct ::= product Double Double ~> $1 * $2
 product double 1 double 2
 //│ |keyword| |product|↵|define| |DoubleProduct| |::=| |product| |Double| |Double| |~>| |$1| |*| |$2|↵|product| |double| |1| |double| |2|
 //│ ╔══[PARSE ERROR] Expected keywords, `Ident`, `Expr`, or other non-terminal symbol in rule definitions; found identifier instead
-//│ ║  l.40: 	define DoubleProduct ::= product Double Double ~> $1 * $2
+//│ ║  l.37: 	define DoubleProduct ::= product Double Double ~> $1 * $2
 //│ ╙──      	                                 ^^^^^^
 //│ ╔══[PARSE ERROR] Expected an infix operator ; found `~>` 2 2 instead
-//│ ║  l.40: 	define DoubleProduct ::= product Double Double ~> $1 * $2
+//│ ║  l.37: 	define DoubleProduct ::= product Double Double ~> $1 * $2
 //│ ╙──      	                                               ^^
 //│ ╔══[PARSE ERROR] Expected end of input; found identifier instead
-//│ ║  l.40: 	define DoubleProduct ::= product Double Double ~> $1 * $2
+//│ ║  l.37: 	define DoubleProduct ::= product Double Double ~> $1 * $2
 //│ ╙──      	                                                  ^^
-//│ Pretty-print: Nil
-//│ AST: Nil
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `double`, `keyword`, `product`, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, Double ::= double ‹Expr›, DoubleProduct ::= product
+//│ Keywords: `product`

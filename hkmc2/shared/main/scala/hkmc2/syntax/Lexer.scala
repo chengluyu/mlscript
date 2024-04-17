@@ -206,8 +206,15 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
         val j = i + 1
         // go(j, COMMA)
         lex(j, ind, next(j, COMMA))
-      case '`' =>
-        lex(i + 1, ind, next(i + 1, QUOTE))
+      case '`' if bytes.lift(i + 1).exists(isIdentFirstChar) =>
+        val (n, j) = takeWhile(i + 1)(isIdentChar)
+        if bytes(j) === '`' then
+          lex(j + 1, ind, next(j + 1, IDENT(n, false)(true)))
+        else
+          pe(msg"expect closing backtick")
+          lex(j, ind, next(j, ERROR))
+      // case '`' =>
+      //   lex(i + 1, ind, next(i + 1, QUOTE))
       case ';' =>
         val j = i + 1
         lex(j, ind, next(j, SEMI))
@@ -262,11 +269,7 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
           )
       case _ if isIdentFirstChar(c) =>
         val (n, j) = takeWhile(i)(isIdentChar)
-        // go(j, if (keywords.contains(n)) KEYWRD(n) else IDENT(n, isAlphaOp(n)))
-        lex(j, ind, next(j,
-            // if keywords.contains(n) then KEYWRD(n) else IDENT(n, isAlphaOp(n))
-            IDENT(n, isAlphaOp(n))
-          ))
+        lex(j, ind, next(j, IDENT(n, isAlphaOp(n))(false)))
       case _ if isOpChar(c) =>
         val (n, j) = takeWhile(i)(isOpChar)
         if n === "." && j < length then
@@ -285,12 +288,12 @@ class Lexer(origin: Origin, raise: Raise, dbg: Bool):
             lex(k, ind, next(k, SELECT(name)))
           else lex(j, ind, next(j,
               // if isSymKeyword.contains(n) then KEYWRD(n) else IDENT(n, true)
-              IDENT(n, true)
+              IDENT(n, true)(false)
             ))
         // else go(j, if (isSymKeyword.contains(n)) KEYWRD(n) else IDENT(n, true))
         else lex(j, ind, next(j,
             // if isSymKeyword.contains(n) then KEYWRD(n) else IDENT(n, true)
-            IDENT(n, true)
+            IDENT(n, true)(false)
           ))
       case _ if isDigit(c) =>
         val (lit, j) = num(i)

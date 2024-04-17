@@ -30,11 +30,11 @@ case class Context(
 
   /** Filter out parse rules starting with `Expr` and `Kw` */
   lazy val infixRules: Map[Keyword, ParseRule[Tree => Tree]] =
-    (rules.valuesIterator.flatMap(_.exprAlt).flatMap:
-      case la => la.rest.kwAlts.iterator.map:
+    (rules.valuesIterator.flatMap(_.exprAlts).flatMap:
+      case la => la.rest.kwRules.iterator.map:
         case (kw, rr) => (kw, rr.map(rhs => (lhs: Tree) => la.k(lhs, rhs)))).toMap
 
-  def prefix(kw: Keyword): Option[ParseRule[Tree]] = prefixRules.kwAlts.get(kw)
+  def prefix(kw: Keyword): Option[ParseRule[Tree]] = prefixRules.kwRules.get(kw)
 
   def keyword(id: IDENT): Option[Keyword] = keywords.get(id.name)
 end Context

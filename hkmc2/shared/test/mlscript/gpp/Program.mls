@@ -17,8 +17,7 @@ x => x
 //│   Const(IntLit(1))
 //│   Lam(Var(x),Var(x))
 //│   App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(2)))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, Program ::= ‹Expr›
+//│ Rules: Program ::= ‹Expr›
 
 :pe
 define Program ::= Expr Expr ~> $1 + $2
@@ -27,12 +26,11 @@ define Program ::= Expr Expr ~> $1 + $2
 4 5
 //│ |define| |Program| |::=| |Expr| |Expr| |~>| |$1| |+| |$2|↵|0| |1|↵|2| |3|↵|4| |5|
 //│ ╔══[PARSE ERROR] Expected end of input; found literal instead
-//│ ║  l.25: 	0 1
+//│ ║  l.24: 	0 1
 //│ ╙──      	  ^
 //│ Pretty-print: 0
 //│ AST: Const(IntLit(0))
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, Program ::= ‹Expr› ‹Expr›
+//│ Rules: Program ::= ‹Expr› ‹Expr›
 
 :pe
 define Program ::= Expr ~> $1
@@ -43,30 +41,30 @@ f(
 )
 //│ |define| |Program| |::=| |Expr| |~>| |$1|↵|f|(| |1|,|↵|2|,|↵|3|,|↵|)|
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.40: 	  1,
+//│ ║  l.38: 	  1,
 //│ ║        	    ^
-//│ ║  l.41: 	  2,
+//│ ║  l.39: 	  2,
 //│ ╙──      	^^
 //│ ╔══[PARSE ERROR] Expected a closing parenthesis; found newline instead
-//│ ║  l.40: 	  1,
+//│ ║  l.38: 	  1,
 //│ ║        	    ^
-//│ ║  l.41: 	  2,
+//│ ║  l.39: 	  2,
 //│ ╙──      	^^
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.41: 	  2,
+//│ ║  l.39: 	  2,
 //│ ║        	    ^
-//│ ║  l.42: 	  3,
+//│ ║  l.40: 	  3,
 //│ ╙──      	^^
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.42: 	  3,
+//│ ║  l.40: 	  3,
 //│ ║        	    ^
-//│ ║  l.43: 	)
+//│ ║  l.41: 	)
 //│ ╙──      	
 //│ ╔══[PARSE ERROR] Expected an expression; found closing parenthesis instead
-//│ ║  l.43: 	)
+//│ ║  l.41: 	)
 //│ ╙──      	^
 //│ ╔══[PARSE ERROR] Expected end of input; found closing parenthesis instead
-//│ ║  l.43: 	)
+//│ ║  l.41: 	)
 //│ ╙──      	^
 //│ Pretty-print:
 //│   f((,(1))(?))
@@ -78,5 +76,4 @@ f(
 //│   App(App(Var(,),Const(IntLit(2))),Empty)
 //│   App(App(Var(,),Const(IntLit(3))),Empty)
 //│   Empty
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `~>` 2 2
-//│ Rules: default ::= ‹Expr›, Program ::= ‹Expr›
+//│ Rules: Program ::= ‹Expr›

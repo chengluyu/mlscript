@@ -176,25 +176,35 @@ class DiffMaker(file: os.Path, relativeName: Str):
           output(syntax.Lexer.printTokens(tokens))
         
         if noParse.isUnset then
+          // Reuse the last context if `:keepContext` is enabled
           given context: syntax.Context = if keepContext.isSet
             then lastContext.getOrElse(syntax.Context.default)
             else syntax.Context.default
+
           val p = new syntax.Parser(origin, tokens, raise, dbg = dbgParsing.isSet):
             def doPrintDbg(msg: => Str): Unit = if dbg then output(msg)
           val res = p.parseAll(p.block)
-          lastContext = Some(res.context)
           
           if showParse.isSet then
             res.content match
-              case Nil => output("Pretty-print: Nil")
+              case Nil => ()
               case head :: Nil => output(s"Pretty-print: ${head.print}")
               case list => output("Pretty-print:"); list.foreach(x => output(s"  ${x.print}"))
             res.content match
-              case Nil => output("AST: Nil")
+              case Nil => ()
               case head :: Nil => output(s"AST: ${head}")
               case list => output("AST:"); list.foreach(x => output(s"  $x"))
-            output(s"Keywords: ${res.context.keywords.valuesIterator.mkString(", ")}")
-            output(s"Rules: ${res.context.rules.valuesIterator.map(_.toString).mkString(", ")}")
+            // Show only newly added keywords and rules
+            val kws = res.context.keywords.valuesIterator.filter:
+                case kw => !context.keywords.contains(kw.name)
+              .mkString(", ")
+            if !kws.isEmpty then output(s"Keywords: ${kws}")
+            val rules = res.context.rules.iterator.filter:
+                case (key, _) => !context.rules.contains(key)
+              .map(_._2).mkString(", ")
+            if !rules.isEmpty then output(s"Rules: ${rules}")
+
+          lastContext = Some(res.context)
         
       catch
         case oh_noes: ThreadDeath => throw oh_noes

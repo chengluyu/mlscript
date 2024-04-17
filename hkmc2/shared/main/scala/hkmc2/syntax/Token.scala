@@ -29,7 +29,7 @@ case object NEWLINE extends Token
 case object ERROR extends Token
 case object QUOTE extends Token
 final case class LITVAL(value: Literal) extends Token
-final case class IDENT(name: String, symbolic: Bool) extends Token
+final case class IDENT(name: String, symbolic: Bool)(val escaped: Bool) extends Token
 final case class SELECT(name: String) extends Token
 final case class OPEN_BRACKET(k: BracketKind) extends Token
 final case class CLOSE_BRACKET(k: BracketKind) extends Token

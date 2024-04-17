@@ -1,0 +1,28 @@
+:global
+:p
+
+a.b
+//│ |a|.b|
+//│ Pretty-print: a.b
+//│ AST: App(App(Var(.),Var(a)),Var(b))
+
+
+a.b.c.d.e.f
+//│ |a|.b|.c|.d|.e|.f|
+//│ Pretty-print: ((((a.b).c).d).e).f
+//│ AST: App(App(Var(.),App(App(Var(.),App(App(Var(.),App(App(Var(.),App(App(Var(.),Var(a)),Var(b))),Var(c))),Var(d))),Var(e))),Var(f))
+
+f(x).c
+//│ |f|(|x|)|.c|
+//│ Pretty-print: (f(x)).c
+//│ AST: App(App(Var(.),App(Var(f),Var(x))),Var(c))
+
+1 + f(x).c
+//│ |1| |+| |f|(|x|)|.c|
+//│ Pretty-print: 1 + (f(x)).c
+//│ AST: App(App(Var(+),Const(IntLit(1))),App(App(Var(.),App(Var(f),Var(x))),Var(c)))
+
+2 * 3 * f(y).a.b + 3
+//│ |2| |*| |3| |*| |f|(|y|)|.a|.b| |+| |3|
+//│ Pretty-print: 2 * 3 * ((f(y)).a).b + 3
+//│ AST: App(App(Var(+),App(App(Var(*),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3)))),App(App(Var(.),App(App(Var(.),App(Var(f),Var(y))),Var(a))),Var(b)))),Const(IntLit(3)))
