@@ -7,20 +7,32 @@ define Program ::= Expr ~> $1
 x => x
 (x => x + 1)(2)
 //│ |define| |Program| |::=| |Expr| |~>| |$1|↵|0|↵|1|↵|x| |=>| |x|↵|(|x| |=>| |x| |+| |1|)|(|2|)|
-//│ AST: List(Const(IntLit(0)), Const(IntLit(1)), Lam(Var(x),Var(x)), Lam(Var(x),App(App(App(Var(+),Var(x)),Const(IntLit(1))),Const(IntLit(2)))))
-//│ Pretty-print: 0, 1, x => Var(x).print, x => App(App(App(Var(+),Var(x)),Const(IntLit(1))),Const(IntLit(2))).print
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Pretty-print:
+//│   0
+//│   1
+//│   x => x
+//│   (x => x + 1)(2)
+//│ AST:
+//│   Const(IntLit(0))
+//│   Const(IntLit(1))
+//│   Lam(Var(x),Var(x))
+//│   App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(2)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Program ::= ‹Expr›
 
+:pe
 define Program ::= Expr Expr ~> $1 + $2
 0 1
 2 3
 4 5
 //│ |define| |Program| |::=| |Expr| |Expr| |~>| |$1| |+| |$2|↵|0| |1|↵|2| |3|↵|4| |5|
-//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))), App(App(Var(+),Const(IntLit(2))),Const(IntLit(3))), App(App(Var(+),Const(IntLit(4))),Const(IntLit(5))))
-//│ Pretty-print: 0 + 1, 2 + 3, 4 + 5
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
+//│ ║  l.25: 	0 1
+//│ ╙──      	  ^
+//│ Pretty-print: 0
+//│ AST: Const(IntLit(0))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Program ::= ‹Expr› ‹Expr›
 
 :pe
 define Program ::= Expr ~> $1
@@ -31,17 +43,40 @@ f(
 )
 //│ |define| |Program| |::=| |Expr| |~>| |$1|↵|f|(| |1|,|↵|2|,|↵|3|,|↵|)|
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.28: 	  1,
+//│ ║  l.40: 	  1,
 //│ ║        	    ^
-//│ ║  l.29: 	  2,
+//│ ║  l.41: 	  2,
 //│ ╙──      	^^
+//│ ╔══[PARSE ERROR] Expected a closing parenthesis; found newline instead
+//│ ║  l.40: 	  1,
+//│ ║        	    ^
+//│ ║  l.41: 	  2,
+//│ ╙──      	^^
+//│ ╔══[PARSE ERROR] Expected an expression; found newline instead
+//│ ║  l.41: 	  2,
+//│ ║        	    ^
+//│ ║  l.42: 	  3,
+//│ ╙──      	^^
+//│ ╔══[PARSE ERROR] Expected an expression; found newline instead
+//│ ║  l.42: 	  3,
+//│ ║        	    ^
+//│ ║  l.43: 	)
+//│ ╙──      	
 //│ ╔══[PARSE ERROR] Expected an expression; found closing parenthesis instead
-//│ ║  l.31: 	)
+//│ ║  l.43: 	)
 //│ ╙──      	^
 //│ ╔══[PARSE ERROR] Expected end of input; found closing parenthesis instead
-//│ ║  l.31: 	)
+//│ ║  l.43: 	)
 //│ ╙──      	^
-//│ AST: List(App(Var(f),App(App(Var(,),Const(IntLit(1))),Empty)), Const(IntLit(2)), Const(IntLit(3)), Empty)
-//│ Pretty-print: (f)(((,)(1))(?)), 2, 3, ?
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Pretty-print:
+//│   f((,(1))(?))
+//│   (,(2))(?)
+//│   (,(3))(?)
+//│   ?
+//│ AST:
+//│   App(Var(f),App(App(Var(,),Const(IntLit(1))),Empty))
+//│   App(App(Var(,),Const(IntLit(2))),Empty)
+//│   App(App(Var(,),Const(IntLit(3))),Empty)
+//│   Empty
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Program ::= ‹Expr›

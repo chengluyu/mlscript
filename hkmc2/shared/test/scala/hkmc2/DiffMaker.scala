@@ -196,20 +196,20 @@ class DiffMaker(file: os.Path, relativeName: Str):
             output(s"Keywords: ${res.context.keywords.valuesIterator.mkString(", ")}")
             output(s"Rules: ${res.context.rules.valuesIterator.map(_.toString).mkString(", ")}")
         
-        catch
-          case oh_noes: ThreadDeath => throw oh_noes
-          case err: Throwable =>
-            if fixme.isUnset then
-              failures += allLines.size - lines.size + 1
-              unhandled(blockLineNum, err)
-            // err.printStackTrace(out)
-            // println(err.getCause())
-            output("/!!!\\ Uncaught error: " + err +
-              err.getStackTrace().take(
-                if fullExceptionStack.isSet then Int.MaxValue
-                else if fixme.isSet || err.isInstanceOf[StackOverflowError] then 0
-                else 10
-              ).map("\n" + "\tat: " + _).mkString)
+      catch
+        case oh_noes: ThreadDeath => throw oh_noes
+        case err: Throwable =>
+          if fixme.isUnset then
+            failures += allLines.size - lines.size + 1
+            unhandled(blockLineNum, err)
+          // err.printStackTrace(out)
+          // println(err.getCause())
+          output("/!!!\\ Uncaught error: " + err +
+            err.getStackTrace().take(
+              if fullExceptionStack.isSet then Int.MaxValue
+              else if fixme.isSet || err.isInstanceOf[StackOverflowError] then 0
+              else 10
+            ).map("\n" + "\tat: " + _).mkString)
       
       rec(lines.drop(block.size))
     case Nil =>

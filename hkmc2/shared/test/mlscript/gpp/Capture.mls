@@ -1,55 +1,73 @@
 :global
 :p
 
-keyword inc
+keyword 10 inc
 define Inc ::= inc Expr ~> $1 + 1
 inc 0
-//│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |Expr| |~>| |$1| |+| |1|↵|inc| |0|
-//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))))
+//│ |keyword| |10| |inc|↵|define| |Inc| |::=| |inc| |Expr| |~>| |$1| |+| |1|↵|inc| |0|
 //│ Pretty-print: 0 + 1
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
-//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+//│ AST: App(App(Var(+),Const(IntLit(0))),Const(IntLit(1)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc` 10, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Inc ::= inc ‹Expr›
 
 :pe
 keyword inc
 define Inc ::= inc Expr ~> $2 + 1
 inc 0
 //│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |Expr| |~>| |$2| |+| |1|↵|inc| |0|
-//│ ╔══[WARNING] Invalid meta-variable index 2
-//│ ║  l.15: 	define Inc ::= inc Expr ~> $2 + 1
-//│ ╙──      	                           ^^
-//│ AST: List(App(App(Var(+),Var($2)),Const(IntLit(1))))
-//│ Pretty-print: $2 + 1
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
-//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+//│ ╔══[PARSE ERROR] Expected an expression; found `inc` instead
+//│ ║  l.16: 	inc 0
+//│ ╙──      	^^^
+//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
+//│ ║  l.16: 	inc 0
+//│ ╙──      	    ^
+//│ Pretty-print: ?
+//│ AST: Empty
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Inc ::= inc ‹Expr›
 
 keyword inc
 define Inc ::= inc ‹Expr› ~> $1 + 1
 inc 0
 //│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |‹|Expr|›| |~>| |$1| |+| |1|↵|inc| |0|
-//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))))
-//│ Pretty-print: 0 + 1
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
-//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+//│ ╔══[PARSE ERROR] Expected an expression; found `inc` instead
+//│ ║  l.31: 	inc 0
+//│ ╙──      	^^^
+//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
+//│ ║  l.31: 	inc 0
+//│ ╙──      	    ^
+//│ Pretty-print: ?
+//│ AST: Empty
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Inc ::= inc ‹Expr›
 
 keyword inc
 define Inc ::= inc ‹x: Expr› ~> $x + 1
 inc 0
 //│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |‹|x|:| |Expr|›| |~>| |$x| |+| |1|↵|inc| |0|
-//│ AST: List(App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))))
-//│ Pretty-print: 0 + 1
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
-//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+//│ ╔══[PARSE ERROR] Expected an expression; found `inc` instead
+//│ ║  l.46: 	inc 0
+//│ ╙──      	^^^
+//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
+//│ ║  l.46: 	inc 0
+//│ ╙──      	    ^
+//│ Pretty-print: ?
+//│ AST: Empty
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Inc ::= inc ‹Expr›
 
 :pe
 keyword inc
 define Inc ::= inc ‹x: Expr› ~> $y + 1
 inc 0
 //│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |‹|x|:| |Expr|›| |~>| |$y| |+| |1|↵|inc| |0|
-//│ ╔══[WARNING] Invalid meta-variable name $y
-//│ ║  l.46: 	define Inc ::= inc ‹x: Expr› ~> $y + 1
-//│ ╙──      	                                ^^
-//│ AST: List(App(App(Var(+),Var($y)),Const(IntLit(1))))
-//│ Pretty-print: $y + 1
-//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `~>` 2 2
-//│ Rules: Inc ::= `inc` Expr  ,default ::= Expr  
+//│ ╔══[PARSE ERROR] Expected an expression; found `inc` instead
+//│ ║  l.62: 	inc 0
+//│ ╙──      	^^^
+//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
+//│ ║  l.62: 	inc 0
+//│ ╙──      	    ^
+//│ Pretty-print: ?
+//│ AST: Empty
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `inc`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, Inc ::= inc ‹Expr›

@@ -1,39 +1,50 @@
 :global
 :p
+:keepContext
 
-define Program ::= Expr ~> $1
 (x => x + 1)(0)
-//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|(|x| |=>| |x| |+| |1|)|(|0|)|
-//│ AST: List(Lam(Var(x),App(App(App(Var(+),Var(x)),Const(IntLit(1))),Const(IntLit(0)))))
-//│ Pretty-print: x => (x + 1)(0)
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ |(|x| |=>| |x| |+| |1|)|(|0|)|
+//│ Pretty-print: (x => x + 1)(0)
+//│ AST: App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(0)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›
 
-define Program ::= Expr ~> $1
-keyword let
-keyword =
-keyword in
+keyword 0 let
+keyword = 0
+keyword in 0
 define LetIn ::= let Ident = Expr in Expr ~> ($1 => $3)($2)
+//│ |keyword| |0| |let|↵|keyword| |=| |0|↵|keyword| |in| |0|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|
+//│ Pretty-print: Nil
+//│ AST: Nil
+//│ Keywords: `::=` 2 2, `=` 0, `=>` 3 2, `define`, `in` 0, `keyword`, `let` 0, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
+
 let x = 0 in x
 let x = 0 in let y = 1 in x + y
 let x = 0 in let y = 1 in let z = 2 in x + y + z
 let f = (x => x) in f(0)
-//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|keyword| |let|↵|keyword| |=|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |=| |0| |in| |x|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |x| |+| |y|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |let| |z| |=| |2| |in| |x| |+| |y| |+| |z|↵|let| |f| |=| |(|x| |=>| |x|)| |in| |f|(|0|)|
-//│ AST: List(App(Lam(Var(x),Var(x)),Const(IntLit(0))), App(Lam(Var(x),App(Lam(Var(y),App(App(Var(+),Var(x)),Var(y))),Const(IntLit(1)))),Const(IntLit(0))), App(Lam(Var(x),App(Lam(Var(y),App(Lam(Var(z),App(App(Var(+),App(App(Var(+),Var(x)),Var(y))),Var(z))),Const(IntLit(2)))),Const(IntLit(1)))),Const(IntLit(0))), App(Lam(Var(f),App(Var(f),Const(IntLit(0)))),Lam(Var(x),Var(x))))
-//│ Pretty-print: (x => x)(0), (x => (y => x + y)(1))(0), (x => (y => (z => x + y + z)(2))(1))(0), (f => (f)(0))(x => x)
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ |let| |x| |=| |0| |in| |x|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |x| |+| |y|↵|let| |x| |=| |0| |in| |let| |y| |=| |1| |in| |let| |z| |=| |2| |in| |x| |+| |y| |+| |z|↵|let| |f| |=| |(|x| |=>| |x|)| |in| |f|(|0|)|
+//│ Pretty-print:
+//│   (x => x)(0)
+//│   (x => (y => x + y)(1))(0)
+//│   (x => (y => (z => x + y + z)(2))(1))(0)
+//│   (f => f(0))(x => x)
+//│ AST:
+//│   App(Lam(Var(x),Var(x)),Const(IntLit(0)))
+//│   App(Lam(Var(x),App(Lam(Var(y),App(App(Var(+),Var(x)),Var(y))),Const(IntLit(1)))),Const(IntLit(0)))
+//│   App(Lam(Var(x),App(Lam(Var(y),App(Lam(Var(z),App(App(Var(+),App(App(Var(+),Var(x)),Var(y))),Var(z))),Const(IntLit(2)))),Const(IntLit(1)))),Const(IntLit(0)))
+//│   App(Lam(Var(f),App(Var(f),Const(IntLit(0)))),Lam(Var(x),Var(x)))
+//│ Keywords: `::=` 2 2, `=` 0, `=>` 3 2, `define`, `in` 0, `keyword`, `let` 0, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›
 
-define Program ::= Expr ~> $1
-keyword let, =, in, fun
-define LetIn ::= let Ident = Expr in Expr ~> ($1 => $3)($2)
+keyword 0 fun
 define FunDecl ::= fun Ident Ident = Expr in Expr ~> ($1 => $4)($2 => $3)
 fun f x = x in
   fun g y = y in
     let z = 0 in
       f(g(z))
-//│ |define| |Program| |::=| |Expr| |~>| |$1|↵|keyword| |let|,| |=|,| |in|,| |fun|↵|define| |LetIn| |::=| |let| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|define| |FunDecl| |::=| |fun| |Ident| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$4|)|(|$2| |=>| |$3|)|↵|fun| |f| |x| |=| |x| |in| |fun| |g| |y| |=| |y| |in| |let| |z| |=| |0| |in| |f|(|g|(|z|)|)|
-//│ AST: List(App(Lam(Var(f),App(Lam(Var(g),App(Lam(Var(z),App(Var(f),App(Var(g),Var(z)))),Const(IntLit(0)))),Lam(Var(y),Var(y)))),Lam(Var(x),Var(x))))
-//│ Pretty-print: (f => (g => (z => (f)((g)(z)))(0))(y => y))(x => x)
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ |keyword| |0| |fun|↵|define| |FunDecl| |::=| |fun| |Ident| |Ident| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$4|)|(|$2| |=>| |$3|)|↵|fun| |f| |x| |=| |x| |in| |fun| |g| |y| |=| |y| |in| |let| |z| |=| |0| |in| |f|(|g|(|z|)|)|
+//│ Pretty-print: (f => (g => (z => f(g(z)))(0))(y => y))(x => x)
+//│ AST: App(Lam(Var(f),App(Lam(Var(g),App(Lam(Var(z),App(Var(f),App(Var(g),Var(z)))),Const(IntLit(0)))),Lam(Var(y),Var(y)))),Lam(Var(x),Var(x)))
+//│ Keywords: `::=` 2 2, `=` 0, `=>` 3 2, `define`, `fun` 0, `in` 0, `keyword`, `let` 0, `syntax`, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, FunDecl ::= fun ‹Ident› ‹Ident› = ‹Expr› in ‹Expr›, LetIn ::= let ‹Ident› = ‹Expr› in ‹Expr›

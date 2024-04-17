@@ -1,0 +1,67 @@
+:global
+:p
+:keepContext
+
+keyword (max) zero
+syntax zero ~> 0
+//│ |keyword| |(|max|)| |zero|↵|syntax| |zero| |~>| |0|
+//│ Pretty-print: Nil
+//│ AST: Nil
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+zero
+//│ |zero|
+//│ Pretty-print: 0
+//│ AST: Const(IntLit(0))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+1 + zero
+//│ |1| |+| |zero|
+//│ Pretty-print: 1 + 0
+//│ AST: App(App(Var(+),Const(IntLit(1))),Const(IntLit(0)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+zero + 1
+//│ |zero| |+| |1|
+//│ Pretty-print: 0 + 1
+//│ AST: App(App(Var(+),Const(IntLit(0))),Const(IntLit(1)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+(1 + zero) * 2
+//│ |(|1| |+| |zero|)| |*| |2|
+//│ Pretty-print: (1 + 0) * 2
+//│ AST: App(App(Var(*),App(App(Var(+),Const(IntLit(1))),Const(IntLit(0)))),Const(IntLit(2)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+(zero + 1) * 2
+//│ |(|zero| |+| |1|)| |*| |2|
+//│ Pretty-print: (0 + 1) * 2
+//│ AST: App(App(Var(*),App(App(Var(+),Const(IntLit(0))),Const(IntLit(1)))),Const(IntLit(2)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+zero + zero
+//│ |zero| |+| |zero|
+//│ Pretty-print: 0 + 0
+//│ AST: App(App(Var(+),Const(IntLit(0))),Const(IntLit(0)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+1 * 2 * 3 + zero
+//│ |1| |*| |2| |*| |3| |+| |zero|
+//│ Pretty-print: 1 * 2 * 3 + 0
+//│ AST: App(App(Var(+),App(App(Var(*),App(App(Var(*),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))),Const(IntLit(0)))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero
+
+1 * 2 * 3 + zero * 4
+//│ |1| |*| |2| |*| |3| |+| |zero| |*| |4|
+//│ Pretty-print: 1 * 2 * 3 + 0 * 4
+//│ AST: App(App(Var(+),App(App(Var(*),App(App(Var(*),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))),App(App(Var(*),Const(IntLit(0))),Const(IntLit(4))))
+//│ Keywords: `::=` 2 2, `=>` 3 2, `define`, `keyword`, `syntax`, `zero` 2147483647, `~>` 2 2
+//│ Rules: default ::= ‹Expr›, unnamed#1 ::= zero

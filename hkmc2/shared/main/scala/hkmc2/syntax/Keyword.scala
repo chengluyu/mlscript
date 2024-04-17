@@ -5,7 +5,7 @@ import collection.mutable
 import mlscript.utils.*, shorthands.*
 
 
-class Keyword(val name: String, val leftPrec: Opt[Int], val rightPrec: Opt[Int]):
+final case class Keyword(val name: String, val leftPrec: Opt[Int], val rightPrec: Opt[Int]):
   // Keyword.all += name -> this
   def assumeLeftPrec: Int = leftPrec.getOrElse(lastWords(s"$this does not have left precedence"))
   def assumeRightPrec: Int = rightPrec.getOrElse(lastWords(s"$this does not have right precedence"))
