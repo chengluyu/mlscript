@@ -1,0 +1,123 @@
+:global
+:p
+
+// Simple left-associative operators
+1 + 2 + 3 // => equivalent to (1 + 2) + 3, but the parentheses can be removed
+(1 + 2) + 3 // the parentheses can be removed
+1 + (2 + 3) // the parentheses should be kept, because commutativity doesn't hold for every operator
+//│ |1| |+| |2| |+| |3| |/* => equivalent to (1 + 2) + 3, but the parentheses can be removed*/|↵|(|1| |+| |2|)| |+| |3| |/* the parentheses can be removed*/|↵|1| |+| |(|2| |+| |3|)| |/* the parentheses should be kept, because commutativity doesn't hold for every operator*/|
+//│ Pretty-print:
+//│   1 + 2 + 3
+//│   1 + 2 + 3
+//│   1 + (2 + 3)
+//│ AST:
+//│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
+//│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
+//│   App(App(Var(+),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3))))
+
+1 + 2 - 3 // equivalent to (1 + 2) - 3, and the parentheses can be removed
+(1 + 2) - 3 // the parentheses can be removed
+1 + (2 - 3) // same
+//│ |1| |+| |2| |-| |3| |/* equivalent to (1 + 2) - 3, and the parentheses can be removed*/|↵|(|1| |+| |2|)| |-| |3| |/* the parentheses can be removed*/|↵|1| |+| |(|2| |-| |3|)| |/* same*/|
+//│ Pretty-print:
+//│   1 + 2 - 3
+//│   1 + 2 - 3
+//│   1 + (2 - 3)
+//│ AST:
+//│   App(App(Var(-),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
+//│   App(App(Var(-),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
+//│   App(App(Var(+),Const(IntLit(1))),App(App(Var(-),Const(IntLit(2))),Const(IntLit(3))))
+
+1 + 2 + 3 + 4
+1 + (2 + 3) + 4
+(1 + (2 + 3)) + 4
+(1 + 2) + (3 + 4)
+1 + ((2 + 3) + 4)
+1 + (2 + (3 + 4))
+//│ |1| |+| |2| |+| |3| |+| |4|↵|1| |+| |(|2| |+| |3|)| |+| |4|↵|(|1| |+| |(|2| |+| |3|)|)| |+| |4|↵|(|1| |+| |2|)| |+| |(|3| |+| |4|)|↵|1| |+| |(|(|2| |+| |3|)| |+| |4|)|↵|1| |+| |(|2| |+| |(|3| |+| |4|)|)|
+//│ Pretty-print:
+//│   1 + 2 + 3 + 4
+//│   1 + (2 + 3) + 4
+//│   1 + (2 + 3) + 4
+//│   1 + 2 + (3 + 4)
+//│   1 + (2 + 3 + 4)
+//│   1 + (2 + (3 + 4))
+//│ AST:
+//│   App(App(Var(+),App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))),Const(IntLit(4)))
+//│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3))))),Const(IntLit(4)))
+//│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3))))),Const(IntLit(4)))
+//│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),App(App(Var(+),Const(IntLit(3))),Const(IntLit(4))))
+//│   App(App(Var(+),Const(IntLit(1))),App(App(Var(+),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3)))),Const(IntLit(4))))
+//│   App(App(Var(+),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),App(App(Var(+),Const(IntLit(3))),Const(IntLit(4)))))
+
+// Right-associative operators
+1 +: 2 +: 3
+(1 +: 2) +: 3
+1 +: (2 +: 3)
+//│ |1| |+:| |2| |+:| |3|↵|(|1| |+:| |2|)| |+:| |3|↵|1| |+:| |(|2| |+:| |3|)|
+//│ Pretty-print:
+//│   1 +: 2 +: 3
+//│   (1 +: 2) +: 3
+//│   1 +: 2 +: 3
+//│ AST:
+//│   App(App(Var(+:),Const(IntLit(1))),App(App(Var(+:),Const(IntLit(2))),Const(IntLit(3))))
+//│   App(App(Var(+:),App(App(Var(+:),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
+//│   App(App(Var(+:),Const(IntLit(1))),App(App(Var(+:),Const(IntLit(2))),Const(IntLit(3))))
+
+// These are the same.
+1 +: 2 +: 3 +: 4
+1 +: (2 +: (3 +: 4))
+1 +: 2 +: (3 +: 4)
+//│ |1| |+:| |2| |+:| |3| |+:| |4|↵|1| |+:| |(|2| |+:| |(|3| |+:| |4|)|)|↵|1| |+:| |2| |+:| |(|3| |+:| |4|)|
+//│ Pretty-print:
+//│   1 +: 2 +: 3 +: 4
+//│   1 +: 2 +: 3 +: 4
+//│   1 +: 2 +: 3 +: 4
+//│ AST:
+//│   App(App(Var(+:),Const(IntLit(1))),App(App(Var(+:),Const(IntLit(2))),App(App(Var(+:),Const(IntLit(3))),Const(IntLit(4)))))
+//│   App(App(Var(+:),Const(IntLit(1))),App(App(Var(+:),Const(IntLit(2))),App(App(Var(+:),Const(IntLit(3))),Const(IntLit(4)))))
+//│   App(App(Var(+:),Const(IntLit(1))),App(App(Var(+:),Const(IntLit(2))),App(App(Var(+:),Const(IntLit(3))),Const(IntLit(4)))))
+
+// These are the same.
+(1 +: 2) +: (3 +: 4)
+(1 +: 2) +: 3 +: 4
+//│ |(|1| |+:| |2|)| |+:| |(|3| |+:| |4|)|↵|(|1| |+:| |2|)| |+:| |3| |+:| |4|
+//│ Pretty-print:
+//│   (1 +: 2) +: 3 +: 4
+//│   (1 +: 2) +: 3 +: 4
+//│ AST:
+//│   App(App(Var(+:),App(App(Var(+:),Const(IntLit(1))),Const(IntLit(2)))),App(App(Var(+:),Const(IntLit(3))),Const(IntLit(4))))
+//│   App(App(Var(+:),App(App(Var(+:),Const(IntLit(1))),Const(IntLit(2)))),App(App(Var(+:),Const(IntLit(3))),Const(IntLit(4))))
+
+1 + 2 * 3
+(1 + 2) * 3
+1 + (2 * 3)
+//│ |1| |+| |2| |*| |3|↵|(|1| |+| |2|)| |*| |3|↵|1| |+| |(|2| |*| |3|)|
+//│ Pretty-print:
+//│   1 + 2 * 3
+//│   (1 + 2) * 3
+//│   1 + 2 * 3
+//│ AST:
+//│   App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3))))
+//│   App(App(Var(*),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
+//│   App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3))))
+
+1 * 2 + 3
+1 * (2 + 3)
+//│ |1| |*| |2| |+| |3|↵|1| |*| |(|2| |+| |3|)|
+//│ Pretty-print:
+//│   1 * 2 + 3
+//│   1 * (2 + 3)
+//│ AST:
+//│   App(App(Var(+),App(App(Var(*),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
+//│   App(App(Var(*),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3))))
+
+1 *: 2 +: 3
+1 +: 2 *: 3
+//│ |1| |*:| |2| |+:| |3|↵|1| |+:| |2| |*:| |3|
+//│ Pretty-print:
+//│   1 *: 2 +: 3
+//│   1 +: 2 *: 3
+//│ AST:
+//│   App(App(Var(*:),Const(IntLit(1))),App(App(Var(+:),Const(IntLit(2))),Const(IntLit(3))))
+//│   App(App(Var(+:),Const(IntLit(1))),App(App(Var(*:),Const(IntLit(2))),Const(IntLit(3))))

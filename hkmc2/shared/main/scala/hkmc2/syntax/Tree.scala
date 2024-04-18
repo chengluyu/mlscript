@@ -60,8 +60,10 @@ enum Tree extends Located:
     case App(App(Var(op), lhs), rhs) if Lexer.isOp(op) =>
       val (leftPrec, rightPrec) = Parser.opPrec(op)
       val should = outerPrec match
-        case Left(prec) => prec > leftPrec
-        case Right(prec) => prec > rightPrec
+        case Left(prec) => prec > leftPrec || rightPrec < leftPrec
+        case Right(prec) => if rightPrec < leftPrec
+          then prec < rightPrec // right-assoc e.g., (1 *: (2 +: 3))
+          else prec >= rightPrec // left-assoc  e.g., 1 * 2 + 3
       if should then s"($print)" else print
     case _ => print
 end Tree
