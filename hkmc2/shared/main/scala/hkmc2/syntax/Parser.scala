@@ -173,19 +173,19 @@ abstract class Parser(
 
   // Report unexpected tokens in various ways.
 
-  def unexpected[A](expected: String, actual: String, loc: Option[Loc], res: A): A =
+  def unexpected[A](expected: String, actual: String, loc: Option[Loc], res: A)(using Line): A = wrap(""):
     err((msg"Expected $expected; found $actual instead" -> loc :: Nil)); res
 
-  def unexpected(expected: String, tok: Token, loc: Loc)(using Context): Tree =
+  def unexpected(expected: String, tok: Token, loc: Loc)(using Context, Line): Tree =
     unexpected(expected, tok.describe, S(loc))
 
-  def unexpected(expected: String, actual: String, loc: Option[Loc]): Tree =
+  def unexpected(expected: String, actual: String, loc: Option[Loc])(using Line): Tree =
     unexpected(expected, actual, loc, errExpr)
 
-  def unexpectedEOI[A](expected: String, res: A): A =
+  def unexpectedEOI[A](expected: String, res: A)(using Line): A =
     unexpected(expected, "end of input", lastLoc, res)
 
-  def unexpectedEOI(expected: String): Tree = unexpectedEOI(expected, errExpr)
+  def unexpectedEOI(expected: String)(using Line): Tree = unexpectedEOI(expected, errExpr)
   
   final def parseAll[R](parser: => R)(using Context): R =
     val res = parser
@@ -347,7 +347,7 @@ abstract class Parser(
   
   /** If the rule accepts an expression, continue subsequent rules. Otherwise, try the empty.  */
   private def tryExprThenEmpty[A](prec: Int, tok: Token, loc: Loc, rule: ParseRule[A], afterExpr: Bool)(using Context): Option[A] =
-    wrap(s"$prec, ${tok.describe}"):
+    wrap(prec, tok, rule):
       rule.exprAlts match
       // Allow an optional NEWLINE if the following is also an expression.
       case exprAlts: ::[Alt.Expr[?, A]] =>
@@ -361,6 +361,7 @@ abstract class Parser(
         // Only `Kw` and `End` are implemented.
         yeetSpaces match
           case (KW(kw), _) :: _ =>
+            printDbg(s"found a keyword $kw")
             // Find the first `exprAlt` that accepts the keyword.
             exprAlts.iterator.flatMap:
               case alt: Alt.Expr[rst, A] =>
@@ -368,13 +369,18 @@ abstract class Parser(
                   case rst => rst.map(res => alt.k(e, res))
                   //   ^^^ `rst` is the rule after `kw`
             .nextOption.flatMap:
-              case rule => parseRule(kw.rightPrecOrMin, rule, false)
+              case rule => 
+                printDbg(s"rule found: $rule")
+                consume
+                parseRule(kw.rightPrecOrMin, rule, false)
           case _ =>
-            tryEmpty(rule, tok.describe, loc)
-        // rule.exprAlts.iterator.map(_.rest).map(parseRule(prec, _, true)).collectFirst:
-        //   case Some(res) => res.map(rule.exprAlts.head.k(e, _))
-        //   case None => tryEmpty(rule, tok.describe, loc)
-        // parseRule(prec, exprAlt.rest, true).map(res => exprAlt.k(e, res))
+            printDbg(s"found other tokens")
+            exprAlts.iterator.flatMap:
+              case alt: Alt.Expr[rst, A] => alt.rest.endAlt.map:
+                case res => alt.k(e, res)
+            .nextOption match
+              case None => unexpected(rule.whatComesAfter, tok.describe, S(loc), None)
+              case Some(res) => S(res)
       case Nil => tryEmpty(rule, tok.describe, loc)
 
   /** If the rule accepts an empty, return the result, otherwise report the unexpectedness.  */
@@ -410,11 +416,9 @@ abstract class Parser(
     yeetSpaces match
     case (KW(kw), loc) :: _ => consume; context.prefix(kw) match
       case S(rule) =>
-        if kw.leftPrec.exists(_ >= prec)
-        then parseRule(kw.rightPrec.getOrElse(0), rule, false)
+        parseRule(kw.rightPrec.getOrElse(0), rule, false)
           .map(lhs => exprCont(lhs, prec, allowNewlines = true))
           .getOrElse(errExpr)
-        else unexpected("an expression", kw.toString, S(loc))
       case N => unexpected("an expression", kw.toString, S(loc))
     case (IDENT(nme, sym), loc) :: _ =>
       consume

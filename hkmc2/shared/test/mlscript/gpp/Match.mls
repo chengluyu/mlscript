@@ -16,26 +16,26 @@
 
 keyword (1) match (1)
 keyword with (2)
-keyword (0) | (2)
+keyword | (2)
 keyword (max) -> (1)
-//│ |keyword| |(|1|)| |match| |(|1|)|↵|keyword| |with| |(|2|)|↵|keyword| |(|0|)| ||| |(|2|)|↵|keyword| |(|max|)| |->| |(|1|)|
-//│ Keywords: `->` 2147483647 1, `match` 1 1, `with` 2, `|` 0 2
+//│ |keyword| |(|1|)| |match| |(|1|)|↵|keyword| |with| |(|2|)|↵|keyword| ||| |(|2|)|↵|keyword| |(|max|)| |->| |(|1|)|
+//│ Keywords: `->` 2147483647 1, `match` 1 1, `with` 2, `|` 2
 
 // TODO: parse multiple arguments
 syntax match _ with _ ~> `match`($1, $2)
 //│ |syntax| |match| |_| |with| |_| |~>| |match|(|$1|,| |$2|)|
 //│ Rules: unnamed#1 ::= match ‹Expr› with ‹Expr›
 
+// When parsing the following sentence, the parser will pick rule
+// `match ‹Expr› with ‹Expr›` because the first token is keyword `match`.
+// `expr` should call `parseRule` to continue parsing the rest of the rule.
+// Since the next symbol of the rule is `Expr`, the parser will call `expr`.
+// After the nested call to `expr` return, the `parseRule` continue to parse
+// the rest of the rule.
 match x with y
 //│ |match| |x| |with| |y|
-//│ ╔══[PARSE ERROR] Expected an expression; found `with` 2 instead
-//│ ║  l.29: 	match x with y
-//│ ╙──      	        ^^^^
-//│ ╔══[PARSE ERROR] Expected expression after after with; found 'with' keyword instead
-//│ ║  l.29: 	match x with y
-//│ ╙──      	        ^^^^
-//│ Pretty-print: ?
-//│ AST: Empty
+//│ Pretty-print: match((,(x))(y))
+//│ AST: App(Var(match),App(App(Var(,),Var(x)),Var(y)))
 
 syntax | _ ~> else($1)
 //│ |syntax| ||| |_| |~>| |else|(|$1|)|
@@ -44,81 +44,142 @@ syntax | _ ~> else($1)
 | 0 + 1
 | 1 * 2 + f(4 + 5) * 6
 //│ ||| |0| |+| |1|↵||| |1| |*| |2| |+| |f|(|4| |+| |5|)| |*| |6|
-//│ ╔══[PARSE ERROR] Expected expression after after |; found literal instead
-//│ ║  l.44: 	| 0 + 1
-//│ ╙──      	  ^
-//│ ╔══[PARSE ERROR] Expected end of input; found '|' keyword instead
-//│ ║  l.45: 	| 1 * 2 + f(4 + 5) * 6
-//│ ╙──      	^
-//│ Pretty-print: ?
-//│ AST: Empty
+//│ Pretty-print:
+//│   else(0 + 1)
+//│   else(1 * 2 + f(4 + 5) * 6)
+//│ AST:
+//│   App(Var(else),App(App(Var(+),Const(IntLit(0))),Const(IntLit(1))))
+//│   App(Var(else),App(App(Var(+),App(App(Var(*),Const(IntLit(1))),Const(IntLit(2)))),App(App(Var(*),App(Var(f),App(App(Var(+),Const(IntLit(4))),Const(IntLit(5))))),Const(IntLit(6)))))
 
 match x with | y
 //│ |match| |x| |with| ||| |y|
-//│ ╔══[PARSE ERROR] Expected an expression; found `with` 2 instead
-//│ ║  l.56: 	match x with | y
-//│ ╙──      	        ^^^^
-//│ ╔══[PARSE ERROR] Expected end of input; found '|' keyword instead
-//│ ║  l.56: 	match x with | y
-//│ ╙──      	             ^
-//│ Pretty-print: ?
-//│ AST: Empty
+//│ Pretty-print: match((,(x))(else(y)))
+//│ AST: App(Var(match),App(App(Var(,),Var(x)),App(Var(else),Var(y))))
 
-syntax _ -> _ | _ ~> case($1, $2, $3)
-//│ |syntax| |_| |->| |_| ||| |_| |~>| |case|(|$1|,| |$2|,| |$3|)|
+syntax _ -> _ | _ ~> case($1)($2)($3)
+//│ |syntax| |_| |->| |_| ||| |_| |~>| |case|(|$1|)|(|$2|)|(|$3|)|
 //│ Rules: unnamed#3 ::= ‹Expr› -> ‹Expr› | ‹Expr›
 
 A -> 0 | otherwise
-//│ |A| |->| |0| ||| |otherwise|
-//│ ╔══[PARSE ERROR] Expected an expression; found `|` 0 2 instead
-//│ ║  l.71: 	A -> 0 | otherwise
-//│ ╙──      	       ^
-//│ ╔══[PARSE ERROR] Expected expression after after |; found '|' keyword instead
-//│ ║  l.71: 	A -> 0 | otherwise
-//│ ╙──      	       ^
-//│ Pretty-print: ?
-//│ AST: Empty
-
 A(n) -> n | y
-//│ |A|(|n|)| |->| |n| ||| |y|
-//│ ╔══[PARSE ERROR] Expected an expression; found `|` 0 2 instead
-//│ ║  l.82: 	A(n) -> n | y
-//│ ╙──      	          ^
-//│ ╔══[PARSE ERROR] Expected expression after after |; found '|' keyword instead
-//│ ║  l.82: 	A(n) -> n | y
-//│ ╙──      	          ^
-//│ Pretty-print: ?
-//│ AST: Empty
+//│ |A| |->| |0| ||| |otherwise|↵|A|(|n|)| |->| |n| ||| |y|
+//│ Pretty-print:
+//│   ((case(A))(0))(otherwise)
+//│   ((case(A(n)))(n))(y)
+//│ AST:
+//│   App(App(App(Var(case),Var(A)),Const(IntLit(0))),Var(otherwise))
+//│   App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),Var(y))
 
-:pe
+:dp
 A(n) -> n | _ -> y
 //│ |A|(|n|)| |->| |n| ||| |_| |->| |y|
-//│ ╔══[PARSE ERROR] Expected an expression; found `|` 0 2 instead
-//│ ║  l.94: 	A(n) -> n | _ -> y
-//│ ╙──      	          ^
-//│ ╔══[PARSE ERROR] Expected expression after after |; found '|' keyword instead
-//│ ║  l.94: 	A(n) -> n | _ -> y
-//│ ╙──      	          ^
-//│ ╔══[PARSE ERROR] Expected end of input; found '->' keyword instead
-//│ ║  l.94: 	A(n) -> n | _ -> y
-//│ ╙──      	              ^^
-//│ Pretty-print: ?
-//│ AST: Empty
+//│ @ block(block)    [at syntax/Parser.scala:249]
+//│ │ ? block		inspects |A|(|n|)| |...    [at syntax/Parser.scala:234]
+//│ │ @ expr(0)    [at syntax/Parser.scala:439]
+//│ │ │ ? expr		inspects |A|(|n|)| |...    [at syntax/Parser.scala:416]
+//│ │ │ ! expr		consumes |A|    [at syntax/Parser.scala:424]
+//│ │ │ @ exprCont(0,`Var(A)`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ ? exprCont		inspects |(|n|)| |->|...    [at syntax/Parser.scala:444]
+//│ │ │ │ ! exprCont		consumes |(|    [at syntax/Parser.scala:475]
+//│ │ │ │ @ expr(0)    [at syntax/Parser.scala:439]
+//│ │ │ │ │ ? expr		inspects |n|)| |->| |...    [at syntax/Parser.scala:416]
+//│ │ │ │ │ ! expr		consumes |n|    [at syntax/Parser.scala:424]
+//│ │ │ │ │ @ exprCont(0,`Var(n)`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ │ ? exprCont		inspects |)| |->| |n|...    [at syntax/Parser.scala:444]
+//│ │ │ │ │ = Var(n)
+//│ │ │ │ = Var(n)
+//│ │ │ │ @ exprCont(0,`App(Var(A),Var(n))`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ ? exprCont		inspects |)| |->| |n|...    [at syntax/Parser.scala:444]
+//│ │ │ │ = App(Var(A),Var(n))
+//│ │ │ │ ? closeBracket		inspects |)| |->| |n|...    [at syntax/Parser.scala:483]
+//│ │ │ │ ! closeBracket		consumes |)|    [at syntax/Parser.scala:484]
+//│ │ │ │ @ exprCont(0,`App(Var(A),Var(n))`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ ? exprCont		inspects | |->| |n| |...    [at syntax/Parser.scala:444]
+//│ │ │ │ │ ! exprCont		consumes | |    [at syntax/Parser.scala:469]
+//│ │ │ │ │ @ exprCont(0,`App(Var(A),Var(n))`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ │ ? exprCont		inspects |->| |n| |||...    [at syntax/Parser.scala:444]
+//│ │ │ │ │ │ looking for infix rules for `->` 2147483647 1
+//│ │ │ │ │ │ ! exprCont		consumes |->|    [at syntax/Parser.scala:455]
+//│ │ │ │ │ │ @ parseRule(1,after -> ::= ‹Expr› | ‹Expr›)    [at syntax/Parser.scala:413]
+//│ │ │ │ │ │ │ ? parseRule		inspects | |n| ||| |...    [at syntax/Parser.scala:393]
+//│ │ │ │ │ │ │ ! parseRule		consumes | |    [at syntax/Parser.scala:393]
+//│ │ │ │ │ │ │ @ tryExprThenEmpty(1,IDENT(n,false),after -> ::= ‹Expr› | ‹Expr›)    [at syntax/Parser.scala:384]
+//│ │ │ │ │ │ │ │ ? tryExprThenEmpty		inspects |n| ||| |_|...    [at syntax/Parser.scala:354]
+//│ │ │ │ │ │ │ │ @ expr(1)    [at syntax/Parser.scala:439]
+//│ │ │ │ │ │ │ │ │ ? expr		inspects |n| ||| |_|...    [at syntax/Parser.scala:416]
+//│ │ │ │ │ │ │ │ │ ! expr		consumes |n|    [at syntax/Parser.scala:424]
+//│ │ │ │ │ │ │ │ │ @ exprCont(1,`Var(n)`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ │ │ │ │ │ ? exprCont		inspects | ||| |_| |...    [at syntax/Parser.scala:444]
+//│ │ │ │ │ │ │ │ │ │ ! exprCont		consumes | |    [at syntax/Parser.scala:469]
+//│ │ │ │ │ │ │ │ │ │ @ exprCont(1,`Var(n)`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ │ │ │ │ │ │ ? exprCont		inspects ||| |_| |->|...    [at syntax/Parser.scala:444]
+//│ │ │ │ │ │ │ │ │ │ = Var(n)
+//│ │ │ │ │ │ │ │ │ = Var(n)
+//│ │ │ │ │ │ │ │ = Var(n)
+//│ │ │ │ │ │ │ │ ? tryExprThenEmpty		inspects ||| |_| |->|...    [at syntax/Parser.scala:362]
+//│ │ │ │ │ │ │ │ found a keyword `|` 2
+//│ │ │ │ │ │ │ │ rule found: after | ::= ‹Expr›
+//│ │ │ │ │ │ │ │ ! tryExprThenEmpty		consumes |||    [at syntax/Parser.scala:374]
+//│ │ │ │ │ │ │ │ @ parseRule(2,after | ::= ‹Expr›)    [at syntax/Parser.scala:413]
+//│ │ │ │ │ │ │ │ │ ? parseRule		inspects | |_| |->| |...    [at syntax/Parser.scala:393]
+//│ │ │ │ │ │ │ │ │ ! parseRule		consumes | |    [at syntax/Parser.scala:393]
+//│ │ │ │ │ │ │ │ │ @ tryExprThenEmpty(2,IDENT(_,false),after | ::= ‹Expr›)    [at syntax/Parser.scala:384]
+//│ │ │ │ │ │ │ │ │ │ @ expr(2)    [at syntax/Parser.scala:439]
+//│ │ │ │ │ │ │ │ │ │ │ ? expr		inspects |_| |->| |y|    [at syntax/Parser.scala:416]
+//│ │ │ │ │ │ │ │ │ │ │ ! expr		consumes |_|    [at syntax/Parser.scala:424]
+//│ │ │ │ │ │ │ │ │ │ │ @ exprCont(2,`Var(_)`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ │ │ │ │ │ │ │ ? exprCont		inspects | |->| |y|    [at syntax/Parser.scala:444]
+//│ │ │ │ │ │ │ │ │ │ │ │ ! exprCont		consumes | |    [at syntax/Parser.scala:469]
+//│ │ │ │ │ │ │ │ │ │ │ │ @ exprCont(2,`Var(_)`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ ? exprCont		inspects |->| |y|    [at syntax/Parser.scala:444]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ looking for infix rules for `->` 2147483647 1
+//│ │ │ │ │ │ │ │ │ │ │ │ │ ! exprCont		consumes |->|    [at syntax/Parser.scala:455]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ @ parseRule(1,after -> ::= ‹Expr› | ‹Expr›)    [at syntax/Parser.scala:413]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ ? parseRule		inspects | |y|    [at syntax/Parser.scala:393]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ ! parseRule		consumes | |    [at syntax/Parser.scala:393]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ @ tryExprThenEmpty(1,IDENT(y,false),after -> ::= ‹Expr› | ‹Expr›)    [at syntax/Parser.scala:384]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ ? tryExprThenEmpty		inspects |y|    [at syntax/Parser.scala:354]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ @ expr(1)    [at syntax/Parser.scala:439]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ ? expr		inspects |y|    [at syntax/Parser.scala:416]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ ! expr		consumes |y|    [at syntax/Parser.scala:424]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ @ exprCont(1,`Var(y)`,true)    [at syntax/Parser.scala:478]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ ? exprCont		inspects ||    [at syntax/Parser.scala:444]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ = Var(y)
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ = Var(y)
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ ? tryExprThenEmpty		inspects ||    [at syntax/Parser.scala:362]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ found other tokens
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ @ unexpected()    [at syntax/Parser.scala:382]
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ Error    [at syntax/Parser.scala:382]
+//│ ╔══[PARSE ERROR] Expected expression; found identifier instead
+//│ ║  l.74: 	A(n) -> n | _ -> y
+//│ ╙──      	                 ^
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ │ = None
+//│ │ │ │ │ │ │ │ │ │ │ │ │ │ = None
+//│ │ │ │ │ │ │ │ │ │ │ │ │ = None
+//│ │ │ │ │ │ │ │ │ │ │ │ = Empty
+//│ │ │ │ │ │ │ │ │ │ │ = Empty
+//│ │ │ │ │ │ │ │ │ │ = Empty
+//│ │ │ │ │ │ │ │ │ │ ? tryExprThenEmpty		inspects ||    [at syntax/Parser.scala:362]
+//│ │ │ │ │ │ │ │ │ │ found other tokens
+//│ │ │ │ │ │ │ │ │ = Some(hkmc2.syntax.Context$Lambda)
+//│ │ │ │ │ │ │ │ = Some(hkmc2.syntax.Context$Lambda)
+//│ │ │ │ │ │ │ = Some(hkmc2.syntax.Context$Lambda)
+//│ │ │ │ │ │ = Some(hkmc2.syntax.Context$Lambda)
+//│ │ │ │ │ = App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),Empty)
+//│ │ │ │ = App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),Empty)
+//│ │ │ = App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),Empty)
+//│ │ = App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),Empty)
+//│ │ ? block		inspects ||    [at syntax/Parser.scala:249]
+//│ = WithContext(List(App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),Empty)),Context(TreeMap(-> -> `->` 2147483647 1, ::= -> `::=` 2 2, => -> `=>` 3 2, define -> `define`, keyword -> `keyword`, match -> `match` 1 1, syntax -> `syntax`, with -> `with` 2, | -> `|` 2, ~> -> `~>` 2 2),TreeMap(Left(0) -> default ::= ‹Expr›, Left(1) -> unnamed#1 ::= match ‹Expr› with ‹Expr›, Left(2) -> unnamed#2 ::= | ‹Expr›, Left(3) -> unnamed#3 ::= ‹Expr› -> ‹Expr› | ‹Expr›)))
+//│ ? parseAll		inspects ||    [at syntax/Parser.scala:192]
+//│ Pretty-print: ((case(A(n)))(n))(?)
+//│ AST: App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),Empty)
 
 
 A(n) -> n | B(x, y) -> x + y | qq
 //│ |A|(|n|)| |->| |n| ||| |B|(|x|,| |y|)| |->| |x| |+| |y| ||| |qq|
-//│ ╔══[PARSE ERROR] Expected an expression; found `|` 0 2 instead
-//│ ║  l.109: 	A(n) -> n | B(x, y) -> x + y | qq
-//│ ╙──       	          ^
-//│ ╔══[PARSE ERROR] Expected expression after after |; found '|' keyword instead
-//│ ║  l.109: 	A(n) -> n | B(x, y) -> x + y | qq
-//│ ╙──       	          ^
-//│ ╔══[PARSE ERROR] Expected end of input; found opening parenthesis instead
-//│ ║  l.109: 	A(n) -> n | B(x, y) -> x + y | qq
-//│ ╙──       	             ^
-//│ Pretty-print: ?
-//│ AST: Empty
+//│ Pretty-print: ((case(A(n)))(n))(((case(B((,(x))(y))))(x + y))(qq))
+//│ AST: App(App(App(Var(case),App(Var(A),Var(n))),Var(n)),App(App(App(Var(case),App(Var(B),App(App(Var(,),Var(x)),Var(y)))),App(App(Var(+),Var(x)),Var(y))),Var(qq)))
 
 syntax _ -> _ ~> case($1, $2, nil)
 //│ |syntax| |_| |->| |_| |~>| |case|(|$1|,| |$2|,| |nil|)|
@@ -126,55 +187,13 @@ syntax _ -> _ ~> case($1, $2, nil)
 
 A -> 0
 //│ |A| |->| |0|
-//│ ╔══[PARSE ERROR] Expected expression after after ->; found literal instead
-//│ ║  l.127: 	A -> 0
-//│ ╙──       	     ^
-//│ Pretty-print: ?
-//│ AST: Empty
+//│ Pretty-print: case((,(A))((,(0))(nil)))
+//│ AST: App(Var(case),App(App(Var(,),Var(A)),App(App(Var(,),Const(IntLit(0))),Var(nil))))
 
-:dp
 A -> 0 | otherwise
 //│ |A| |->| |0| ||| |otherwise|
-//│ @ block(block)    [at syntax/Parser.scala:249]
-//│ │ ? block		inspects |A| |->| |0|...    [at syntax/Parser.scala:234]
-//│ │ @ expr(0)    [at syntax/Parser.scala:435]
-//│ │ │ ? expr		inspects |A| |->| |0|...    [at syntax/Parser.scala:410]
-//│ │ │ ! expr		consumes |A|    [at syntax/Parser.scala:420]
-//│ │ │ @ exprCont(0,`Var(A)`,true)    [at syntax/Parser.scala:474]
-//│ │ │ │ ? exprCont		inspects | |->| |0| |...    [at syntax/Parser.scala:440]
-//│ │ │ │ ! exprCont		consumes | |    [at syntax/Parser.scala:465]
-//│ │ │ │ @ exprCont(0,`Var(A)`,true)    [at syntax/Parser.scala:474]
-//│ │ │ │ │ ? exprCont		inspects |->| |0| |||...    [at syntax/Parser.scala:440]
-//│ │ │ │ │ looking for infix rules for `->` 2147483647 1
-//│ │ │ │ │ ! exprCont		consumes |->|    [at syntax/Parser.scala:451]
-//│ │ │ │ │ @ parseRule(1,after -> ::= ‹Expr›)    [at syntax/Parser.scala:407]
-//│ │ │ │ │ │ ? parseRule		inspects | |0| ||| |...    [at syntax/Parser.scala:387]
-//│ │ │ │ │ │ ! parseRule		consumes | |    [at syntax/Parser.scala:387]
-//│ │ │ │ │ │ @ tryExprThenEmpty(1, literal)    [at syntax/Parser.scala:378]
-//│ │ │ │ │ │ │ ? tryExprThenEmpty		inspects |0| ||| |otherwise|    [at syntax/Parser.scala:354]
-//│ │ │ │ │ │ │ @ expr(1)    [at syntax/Parser.scala:435]
-//│ │ │ │ │ │ │ │ ? expr		inspects |0| ||| |otherwise|    [at syntax/Parser.scala:410]
-//│ │ │ │ │ │ │ │ ! expr		consumes |0|    [at syntax/Parser.scala:423]
-//│ │ │ │ │ │ │ │ @ exprCont(1,`Const(IntLit(0))`,true)    [at syntax/Parser.scala:474]
-//│ │ │ │ │ │ │ │ │ ? exprCont		inspects | ||| |otherwise|    [at syntax/Parser.scala:440]
-//│ │ │ │ │ │ │ │ │ ! exprCont		consumes | |    [at syntax/Parser.scala:465]
-//│ │ │ │ │ │ │ │ │ @ exprCont(1,`Const(IntLit(0))`,true)    [at syntax/Parser.scala:474]
-//│ │ │ │ │ │ │ │ │ │ ? exprCont		inspects ||| |otherwise|    [at syntax/Parser.scala:440]
-//│ │ │ │ │ │ │ │ │ = Const(IntLit(0))
-//│ │ │ │ │ │ │ │ = Const(IntLit(0))
-//│ │ │ │ │ │ │ = Const(IntLit(0))
-//│ │ │ │ │ │ │ ? tryExprThenEmpty		inspects ||| |otherwise|    [at syntax/Parser.scala:362]
-//│ │ │ │ │ │ = None
-//│ │ │ │ │ = None
-//│ │ │ │ = Empty
-//│ │ │ = Empty
-//│ │ = Empty
-//│ │ ? block		inspects ||| |otherwise|    [at syntax/Parser.scala:249]
-//│ = WithContext(List(Empty),Context(TreeMap(-> -> `->` 2147483647 1, ::= -> `::=` 2 2, => -> `=>` 3 2, define -> `define`, keyword -> `keyword`, match -> `match` 1 1, syntax -> `syntax`, with -> `with` 2, | -> `|` 0 2, ~> -> `~>` 2 2),TreeMap(Left(0) -> default ::= ‹Expr›, Left(1) -> unnamed#1 ::= match ‹Expr› with ‹Expr›, Left(2) -> unnamed#2 ::= | ‹Expr›, Left(3) -> unnamed#3 ::= ‹Expr› -> ‹Expr› | ‹Expr›, Left(4) -> unnamed#4 ::= ‹Expr› -> ‹Expr›)))
-//│ ? parseAll		inspects ||| |otherwise|    [at syntax/Parser.scala:192]
-//│ Error    [at syntax/Parser.scala:195]
 //│ ╔══[PARSE ERROR] Expected end of input; found '|' keyword instead
-//│ ║  l.136: 	A -> 0 | otherwise
+//│ ║  l.193: 	A -> 0 | otherwise
 //│ ╙──       	       ^
 //│ Pretty-print: ?
 //│ AST: Empty
