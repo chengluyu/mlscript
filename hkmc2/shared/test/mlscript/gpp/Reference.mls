@@ -2,46 +2,44 @@
 :p
 :keepContext
 
-keyword double
-define Double ::= double Expr ~> $1 * 2
-double 1
-double 2 + 3
-//│ |keyword| |double|↵|define| |Double| |::=| |double| |Expr| |~>| |$1| |*| |2|↵|double| |1|↵|double| |2| |+| |3|
-//│ AST: List(App(App(Var(*),Const(IntLit(1))),Const(IntLit(2))), App(App(Var(*),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3)))),Const(IntLit(2))))
-//│ Pretty-print: 1 * 2, (2 + 3) * 2
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+keyword with, nil, cons
+//│ |keyword| |with|,| |nil|,| |cons|
+//│ Keywords: cons, nil, with
 
-:pe
-define DoubleProduct ::= Double Double ~> $1 * $2
-// Because `Double` and `DoubleProduct` shares the same prefix.
-double 1 double 2
-//│ |define| |DoubleProduct| |::=| |Double| |Double| |~>| |$1| |*| |$2|↵|/* Because `Double` and `DoubleProduct` shares the same prefix.*/|↵|double| |1| |double| |2|
-//│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.17: 	// Because `Double` and `DoubleProduct` shares the same prefix.
-//│ ║        	                                                               ^
-//│ ║  l.18: 	double 1 double 2
-//│ ╙──      	
-//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
-//│ ║  l.18: 	double 1 double 2
-//│ ╙──      	                ^
-//│ AST: List(Empty, App(App(Var(*),Const(IntLit(1))),Const(IntLit(2))))
-//│ Pretty-print: ?, 1 * 2
-//│ Keywords: ::=, =>, define, double, keyword, ~>
-//│ Rules: Double ::= `double` Expr End ,default ::= Expr End 
+syntax List "a simple tail-recursive list"
+//│ |syntax| |List| |"a simple tail-recursive list"|
+//│ Rules: List ::= 
 
-:pe
-keyword product
-define DoubleProduct ::= product Double Double ~> $1 * $2
-product double 1 double 2
-//│ |keyword| |product|↵|define| |DoubleProduct| |::=| |product| |Double| |Double| |~>| |$1| |*| |$2|↵|product| |double| |1| |double| |2|
-//│ ╔══[PARSE ERROR] Expected reference to Double after after product; found 'double' keyword instead
-//│ ║  l.36: 	product double 1 double 2
-//│ ╙──      	        ^^^^^^
-//│ ╔══[PARSE ERROR] Expected end of input; found literal instead
-//│ ║  l.36: 	product double 1 double 2
-//│ ╙──      	               ^
-//│ AST: List(Empty)
-//│ Pretty-print: ?
-//│ Keywords: ::=, =>, define, double, keyword, ~>
-//│ Rules: Double ::= `double` Expr End ,DoubleProduct ::= Double Double End ,default ::= Expr End 
+define List += nil ~> nil
+//│ |define| |List| |+=| |nil| |~>| |nil|
+
+define List += cons Expr (with List)? ~> ($1 + $2)
+//│ |define| |List| |+=| |cons| |Expr| |(|with| |List|)|?| |~>| |(|$1| |+| |$2|)|
+
+nil
+//│ |nil|
+//│ Pretty-print: nil
+//│ AST: Var(nil)
+
+cons 0
+//│ |cons| |0|
+//│ ╔══[WARNING] Invalid meta-variable index 2
+//│ ║  l.16: 	define List += cons Expr (with List)? ~> ($1 + $2)
+//│ ╙──      	                                               ^^
+//│ Pretty-print: 0 + $2
+//│ AST: App(App(Var(+),Const(IntLit(0))),Var($2))
+
+cons 0 with nil
+//│ |cons| |0| |with| |nil|
+//│ Pretty-print: 0 + nil
+//│ AST: App(App(Var(+),Const(IntLit(0))),Var(nil))
+
+cons 0 with cons 1 with nil
+//│ |cons| |0| |with| |cons| |1| |with| |nil|
+//│ Pretty-print: 0 + 1 + nil
+//│ AST: App(App(Var(+),Const(IntLit(0))),App(App(Var(+),Const(IntLit(1))),Var(nil)))
+
+cons 0 with cons 1 with cons 2 with cons 3 with cons 4 with cons 5 with nil
+//│ |cons| |0| |with| |cons| |1| |with| |cons| |2| |with| |cons| |3| |with| |cons| |4| |with| |cons| |5| |with| |nil|
+//│ Pretty-print: 0 + 1 + 2 + 3 + 4 + 5 + nil
+//│ AST: App(App(Var(+),Const(IntLit(0))),App(App(Var(+),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),App(App(Var(+),Const(IntLit(3))),App(App(Var(+),Const(IntLit(4))),App(App(Var(+),Const(IntLit(5))),Var(nil)))))))

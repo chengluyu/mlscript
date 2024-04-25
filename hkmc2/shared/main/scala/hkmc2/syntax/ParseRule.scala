@@ -3,78 +3,68 @@ package syntax
 
 import sourcecode.{Name, Line}
 import mlscript.utils.*, shorthands.*
-import hkmc2.Message._
 import BracketKind._
 
+class ParseRule[+A](val name: String)(val description: String)(val alts: Alt[A]*):
+  def map[B](f: A => B): ParseRule[B] = ParseRule(name)(description)(alts.map(_.map(f)): _*)
 
-enum Alt[+A]:
-  case Kw[Rest](kw: Keyword)(val rest: ParseRule[Rest]) extends Alt[Rest]
-  case Ident[Rest, +Res](val rest: ParseRule[Rest])(val k: (Tree.Var, Rest) => Res) extends Alt[Res]
-  case Ref[First, Rest, +Res](name: String, rule: ParseRule[First])(val rest: ParseRule[Rest])(val k: (First, Rest) => Res) extends Alt[Res]
-  case Expr[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
-  case Blk[Rest, +Res](rest: ParseRule[Rest])(val k: (Tree, Rest) => Res) extends Alt[Res]
-  case End(a: A)
-
-  def restOption: Option[ParseRule[?]] = this match
-    case k: Kw[?] => Some(k.rest)
-    case Ident(rest) => Some(rest)
-    case alt @ Ref(_, _) => Some(alt.rest)
-    case Expr(rest) => Some(rest)
-    case Blk(rest) => Some(rest)
-    case End(_) => None
-  
-  def map[B](f: A => B): Alt[B] = 
-    this match
-    case k: Kw[?] => Kw(k.kw)(k.rest.map(f))
-    case i: Ident[?, ?] => Ident(i.rest)((str, rest) => f(i.k(str, rest)))
-    case r: Ref[fst, rest, A] =>
-      Ref[fst, rest, B](r.name, r.rule)(r.rest)((tree, rest) => f(r.k(tree, rest)))
-    case e: Expr[rest, A] => Expr(e.rest)((tree, rest) => f(e.k(tree, rest)))
-    case End(a) => End(f(a))
-    case b: Blk[rest, A] => Blk(b.rest)((tree, rest) => f(b.k(tree, rest)))
-
-  override def toString(): String =
-    val head = this match 
-      case alt @ Kw(kw) => s"`${kw.name}`"
-      case alt @ Ident(_) => "Ident"
-      case alt @ Ref(name, _) => name
-      case alt @ Expr(_) => "Expr"
-      case alt @ Blk(_) => "Block"
-      case End(_) => "End"
-    head + " " + restOption.fold("")(_.altsToString)
-    
-
-class ParseRule[+A](val name: Str)(val alts: Alt[A]*):
-  def map[B](f: A => B): ParseRule[B] =
-    ParseRule(name)(alts.map(_.map(f))*)
-  
-  def extend[B >: A](alt: Alt[B]): ParseRule[B] =
-    ParseRule(name)((alts :+ alt)*)
+  def andThen[B, C](rule: ParseRule[B], fn: (A, B) => C): ParseRule[C] = ???
 
   def altsToString: String = alts.mkString(" | ")
   
   override def toString: Str = s"$name ::= " + altsToString
   
-  lazy val emptyAlt: Option[A] = alts.collectFirst { case Alt.End(a) => a }
-  lazy val kwAlts: Map[String, ParseRule[A]] =
+  def emptyAlt: Option[A] = alts.collectFirst { case Alt.End(a) => a }
+
+  def kwAlts: Map[String, ParseRule[A]] =
     alts.collect { case k @ Alt.Kw(kw) => kw.name -> k.rest }.toMap
-  lazy val identAlt: Option[Alt.Ident[?, A]] =
-    alts.collectFirst { case alt: Alt.Ident[rst, A] => alt }
-  lazy val exprAlt: Option[Alt.Expr[?, A]] =
-    alts.collectFirst { case alt: Alt.Expr[rst, A] => alt }
-  lazy val blkAlt: Option[Alt.Blk[?, A]] =
-    alts.collectFirst { case alt: Alt.Blk[rst, A] => alt }
-  
-  def whatComesAfter: Str =
-    alts.map:
-      case Alt.Kw(kw) => s"'${kw.name}' keyword"
-      case Alt.Ident(rest) => "identifier"
-      case Alt.Ref(name, _) => s"reference to $name"
-      case Alt.Expr(rest) => "expression"
-      case Alt.Blk(rest) => "indented block"
-      case Alt.End(_) => "end of input"
+
+  def kwRule(kw: Keyword)(using context: Context): Option[ParseRule[A]] =
+    val x = alts.collectFirst[Option[ParseRule[A]]]:
+      case k @ Alt.Kw(`kw`) => Some(k.rest)
+      case alt @ Alt.Rec(key) => context.rules.get(key) match
+        case None => None // Rule not found
+        case Some(rule) => rule.kwRule(kw).map(r => r.map(alt.k))
+    x.flatten
+
+  def identAlt(using context: Context): Option[Alt.Ident[?, A]] =
+    alts.collectFirst[Option[Alt.Ident[?, A]]]:
+      case alt: Alt.Ident[rst, A] => Some(alt)
+      case alt @ Alt.Rec(key) => context.rules.get(key) match
+        case Some(rule) => rule.identAlt.map(r => r.map(alt.k))
+        case None => None
+    .flatten
+
+  /** Get the first `Alt` begins with `Expr`. */
+  def exprAlt(using context: Context): Option[Alt.Expr[?, A]] =
+    alts.collectFirst[Option[Alt.Expr[?, A]]]:
+      case alt: Alt.Expr[?, A] => Some(alt)
+      case alt @ Alt.Rec(key) => context.rules.get(key) match
+        case Some(rule) => rule.exprAlt.map(r => r.map(alt.k))
+        case None => None
+    .flatten
+
+  def blkAlt(using context: Context): Option[Alt.Blk[?, A]] =
+    alts.collectFirst[Option[Alt.Blk[?, A]]]:
+      case alt: Alt.Blk[rst, A] => Some(alt)
+      case alt @ Alt.Rec(key) => context.rules.get(key) match
+        case Some(rule) => rule.blkAlt.map(r => r.map(alt.k))
+        case None => None
+    .flatten
+
+  private def initialSymbols(using context: Context): List[String] =
+    import Iterator.single
+    alts.iterator.flatMap:
+      case Alt.Kw(kw) => single(s"'${kw.name}' keyword")
+      case Alt.Ident(_) => single("identifier")
+      case Alt.Rec(key) => context.rules(key).initialSymbols
+      case Alt.Expr(_) => single("expression")
+      case Alt.Blk(_) => single("indented block")
+      case Alt.End(_) => single("end of input")
     .toList
-    match
+  
+  def whatComesAfter(using context: Context): Str =
+    initialSymbols.distinct match
       case Nil => "nothing at all"
       case str :: Nil => str
       case str1 :: str2 :: Nil => s"$str1 or $str2"

@@ -3,21 +3,15 @@
 
 keyword a
 //│ |keyword| |a|
-//│ AST: List()
-//│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Keywords: ::=, =>, a, define, keyword, ~>
 //│ Rules: default ::= Expr End 
 
 keyword a, b
 //│ |keyword| |a|,| |b|
-//│ AST: List()
-//│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Keywords: ::=, =>, a, b, define, keyword, ~>
 //│ Rules: default ::= Expr End 
 
 keyword a, b, c
 //│ |keyword| |a|,| |b|,| |c|
-//│ AST: List()
-//│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Keywords: ::=, =>, a, b, c, define, keyword, ~>
 //│ Rules: default ::= Expr End 

@@ -183,31 +183,41 @@ class DiffMaker(file: os.Path, relativeName: Str):
           val p = new syntax.Parser(origin, tokens, raise, dbg = dbgParsing.isSet):
             def doPrintDbg(msg: => Str): Unit = if dbg then output(msg)
           val res = p.parseAll(p.block)
-          lastContext = Some(res.context)
-          
-          // if (parseOnly)
-          //   output(s"Parsed: ${res.showDbg}")
           
           if showParse.isSet then
-            output(s"AST: ${res.content}")
-            output(s"Pretty-print: ${res.content.iterator.map(_.print).mkString(", ")}")
-            output(s"Keywords: ${context.keywords.keysIterator.mkString(", ")}")
-            output(s"Rules: ${context.rules.valuesIterator.map(_.toString).mkString(",")}")
+            res.content match
+              case Nil => ()
+              case head :: Nil => output(s"Pretty-print: ${head.print}")
+              case list => output("Pretty-print:"); list.foreach(x => output(s"  ${x.print}"))
+            res.content match
+              case Nil => ()
+              case head :: Nil => output(s"AST: ${head}")
+              case list => output("AST:"); list.foreach(x => output(s"  $x"))
+            if res.context.keywords.size != context.keywords.size then
+              output(res.context.keywords.keysIterator.filter: k =>
+                      !context.keywords.contains(k)
+                    .mkString("Keywords: ", ", ", ""))
+            if res.context.rules.size != context.rules.size then
+              output(res.context.rules.iterator.collect:
+                      case (k, v) if !context.rules.contains(k) => v.toString
+                    .mkString("Rules: ", ", ", ""))
+
+          lastContext = Some(res.context)
         
-        catch
-          case oh_noes: ThreadDeath => throw oh_noes
-          case err: Throwable =>
-            if fixme.isUnset then
-              failures += allLines.size - lines.size + 1
-              unhandled(blockLineNum, err)
-            // err.printStackTrace(out)
-            // println(err.getCause())
-            output("/!!!\\ Uncaught error: " + err +
-              err.getStackTrace().take(
-                if fullExceptionStack.isSet then Int.MaxValue
-                else if fixme.isSet || err.isInstanceOf[StackOverflowError] then 0
-                else 10
-              ).map("\n" + "\tat: " + _).mkString)
+      catch
+        case oh_noes: ThreadDeath => throw oh_noes
+        case err: Throwable =>
+          if fixme.isUnset then
+            failures += allLines.size - lines.size + 1
+            unhandled(blockLineNum, err)
+          // err.printStackTrace(out)
+          // println(err.getCause())
+          output("/!!!\\ Uncaught error: " + err +
+            err.getStackTrace().take(
+              if fullExceptionStack.isSet then Int.MaxValue
+              else if fixme.isSet || err.isInstanceOf[StackOverflowError] then 0
+              else 10
+            ).map("\n" + "\tat: " + _).mkString)
       
       rec(lines.drop(block.size))
     case Nil =>

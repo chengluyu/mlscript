@@ -5,18 +5,16 @@ keyword x
 keyword y
 keyword z
 //│ |keyword| |x|↵|keyword| |y|↵|keyword| |z|
-//│ AST: List()
-//│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ Keywords: ::=, =>, define, keyword, x, y, z, ~>
 //│ Rules: default ::= Expr End 
 
 :pe
 keyword x
 x
 //│ |keyword| |x|↵|x|
-//│ AST: List(Var(x))
 //│ Pretty-print: x
-//│ Keywords: ::=, =>, define, keyword, ~>
+//│ AST: Var(x)
+//│ Keywords: ::=, =>, define, keyword, x, ~>
 //│ Rules: default ::= Expr End 
 
 keyword inc
@@ -24,10 +22,14 @@ define Inc ::= inc Expr ~> ($1 + 1)
 inc x
 inc 1 + 2
 //│ |keyword| |inc|↵|define| |Inc| |::=| |inc| |Expr| |~>| |(|$1| |+| |1|)|↵|inc| |x|↵|inc| |1| |+| |2|
-//│ AST: List(App(App(Var(+),Var(x)),Const(IntLit(1))), App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(1))))
-//│ Pretty-print: x + 1, 1 + 2 + 1
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Pretty-print:
+//│   x + 1
+//│   1 + 2 + 1
+//│ AST:
+//│   App(App(Var(+),Var(x)),Const(IntLit(1)))
+//│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(1)))
+//│ Keywords: ::=, =>, define, inc, keyword, ~>
+//│ Rules: Inc ::= `inc` Expr End , default ::= Expr End 
 
 // Warn about wrong indices
 :w
@@ -36,12 +38,12 @@ define Dec ::= dec Expr ~> ($2 - 1)
 dec x
 //│ |keyword| |dec|↵|define| |Dec| |::=| |dec| |Expr| |~>| |(|$2| |-| |1|)|↵|dec| |x|
 //│ ╔══[WARNING] Invalid meta-variable reference $2
-//│ ║  l.35: 	define Dec ::= dec Expr ~> ($2 - 1)
+//│ ║  l.37: 	define Dec ::= dec Expr ~> ($2 - 1)
 //│ ╙──      	                            ^^
-//│ AST: List(App(App(Var(-),Var($2)),Const(IntLit(1))))
 //│ Pretty-print: $2 - 1
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ AST: App(App(Var(-),Var($2)),Const(IntLit(1)))
+//│ Keywords: ::=, =>, dec, define, keyword, ~>
+//│ Rules: Dec ::= `dec` Expr End , default ::= Expr End 
 
 keyword let
 keyword as
@@ -49,13 +51,10 @@ keyword in
 define LetIn ::= let Expr as Expr in Expr ~> ($1 => $3)($2)
 let x as 1 in x
 //│ |keyword| |let|↵|keyword| |as|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Expr| |as| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |as| |1| |in| |x|
-//│ ╔══[PARSE ERROR] Expected end of input; found opening parenthesis instead
-//│ ║  l.49: 	define LetIn ::= let Expr as Expr in Expr ~> ($1 => $3)($2)
-//│ ╙──      	                                                       ^
-//│ AST: List()
-//│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Pretty-print: (x => Var(x).print)(1)
+//│ AST: App(Lam(Var(x),Var(x)),Const(IntLit(1)))
+//│ Keywords: ::=, =>, as, define, in, keyword, let, ~>
+//│ Rules: LetIn ::= `let` Expr `as` Expr `in` Expr End , default ::= Expr End 
 
 :pe
 keyword let
@@ -64,10 +63,7 @@ keyword in
 define LetIn ::= let Expr = Expr in Expr ~> ($1 => $3)($2)
 let x = 1 in x
 //│ |keyword| |let|↵|keyword| |=|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Expr| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |=| |1| |in| |x|
-//│ ╔══[PARSE ERROR] Expected end of input; found opening parenthesis instead
-//│ ║  l.64: 	define LetIn ::= let Expr = Expr in Expr ~> ($1 => $3)($2)
-//│ ╙──      	                                                      ^
-//│ AST: List()
-//│ Pretty-print: 
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Pretty-print: (x => Var(x).print)(1)
+//│ AST: App(Lam(Var(x),Var(x)),Const(IntLit(1)))
+//│ Keywords: ::=, =, =>, define, in, keyword, let, ~>
+//│ Rules: LetIn ::= `let` Expr `=` Expr `in` Expr End , default ::= Expr End 
