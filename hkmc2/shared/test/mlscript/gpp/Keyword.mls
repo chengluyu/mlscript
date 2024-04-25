@@ -3,15 +3,12 @@
 
 keyword a
 //│ |keyword| |a|
-//│ Keywords: ::=, =>, a, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Keywords: a
 
 keyword a, b
 //│ |keyword| |a|,| |b|
-//│ Keywords: ::=, =>, a, b, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Keywords: a, b
 
 keyword a, b, c
 //│ |keyword| |a|,| |b|,| |c|
-//│ Keywords: ::=, =>, a, b, c, define, keyword, ~>
-//│ Rules: default ::= Expr End 
+//│ Keywords: a, b, c

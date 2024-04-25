@@ -5,8 +5,7 @@ keyword x
 keyword y
 keyword z
 //│ |keyword| |x|↵|keyword| |y|↵|keyword| |z|
-//│ Keywords: ::=, =>, define, keyword, x, y, z, ~>
-//│ Rules: default ::= Expr End 
+//│ Keywords: x, y, z
 
 :pe
 keyword x
@@ -14,8 +13,7 @@ x
 //│ |keyword| |x|↵|x|
 //│ Pretty-print: x
 //│ AST: Var(x)
-//│ Keywords: ::=, =>, define, keyword, x, ~>
-//│ Rules: default ::= Expr End 
+//│ Keywords: x
 
 keyword inc
 define Inc ::= inc Expr ~> ($1 + 1)
@@ -28,8 +26,8 @@ inc 1 + 2
 //│ AST:
 //│   App(App(Var(+),Var(x)),Const(IntLit(1)))
 //│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(1)))
-//│ Keywords: ::=, =>, define, inc, keyword, ~>
-//│ Rules: Inc ::= `inc` Expr End , default ::= Expr End 
+//│ Keywords: inc
+//│ Rules: Inc ::= `inc` Expr End 
 
 // Warn about wrong indices
 :w
@@ -37,13 +35,13 @@ keyword dec
 define Dec ::= dec Expr ~> ($2 - 1)
 dec x
 //│ |keyword| |dec|↵|define| |Dec| |::=| |dec| |Expr| |~>| |(|$2| |-| |1|)|↵|dec| |x|
-//│ ╔══[WARNING] Invalid meta-variable reference $2
-//│ ║  l.37: 	define Dec ::= dec Expr ~> ($2 - 1)
+//│ ╔══[WARNING] Invalid meta-variable index 2
+//│ ║  l.35: 	define Dec ::= dec Expr ~> ($2 - 1)
 //│ ╙──      	                            ^^
 //│ Pretty-print: $2 - 1
 //│ AST: App(App(Var(-),Var($2)),Const(IntLit(1)))
-//│ Keywords: ::=, =>, dec, define, keyword, ~>
-//│ Rules: Dec ::= `dec` Expr End , default ::= Expr End 
+//│ Keywords: dec
+//│ Rules: Dec ::= `dec` Expr End 
 
 keyword let
 keyword as
@@ -53,8 +51,8 @@ let x as 1 in x
 //│ |keyword| |let|↵|keyword| |as|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Expr| |as| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |as| |1| |in| |x|
 //│ Pretty-print: (x => Var(x).print)(1)
 //│ AST: App(Lam(Var(x),Var(x)),Const(IntLit(1)))
-//│ Keywords: ::=, =>, as, define, in, keyword, let, ~>
-//│ Rules: LetIn ::= `let` Expr `as` Expr `in` Expr End , default ::= Expr End 
+//│ Keywords: as, in, let
+//│ Rules: LetIn ::= `let` Expr `as` Expr `in` Expr End 
 
 :pe
 keyword let
@@ -65,5 +63,5 @@ let x = 1 in x
 //│ |keyword| |let|↵|keyword| |=|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Expr| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |=| |1| |in| |x|
 //│ Pretty-print: (x => Var(x).print)(1)
 //│ AST: App(Lam(Var(x),Var(x)),Const(IntLit(1)))
-//│ Keywords: ::=, =, =>, define, in, keyword, let, ~>
-//│ Rules: LetIn ::= `let` Expr `=` Expr `in` Expr End , default ::= Expr End 
+//│ Keywords: =, in, let
+//│ Rules: LetIn ::= `let` Expr `=` Expr `in` Expr End 

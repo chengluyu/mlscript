@@ -17,8 +17,7 @@ x => x
 //│   Const(IntLit(1))
 //│   Lam(Var(x),Var(x))
 //│   App(Lam(Var(x),App(App(Var(+),Var(x)),Const(IntLit(1)))),Const(IntLit(2)))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: Program ::= Expr End , default ::= Expr End 
+//│ Rules: Program ::= Expr End 
 
 define Program ::= Expr Expr ~> $1 + $2
 0 1
@@ -33,8 +32,7 @@ define Program ::= Expr Expr ~> $1 + $2
 //│   App(App(Var(+),Const(IntLit(0))),Const(IntLit(1)))
 //│   App(App(Var(+),Const(IntLit(2))),Const(IntLit(3)))
 //│   App(App(Var(+),Const(IntLit(4))),Const(IntLit(5)))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: Program ::= Expr Expr End , default ::= Expr End 
+//│ Rules: Program ::= Expr Expr End 
 
 :pe
 define Program ::= Expr ~> $1
@@ -45,20 +43,20 @@ f(
 )
 //│ |define| |Program| |::=| |Expr| |~>| |$1|↵|f|(| |1|,|↵|2|,|↵|3|,|↵|)|
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.42: 	  1,
+//│ ║  l.40: 	  1,
 //│ ║        	    ^
-//│ ║  l.43: 	  2,
+//│ ║  l.41: 	  2,
 //│ ╙──      	^^
 //│ ╔══[PARSE ERROR] Expected a closing parenthesis; found newline instead
-//│ ║  l.42: 	  1,
+//│ ║  l.40: 	  1,
 //│ ║        	    ^
-//│ ║  l.43: 	  2,
+//│ ║  l.41: 	  2,
 //│ ╙──      	^^
 //│ ╔══[PARSE ERROR] Expected an expression; found closing parenthesis instead
-//│ ║  l.45: 	)
+//│ ║  l.43: 	)
 //│ ╙──      	^
 //│ ╔══[PARSE ERROR] Expected end of input; found closing parenthesis instead
-//│ ║  l.45: 	)
+//│ ║  l.43: 	)
 //│ ╙──      	^
 //│ Pretty-print:
 //│   (f)(((,)(1))(?))
@@ -70,5 +68,4 @@ f(
 //│   Const(IntLit(2))
 //│   Const(IntLit(3))
 //│   Empty
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: Program ::= Expr End , default ::= Expr End 
+//│ Rules: Program ::= Expr End 

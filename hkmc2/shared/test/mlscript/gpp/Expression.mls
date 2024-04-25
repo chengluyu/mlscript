@@ -6,71 +6,57 @@
 //│ |1| |+| |2|
 //│ Pretty-print: 1 + 2
 //│ AST: App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 1 + 2 * 3
 //│ |1| |+| |2| |*| |3|
 //│ Pretty-print: 1 + 2 * 3
 //│ AST: App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3))))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 (1 + 2) * 3
 //│ |(|1| |+| |2|)| |*| |3|
 //│ Pretty-print: (1 + 2) * 3
 //│ AST: App(App(Var(*),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Const(IntLit(3)))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 1 * (2 + 3)
 //│ |1| |*| |(|2| |+| |3|)|
 //│ Pretty-print: 1 * (2 + 3)
 //│ AST: App(App(Var(*),Const(IntLit(1))),App(App(Var(+),Const(IntLit(2))),Const(IntLit(3))))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 :pe
 1 + (2 * 3 "str"
 //│ |1| |+| |(|2| |*| |3| |"str"|
 //│ ╔══[PARSE ERROR] Expected a closing parenthesis; found literal instead
-//│ ║  l.34: 	1 + (2 * 3 "str"
+//│ ║  l.26: 	1 + (2 * 3 "str"
 //│ ╙──      	           ^^^^^
 //│ ╔══[PARSE ERROR] Expected end of input; found literal instead
-//│ ║  l.34: 	1 + (2 * 3 "str"
+//│ ║  l.26: 	1 + (2 * 3 "str"
 //│ ╙──      	           ^^^^^
 //│ Pretty-print: 1 + 2 * 3
 //│ AST: App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3))))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 :pe
 1 + (2 * 3
 //│ |1| |+| |(|2| |*| |3|
 //│ ╔══[PARSE ERROR] Expected a closing parenthesis; found end of input instead
-//│ ║  l.48: 	1 + (2 * 3
+//│ ║  l.38: 	1 + (2 * 3
 //│ ╙──      	          ^
 //│ Pretty-print: 1 + 2 * 3
 //│ AST: App(App(Var(+),Const(IntLit(1))),App(App(Var(*),Const(IntLit(2))),Const(IntLit(3))))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 1 +
   2
 //│ |1| |+| |2|
 //│ Pretty-print: 1 + 2
 //│ AST: App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 :pe
 1 +
 2
 //│ |1| |+|↵|2|
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.67: 	1 +
+//│ ║  l.53: 	1 +
 //│ ║        	   ^
-//│ ║  l.68: 	2
+//│ ║  l.54: 	2
 //│ ╙──      	
 //│ Pretty-print:
 //│   1 + ?
@@ -78,8 +64,6 @@
 //│ AST:
 //│   App(App(Var(+),Const(IntLit(1))),Empty)
 //│   Const(IntLit(2))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 
 
 :pe
 1 +
@@ -87,9 +71,9 @@
   3
 //│ |1| |+| |2| |+|↵|3|
 //│ ╔══[PARSE ERROR] Expected an expression; found newline instead
-//│ ║  l.86: 	  2 +
+//│ ║  l.70: 	  2 +
 //│ ║        	     ^
-//│ ║  l.87: 	  3
+//│ ║  l.71: 	  3
 //│ ╙──      	^^
 //│ Pretty-print:
 //│   1 + 2 + ?
@@ -97,5 +81,3 @@
 //│ AST:
 //│   App(App(Var(+),App(App(Var(+),Const(IntLit(1))),Const(IntLit(2)))),Empty)
 //│   Const(IntLit(3))
-//│ Keywords: ::=, =>, define, keyword, ~>
-//│ Rules: default ::= Expr End 

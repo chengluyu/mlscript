@@ -9,5 +9,5 @@ let x = 1 in x
 //│ |keyword| |let|↵|keyword| |=|↵|keyword| |in|↵|define| |LetIn| |::=| |let| |Expr| |=| |Expr| |in| |Expr| |~>| |(|$1| |=>| |$3|)|(|$2|)|↵|let| |x| |=| |1| |in| |x|
 //│ Pretty-print: (x => Var(x).print)(1)
 //│ AST: App(Lam(Var(x),Var(x)),Const(IntLit(1)))
-//│ Keywords: ::=, =, =>, define, in, keyword, let, ~>
-//│ Rules: LetIn ::= `let` Expr `=` Expr `in` Expr End , default ::= Expr End 
+//│ Keywords: =, in, let
+//│ Rules: LetIn ::= `let` Expr `=` Expr `in` Expr End 
