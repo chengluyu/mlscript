@@ -17,3 +17,26 @@
 //│ Where:
 //│   Int <: α2_2
 //│   α2_2 <: Int
+
+fun iid: [A extends Int] -> A -> A
+fun iid(x) = x
+//│ Type: ⊤
+
+iid
+//│ Type: forall α4_2: (α4_2) ->{⊥} α4_2
+//│ Where:
+//│   α4_2 <: Int
+
+:e
+iid("42")
+//│ ╔══[ERROR] Type error in string literal with expected type α5_1
+//│ ║  l.31: 	iid("42")
+//│ ║        	    ^^^^
+//│ ╟── because: cannot constrain  Str  <:  α5_1
+//│ ╟── because: cannot constrain  Str  <:  α5_1
+//│ ╙── because: cannot constrain  Str  <:  Int
+//│ Type: Str
+
+
+iid(42)
+//│ Type: Int

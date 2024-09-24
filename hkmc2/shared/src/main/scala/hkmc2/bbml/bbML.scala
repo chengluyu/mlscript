@@ -212,8 +212,10 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
   
   private def instantiate(ty: PolyType)(using ctx: Ctx): GeneralType =
     ty.body.subst(using (ty.tvs.map {
-      case InfVar(_, uid, _, _) =>
+      case InfVar(_, uid, state, _) =>
         val nv = freshVar
+        nv.state.upperBounds :::= state.upperBounds
+        nv.state.lowerBounds :::= state.lowerBounds
         uid -> nv
     }).toMap)
   
