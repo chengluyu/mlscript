@@ -164,7 +164,7 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
     case Term.Forall(tvs, body) =>
       val nestCtx = ctx.nextLevel
       given Ctx = nestCtx
-      genPolyType(tvs, typeAndSubstType(body, pol))
+      genPolyType(tvs.map(_.sym), typeAndSubstType(body, pol)) // TODO
     case Term.TyApp(Ref(cls: ClassSymbol), targs) =>
       // log(s"Type application: ${cls.nme} with ${targs}")
       cls.defn match

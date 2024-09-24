@@ -70,12 +70,16 @@ class Elaborator(tl: TraceLogger)(using raise: Raise, state: State):
       })
     case InfixApp(TyTup(tvs), Keyword.`->`, body) =>
       val boundVars = mutable.HashMap.empty[Str, VarSymbol]
+      def genSym(id: Tree.Ident) =
+        val sym = VarSymbol(id, nextUid)
+        sym.decl = S(TyParam(FldFlags.empty, N, sym)) // TODO vce
+        boundVars += id.name -> sym
+        sym
       val bds = tvs.collect:
-        case id: Tree.Ident =>
-          val sym = VarSymbol(id, nextUid)
-          sym.decl = S(TyParam(FldFlags.empty, N, sym)) // TODO vce
-          boundVars += id.name -> sym
-          sym          
+        case id: Tree.Ident => QuantVar(genSym(id), N, N)
+        case InfixApp(id: Tree.Ident, Keyword.`extends`, ub) => QuantVar(genSym(id), S(term(ub)), N)
+        case InfixApp(id: Tree.Ident, Keyword.`restricts`, lb) => QuantVar(genSym(id), N, S(term(lb)))
+        case InfixApp(InfixApp(id: Tree.Ident, Keyword.`extends`, ub), Keyword.`restricts`, lb) => QuantVar(genSym(id), S(term(ub)), S(term(lb)))
       if bds.length != tvs.length then
         raise(ErrorReport(msg"Illegal forall annotation." -> tree.toLoc :: Nil))
         Term.Error
