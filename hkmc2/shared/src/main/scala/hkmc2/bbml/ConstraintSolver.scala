@@ -48,8 +48,11 @@ class ConstraintSolver(infVarState: InfVarUid.State, tl: TraceLogger):
           Wildcard(extrude(in)(using lvl, !pol), extrude(out))
         case t: Type => Wildcard(extrude(t)(using lvl, !pol), extrude(t))
       })
-    case v @ InfVar(_, uid, _, true) => // * skolem
-      if pol then Top else Bot
+    case v @ InfVar(_, uid, state, true) => // * skolem
+      if pol then
+        if state.upperBounds.isEmpty then Top else state.upperBounds.reduceLeft(_ & _)
+      else
+        if state.lowerBounds.isEmpty then Bot else state.lowerBounds.reduceLeft(_ | _)
     case v @ InfVar(_, uid, _, false) =>
       cache.getOrElse(uid -> pol, {
         val nv = freshXVar(lvl)
@@ -117,12 +120,20 @@ class ConstraintSolver(infVarState: InfVarUid.State, tl: TraceLogger):
   private def constrainArgs(lhs: TypeArg, rhs: TypeArg)(using Ctx, CCtx, TL): Unit =
     constrainImpl(rhs.negPart, lhs.negPart)
     constrainImpl(lhs.posPart, rhs.posPart)
+
+  private def inlineSkolemBounds(ty: Type, pol: Bool)(using cache: Set[Uid[InfVar]]): Type = ty match
+    case v @ InfVar(_, uid, state, skolem) if skolem && !cache(uid) =>
+      given Set[Uid[InfVar]] = cache + uid
+      inlineSkolemBounds(if pol then (v :: state.upperBounds).reduceLeft(_ & _) else (v :: state.lowerBounds).reduceLeft(_ | _), pol)
+    case ComposedType(lhs, rhs, p) => ComposedType(inlineSkolemBounds(lhs, pol), inlineSkolemBounds(rhs, pol), p)
+    case NegType(ty) => NegType(inlineSkolemBounds(ty, !pol))
+    case _ => ty // TODO: list  
   
   private def constrainImpl(lhs: Type, rhs: Type)(using Ctx, CCtx, TL): Unit =
     if cctx.cache((lhs, rhs)) then log(s"Cached!")
     else trace(s"CONSTRAINT $lhs <: $rhs"):
       cctx.nest(lhs -> rhs) givenIn:
-        val ty = dnf(lhs & rhs.!) // TODO: inline skolem bounds
+        val ty = dnf(inlineSkolemBounds(lhs & rhs.!, true)(using Set.empty)) 
         constrainDNF(ty)
   def constrain(lhs: Type, rhs: Type)(using Ctx, CCtx, TL): Unit =
     constrainImpl(lhs, rhs)

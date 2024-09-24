@@ -1,38 +1,18 @@
 :global
 :bbml
 
-:todo
-(x => x + 1): [A extends Int] -> A -> A
-//│ ╔══[ERROR] Type error in reference with expected type Int
-//│ ║  l.5: 	(x => x + 1): [A extends Int] -> A -> A
-//│ ║       	      ^
-//│ ╙── because: cannot constrain  <α>0_2  <:  Int
-//│ ╔══[ERROR] Type error in function literal with expected type (<α>0_2) ->{⊥} <α>0_2
-//│ ║  l.5: 	(x => x + 1): [A extends Int] -> A -> A
-//│ ║       	 ^^^^^^^^^^
-//│ ╙── because: cannot constrain  Int  <:  <α>0_2
-//│ Type: forall α0_2: (α0_2) ->{⊥} α0_2
-//│ Where:
-//│   α0_2 <: Int
+
+(x => x + 1): [A extends Int] -> A -> Int
+//│ Type: forall α0_2: (Int) ->{⊥} Int
 
 
-:todo
 (x => x): [A restricts Int] -> A -> A
 //│ Type: forall α1_2: (α1_2) ->{⊥} α1_2
 //│ Where:
 //│   Int <: α1_2
 
 
-:todo
 (x => x - 1): [A extends Int restricts Int] -> A -> A
-//│ ╔══[ERROR] Type error in reference with expected type Int
-//│ ║  l.27: 	(x => x - 1): [A extends Int restricts Int] -> A -> A
-//│ ║        	      ^
-//│ ╙── because: cannot constrain  <α>2_2  <:  Int
-//│ ╔══[ERROR] Type error in function literal with expected type (<α>2_2) ->{⊥} <α>2_2
-//│ ║  l.27: 	(x => x - 1): [A extends Int restricts Int] -> A -> A
-//│ ║        	 ^^^^^^^^^^
-//│ ╙── because: cannot constrain  Int  <:  <α>2_2
 //│ Type: forall α2_2: (α2_2) ->{⊥} α2_2
 //│ Where:
 //│   Int <: α2_2
