@@ -1,0 +1,15 @@
+:global
+:bbml
+
+:todo
+(x => x + 1): [A extends Int] -> A -> A
+//│ ╔══[ERROR] Illegal forall annotation.
+//│ ║  l.5: 	(x => x + 1): [A extends Int] -> A -> A
+//│ ╙──     	              ^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Error is not a valid type
+//│ ╙──
+//│ ╔══[ERROR] Type error in function literal with expected type ⊥
+//│ ║  l.5: 	(x => x + 1): [A extends Int] -> A -> A
+//│ ║       	 ^^^^^^^^^^
+//│ ╙── because: cannot constrain  α0_1 -> Int  <:  ⊥
+//│ Type: ⊥
