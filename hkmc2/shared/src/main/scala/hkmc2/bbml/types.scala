@@ -254,7 +254,6 @@ object Type:
     else lhs & rhs
   def mkNegType(ty: Type): Type = ty.!
 
-// TODO: bounds
 // * Poly types can not be used as type arguments
 case class PolyType(tvs: Ls[InfVar], body: GeneralType) extends GeneralType:
   override protected type ThisType = GeneralType

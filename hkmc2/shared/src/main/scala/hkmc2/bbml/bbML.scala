@@ -164,7 +164,7 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
     case Term.Forall(tvs, body) =>
       val nestCtx = ctx.nextLevel
       given Ctx = nestCtx
-      genPolyType(tvs.map(_.sym), typeAndSubstType(body, pol)) // TODO
+      genPolyType(tvs, typeAndSubstType(body, pol))
     case Term.TyApp(Ref(cls: ClassSymbol), targs) =>
       // log(s"Type application: ${cls.nme} with ${targs}")
       cls.defn match
@@ -195,10 +195,12 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
       Type.mkComposedType(typeMonoType(lhs), typeMonoType(rhs), pol)
     case _ => error(msg"${ty.toString} is not a valid type" -> ty.toLoc :: Nil) // TODO
 
-  private def genPolyType(tvs: Ls[VarSymbol], body: => GeneralType)(using ctx: Ctx) =
+  private def genPolyType(tvs: Ls[QuantVar], body: => GeneralType)(using ctx: Ctx) =
     val bd = tvs.map:
-      case sym: VarSymbol =>
+      case QuantVar(sym, ub, lb) =>
         val tv = freshVar
+        ub.foreach(ub => tv.state.upperBounds ::= typeMonoType(ub))
+        lb.foreach(lb => tv.state.lowerBounds ::= typeMonoType(lb))
         ctx += sym -> tv // TODO: a type var symbol may be better...
         tv
     PolyType(bd, body)

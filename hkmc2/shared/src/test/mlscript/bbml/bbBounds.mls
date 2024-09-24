@@ -2,37 +2,38 @@
 :bbml
 
 :todo
-:el
 (x => x + 1): [A extends Int] -> A -> A
-//│ Elab: { Lam(List(Param(‹›,x@24,None)),App(Ref(+),Tup(List(Fld(‹›,Ref(x@24),None), Fld(‹›,Lit(IntLit(1)),None))))): Forall(List(QuantVar(A@26,Some(Ref(class:Int)),None)),FunTy(Tup(List(Fld(‹›,Ref(A@26),None))),Ref(A@26),None)) }
 //│ ╔══[ERROR] Type error in reference with expected type Int
-//│ ║  l.6: 	(x => x + 1): [A extends Int] -> A -> A
+//│ ║  l.5: 	(x => x + 1): [A extends Int] -> A -> A
 //│ ║       	      ^
 //│ ╙── because: cannot constrain  <α>0_2  <:  Int
 //│ ╔══[ERROR] Type error in function literal with expected type (<α>0_2) ->{⊥} <α>0_2
-//│ ║  l.6: 	(x => x + 1): [A extends Int] -> A -> A
+//│ ║  l.5: 	(x => x + 1): [A extends Int] -> A -> A
 //│ ║       	 ^^^^^^^^^^
 //│ ╙── because: cannot constrain  Int  <:  <α>0_2
 //│ Type: forall α0_2: (α0_2) ->{⊥} α0_2
+//│ Where:
+//│   α0_2 <: Int
 
 
 :todo
-:el
 (x => x): [A restricts Int] -> A -> A
-//│ Elab: { Lam(List(Param(‹›,x@33,None)),Ref(x@33)): Forall(List(QuantVar(A@34,None,Some(Ref(class:Int)))),FunTy(Tup(List(Fld(‹›,Ref(A@34),None))),Ref(A@34),None)) }
 //│ Type: forall α1_2: (α1_2) ->{⊥} α1_2
+//│ Where:
+//│   Int <: α1_2
 
 
 :todo
-:el
 (x => x - 1): [A extends Int restricts Int] -> A -> A
-//│ Elab: { Lam(List(Param(‹›,x@36,None)),App(Ref(-),Tup(List(Fld(‹›,Ref(x@36),None), Fld(‹›,Lit(IntLit(1)),None))))): Forall(List(QuantVar(A@38,Some(Ref(class:Int)),Some(Ref(class:Int)))),FunTy(Tup(List(Fld(‹›,Ref(A@38),None))),Ref(A@38),None)) }
 //│ ╔══[ERROR] Type error in reference with expected type Int
-//│ ║  l.28: 	(x => x - 1): [A extends Int restricts Int] -> A -> A
+//│ ║  l.27: 	(x => x - 1): [A extends Int restricts Int] -> A -> A
 //│ ║        	      ^
 //│ ╙── because: cannot constrain  <α>2_2  <:  Int
 //│ ╔══[ERROR] Type error in function literal with expected type (<α>2_2) ->{⊥} <α>2_2
-//│ ║  l.28: 	(x => x - 1): [A extends Int restricts Int] -> A -> A
+//│ ║  l.27: 	(x => x - 1): [A extends Int restricts Int] -> A -> A
 //│ ║        	 ^^^^^^^^^^
 //│ ╙── because: cannot constrain  Int  <:  <α>2_2
 //│ Type: forall α2_2: (α2_2) ->{⊥} α2_2
+//│ Where:
+//│   Int <: α2_2
+//│   α2_2 <: Int
