@@ -26,13 +26,13 @@ run(checkedDiv)
 
 fun show: [T] -> CodeBase[out T, out Any, out Any] -> Str = s => "debug"
 show
-//│ Type: forall α63_2: (CodeBase[?, ?, ?]) ->{⊥} Str
+//│ Type: (CodeBase[?, ?, ?]) ->{⊥} Str
 
 
 fun inc(dbg) =
   x `=> let c = x `+ `1 in let t = dbg(c) in c
 inc
-//│ Type: (CodeBase[out Int, ?, ?] ->{α79_1} ⊤) ->{α79_1} CodeBase[out Int -> Int, ⊥, ?]
+//│ Type: forall α79_2: (CodeBase[out Int, ?, ?] ->{α79_2} ⊤) ->{α79_2} CodeBase[out Int -> Int, ⊥, ?]
 
 inc(c => log(show(c)))
 //│ Type: CodeBase[out Int -> Int, ⊥, ?]
@@ -49,7 +49,7 @@ let gn5 = run(gib_naive(5))
 
 fun bind(rhs, k) = `let x = rhs `in k(x)
 bind
-//│ Type: (CodeBase[out α128_1, out α129_1, ?], CodeBase[in α133_1 out α133_1 ∨ α128_1, ?, ⊥] ->{α136_1} CodeBase[out α139_1, out α140_1, ?]) ->{α136_1} CodeBase[out α139_1, out α129_1 ∨ α140_1, ?]
+//│ Type: forall α147_2, α148_2, α152_2, α155_2, α158_2, α159_2: (CodeBase[out α147_2, out α148_2, ?], CodeBase[in α152_2 out α152_2 ∨ α147_2, ?, ⊥] ->{α155_2} CodeBase[out α158_2, out α159_2, ?]) ->{α155_2} CodeBase[out α158_2, out α148_2 ∨ α159_2, ?]
 
 :e
 fun body: [G] -> (CodeBase[out Int, out G, out Any], CodeBase[out Int, out G, out Any]) -> Int -> CodeBase[out Int, out G, out Any]
@@ -57,7 +57,7 @@ fun body(x, y) = case
   0 then x
   1 then y
   n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out C, out Any]
-//│ ╔══[ERROR] Type error in function literal with expected type (CodeBase[out Int, out <α>147_2, ?], CodeBase[out Int, out <α>147_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out <α>147_2, ?]
+//│ ╔══[ERROR] Type error in function literal with expected type (CodeBase[out Int, out <α>166_2, ?], CodeBase[out Int, out <α>166_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out <α>166_2, ?]
 //│ ║  l.56: 	fun body(x, y) = case
 //│ ║        	         ^^^^^^^^^^^^
 //│ ║  l.57: 	  0 then x
@@ -66,75 +66,19 @@ fun body(x, y) = case
 //│ ║        	^^^^^^^^^^
 //│ ║  l.59: 	  n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out C, out Any]
 //│ ║        	^^^
-//│ ╟── because: cannot constrain  α148_2 ->{α158_2} (CodeBase[out Int, out <α>147_2, ?] ∨ α159_2)  <:  Int -> CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  D( CodeBase[in D() out D( Int ), in D() out D( <α>147_2 ), in D() out D(  )] || α159_2 )  <:  CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  α159_2  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  CodeBase[in D() out D( α139_1 ), in D() out D( α129_1 || α140_1 ), in D() out D(  )]  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  D( α129_1 || α140_1 )  <:  ⊥
-//│ ╟── because: cannot constrain  α129_1  <:  ¬()
-//│ ╙── because: cannot constrain    <:  ¬()
-//│ ╔══[ERROR] Type error in function literal with expected type (CodeBase[out Int, out <α>147_2, ?], CodeBase[out Int, out <α>147_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out <α>147_2, ?]
-//│ ║  l.56: 	fun body(x, y) = case
-//│ ║        	         ^^^^^^^^^^^^
-//│ ║  l.57: 	  0 then x
-//│ ║        	^^^^^^^^^^
-//│ ║  l.58: 	  1 then y
-//│ ║        	^^^^^^^^^^
-//│ ║  l.59: 	  n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out C, out Any]
-//│ ║        	^^^
-//│ ╟── because: cannot constrain  α148_2 ->{α158_2} (CodeBase[out Int, out <α>147_2, ?] ∨ α159_2)  <:  Int -> CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  D( CodeBase[in D() out D( Int ), in D() out D( <α>147_2 ), in D() out D(  )] || α159_2 )  <:  CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  α159_2  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  CodeBase[in D() out D( α139_1 ), in D() out D( α129_1 || α140_1 ), in D() out D(  )]  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  D( α129_1 || α140_1 )  <:  ⊥
-//│ ╟── because: cannot constrain  α129_1  <:  ¬()
-//│ ╙── because: cannot constrain    <:  ¬()
-//│ ╔══[ERROR] Type error in function literal with expected type (CodeBase[out Int, out <α>147_2, ?], CodeBase[out Int, out <α>147_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out <α>147_2, ?]
-//│ ║  l.56: 	fun body(x, y) = case
-//│ ║        	         ^^^^^^^^^^^^
-//│ ║  l.57: 	  0 then x
-//│ ║        	^^^^^^^^^^
-//│ ║  l.58: 	  1 then y
-//│ ║        	^^^^^^^^^^
-//│ ║  l.59: 	  n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out C, out Any]
-//│ ║        	^^^
-//│ ╟── because: cannot constrain  α148_2 ->{α158_2} (CodeBase[out Int, out <α>147_2, ?] ∨ α159_2)  <:  Int -> CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  D( CodeBase[in D() out D( Int ), in D() out D( <α>147_2 ), in D() out D(  )] || α159_2 )  <:  CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  α159_2  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  CodeBase[in D() out D( α139_1 ), in D() out D( α129_1 || α140_1 ), in D() out D(  )]  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  D( α129_1 || α140_1 )  <:  ⊥
-//│ ╟── because: cannot constrain  α140_1  <:  ¬()
-//│ ╙── because: cannot constrain    <:  ¬()
-//│ ╔══[ERROR] Type error in function literal with expected type (CodeBase[out Int, out <α>147_2, ?], CodeBase[out Int, out <α>147_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out <α>147_2, ?]
-//│ ║  l.56: 	fun body(x, y) = case
-//│ ║        	         ^^^^^^^^^^^^
-//│ ║  l.57: 	  0 then x
-//│ ║        	^^^^^^^^^^
-//│ ║  l.58: 	  1 then y
-//│ ║        	^^^^^^^^^^
-//│ ║  l.59: 	  n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out C, out Any]
-//│ ║        	^^^
-//│ ╟── because: cannot constrain  α148_2 ->{α158_2} (CodeBase[out Int, out <α>147_2, ?] ∨ α159_2)  <:  Int -> CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  D( CodeBase[in D() out D( Int ), in D() out D( <α>147_2 ), in D() out D(  )] || α159_2 )  <:  CodeBase[out Int, out <α>147_2, ?]
-//│ ╟── because: cannot constrain  α159_2  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  ¬(~{CodeBase[out Int, out <α>147_2, ?]})
-//│ ╟── because: cannot constrain  α166_1  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  CodeBase[in D() out D( α139_1 ), in D() out D( α129_1 || α140_1 ), in D() out D(  )]  <:  CodeBase[out Int, ⊥, ?]
-//│ ╟── because: cannot constrain  D( α129_1 || α140_1 )  <:  ⊥
-//│ ╟── because: cannot constrain  α140_1  <:  ¬()
-//│ ╙── because: cannot constrain    <:  ¬()
+//│ ╟── because: cannot constrain  α167_2 ->{α175_2} (CodeBase[out Int, out <α>166_2, ?] ∨ CodeBase[out α180_2, out α172_2 ∨ α183_2, ?])  <:  Int -> CodeBase[out Int, out <α>166_2, ?]
+//│ ╟── because: cannot constrain  D( CodeBase[in D() out D( Int ), in D() out D( <α>166_2 ), in D() out D(  )] || CodeBase[in D() out D( α180_2 ), in D() out D( α172_2 || α183_2 ), in D() out D(  )] )  <:  CodeBase[out Int, out <α>166_2, ?]
+//│ ╟── because: cannot constrain  D( α172_2 || α183_2 )  <:  <α>166_2
+//│ ╟── because: cannot constrain  α183_2  <:  ¬(~<α>166_2)
+//│ ╟── because: cannot constrain  α182_2  <:  ¬(~<α>166_2)
+//│ ╟── because: cannot constrain  α182_2  <:  ¬(~<α>166_2)
+//│ ╙── because: cannot constrain    <:  ¬(~<α>166_2)
 //│ Type: ⊤
 
 fun bind: [G] -> (CodeBase[out Int, out G, out Any], [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out Int, out C | G, out Any]) -> CodeBase[out Int, out G, out Any]
 fun bind(rhs, k) = `let x = rhs `in k(x)
 bind
-//│ Type: forall α170_2: (CodeBase[out Int, out α170_2, ?], forall α171_3: (CodeBase[out Int, out α171_3, ?]) ->{⊥} CodeBase[out Int, out α171_3 ∨ α170_2, ?]) ->{⊥} CodeBase[out Int, out α170_2, ?]
+//│ Type: forall α200_2: (CodeBase[out Int, out α200_2, ?], forall α201_3: (CodeBase[out Int, out α201_3, ?]) ->{⊥} CodeBase[out Int, out α201_3 ∨ α200_2, ?]) ->{⊥} CodeBase[out Int, out α200_2, ?]
 
 
 fun body: [G] -> (CodeBase[out Int, out G, out Any], CodeBase[out Int, out G, out Any]) -> Int -> CodeBase[out Int, out G, out Any]
@@ -143,7 +87,7 @@ fun body(x, y) = case
   1 then y
   n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out Int, out C, out Any]
 body
-//│ Type: forall α180_2: (CodeBase[out Int, out α180_2, ?], CodeBase[out Int, out α180_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out α180_2, ?]
+//│ Type: forall α210_2: (CodeBase[out Int, out α210_2, ?], CodeBase[out Int, out α210_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out α210_2, ?]
 
 fun gib(n) = (x, y) `=> body(x, y)(n)
 let g5 = run(gib(5))

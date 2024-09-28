@@ -124,7 +124,7 @@ region x in
 //│ ╟── because: cannot constrain  α64_3  <:  ⊥
 //│ ╟── because: cannot constrain  α64_3  <:  ¬()
 //│ ╙── because: cannot constrain  <α>62_2  <:  ¬()
-//│ Type: forall α63_3: Int
+//│ Type: Int
 
 
 :e

@@ -3,7 +3,7 @@
 
 
 (x => x + 1): [A extends Int] -> A -> Int
-//│ Type: forall α0_2: (Int) ->{⊥} Int
+//│ Type: (Int) ->{⊥} Int
 
 
 (x => x): [A restricts Int] -> A -> A
@@ -34,7 +34,7 @@ iid("42")
 //│ ║        	    ^^^^
 //│ ╟── because: cannot constrain  Str  <:  α5_1
 //│ ╟── because: cannot constrain  Str  <:  α5_1
-//│ ╙── because: cannot constrain  Str  <:  Int
+//│ ╙── because: cannot constrain  Str  <:  ¬(~{Int})
 //│ Type: Str
 
 

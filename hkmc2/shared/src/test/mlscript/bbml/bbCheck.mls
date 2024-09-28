@@ -149,11 +149,11 @@ id: [A] -> A -> A
 //│ Type: Int ∨ Num
 
 42: [A] -> Int
-//│ Type: forall α25_2: Int
+//│ Type: Int
 
 
 42: [A] -> Int | Num
-//│ Type: forall α26_2: Int ∨ Num
+//│ Type: Int ∨ Num
 
 fun foo: Int -> Int
 foo

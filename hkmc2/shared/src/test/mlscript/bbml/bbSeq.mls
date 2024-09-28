@@ -104,7 +104,7 @@ fun mapi = s => f =>
       i := !i + 1
       f(!i, x)
 mapi
-//│ Type: Seq[out α56_1, out α57_1] -> (((Int, α56_1) ->{α68_1} α67_1) ->{Alloc} Seq[out α67_1, ?])
+//│ Type: forall α56_2, α57_2, α67_2, α68_2: Seq[out α56_2, out α57_2] -> (((Int, α56_2) ->{α68_2} α67_2) ->{Alloc} Seq[out α67_2, ?])
 
 // * This version is correct as it keeps the mutation encapsulated within the region
 fun mapi_force: [A, E] -> Seq[out A, out E] -> ((Int, A) ->{E} A) ->{Alloc | E} Seq[out A, Nothing]

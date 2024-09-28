@@ -210,14 +210,18 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
   private def typeType(ty: Term)(using ctx: Ctx): GeneralType =
     typeAndSubstType(ty, pol = true)(using Map.empty)
   
-  private def instantiate(ty: PolyType)(using ctx: Ctx): GeneralType =
-    ty.body.subst(using (ty.tvs.map {
+  private def instantiate(ty: PolyType)(using ctx: Ctx, cctx: CCtx): GeneralType =
+    val map = (ty.tvs.map {
       case InfVar(_, uid, state, _) =>
         val nv = freshVar
-        nv.state.upperBounds :::= state.upperBounds
-        nv.state.lowerBounds :::= state.lowerBounds
         uid -> nv
-    }).toMap)
+    }).toMap
+    ty.tvs.foreach {
+      case InfVar(_, uid, state, _) =>
+        state.upperBounds.foreach(ub => constrain(map(uid), ub.subst(using map)))
+        state.lowerBounds.foreach(lb => constrain(lb.subst(using map), map(uid)))
+    }
+    ty.body.subst(using map)
   
   // * Check if two poly types are equivalent
   private def checkPoly(lhs: GeneralType, rhs: GeneralType)(using ctx: Ctx): Bool = (lhs, rhs) match
@@ -341,11 +345,14 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
         ascribe(lam, sigTy)
         ()
       case N =>
-        val funTy = freshVar
-        pctx += sym -> funTy // for recursive types
+        given Ctx = ctx.nextLevel
+        val funTyV = freshVar
+        pctx += sym -> funTyV // for recursive functions
         val (res, _) = typeCheck(lam)
+        val funTy = monoOrErr(res, lam)
         given CCtx = CCtx.init(lam, N)
-        constrain(monoOrErr(res, lam), funTy)(using ctx)
+        constrain(funTy, funTyV)(using ctx)
+        pctx += sym -> PolyType.generalize(funTy, 1)
     case _ => error(msg"Function definition shape not yet supported for ${sym.nme}" -> lam.toLoc :: Nil)
 
   private def typeSplit(split: TermSplit, sign: Opt[GeneralType])(using ctx: Ctx)(using CCtx): (GeneralType, Type) = split match

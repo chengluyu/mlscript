@@ -5,6 +5,7 @@ import mlscript.utils.*, shorthands.*
 import syntax.*
 import semantics.*, semantics.Term.*
 import utils.*
+import scala.collection.mutable.{Set => MutSet}
 
 // * General types include mono types (i.e., Type), forall quantified type, and poly function types
 sealed abstract class GeneralType:
@@ -265,6 +266,22 @@ case class PolyType(tvs: Ls[InfVar], body: GeneralType) extends GeneralType:
   override def map(f: GeneralType => GeneralType): PolyType = PolyType(tvs, f(body))
 
   override def subst(using map: Map[Uid[InfVar], InfVar]): ThisType = PolyType(tvs, body.subst)
+
+object PolyType:
+  def generalize(ty: GeneralType, lvl: Int): PolyType =
+    val tvs = MutSet[InfVar]()
+    object CollectTVs extends TypeTraverser:
+      override def apply(pol: Boolean)(ty: GeneralType): Unit = ty match
+        case v @ InfVar(vlvl, _, state, _) if vlvl > lvl =>
+          if tvs.add(v) then
+            state.lowerBounds.foreach: bd =>
+              apply(true)(bd)
+            state.upperBounds.foreach: bd =>
+              apply(false)(bd)
+            super.apply(pol)(ty)
+        case _ => super.apply(pol)(ty)
+    CollectTVs(true)(ty)
+    PolyType(tvs.toList.sorted, ty)
 
 // * Functions that accept/return a polymorphic type.
 // * Note that effects are always monomorphic
