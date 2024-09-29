@@ -203,4 +203,3 @@ class TypeSimplifier(tl: TraceLogger):
       if newTvs.isEmpty then body
       else PolyType(newTvs, body)
     case _ => ty
-  

@@ -127,8 +127,9 @@ class ConstraintSolver(infVarState: InfVarUid.State, tl: TraceLogger):
       inlineSkolemBounds(if pol then (v :: state.upperBounds).reduceLeft(_ & _) else (v :: state.lowerBounds).reduceLeft(_ | _), pol)
     case ComposedType(lhs, rhs, p) => ComposedType(inlineSkolemBounds(lhs, pol), inlineSkolemBounds(rhs, pol), p)
     case NegType(ty) => NegType(inlineSkolemBounds(ty, !pol))
-    case _ => ty // TODO: list  
-  
+    case ty: CachedBasicType => inlineSkolemBounds(ty.mkBasic, pol)
+    case _: ClassType | _: FunType | _: InfVar | _: TypeExt | Top | Bot => ty
+
   private def constrainImpl(lhs: Type, rhs: Type)(using Ctx, CCtx, TL): Unit =
     if cctx.cache((lhs, rhs)) then log(s"Cached!")
     else trace(s"CONSTRAINT $lhs <: $rhs"):
