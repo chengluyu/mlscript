@@ -121,14 +121,13 @@ class ConstraintSolver(infVarState: InfVarUid.State, tl: TraceLogger):
     constrainImpl(rhs.negPart, lhs.negPart)
     constrainImpl(lhs.posPart, rhs.posPart)
 
-  private def inlineSkolemBounds(ty: Type, pol: Bool)(using cache: Set[Uid[InfVar]]): Type = ty match
+  private def inlineSkolemBounds(ty: Type, pol: Bool)(using cache: Set[Uid[InfVar]]): Type = ty.toBasic match
     case v @ InfVar(_, uid, state, skolem) if skolem && !cache(uid) =>
       given Set[Uid[InfVar]] = cache + uid
-      inlineSkolemBounds(if pol then (v :: state.upperBounds).reduceLeft(_ & _) else (v :: state.lowerBounds).reduceLeft(_ | _), pol)
+      inlineSkolemBounds(if pol then state.upperBounds.foldLeft[Type](v)(_ & _) else state.lowerBounds.foldLeft[Type](v)(_ | _), pol)
     case ComposedType(lhs, rhs, p) => ComposedType(inlineSkolemBounds(lhs, pol), inlineSkolemBounds(rhs, pol), p)
     case NegType(ty) => NegType(inlineSkolemBounds(ty, !pol))
-    case ty: CachedBasicType => inlineSkolemBounds(ty.mkBasic, pol)
-    case _: ClassType | _: FunType | _: InfVar | _: TypeExt | Top | Bot => ty
+    case _: ClassType | _: FunType | _: InfVar | Top | Bot => ty
 
   private def constrainImpl(lhs: Type, rhs: Type)(using Ctx, CCtx, TL): Unit =
     if cctx.cache((lhs, rhs)) then log(s"Cached!")
