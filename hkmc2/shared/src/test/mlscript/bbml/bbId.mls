@@ -29,7 +29,6 @@ id : [A] -> A -> A
 (y => y) : [A] -> A -> A
 //│ Type: forall α8_2: (α8_2) ->{⊥} α8_2
 
-
 fun id(x) = x
 (y => id(y)) : [A] -> A -> A
 //│ Type: forall α11_2: (α11_2) ->{⊥} α11_2
