@@ -136,7 +136,7 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
     Bot // TODO: error type?
 
 
-  private def typeAndSubstType(ty: Term, pol: Bool)(using map: Map[Uid[Symbol], TypeArg])(using ctx: Ctx): GeneralType =
+  private def typeAndSubstType(ty: Term, pol: Bool)(using map: Map[Uid[Symbol], TypeArg])(using ctx: Ctx, cctx: CCtx): GeneralType =
   trace[GeneralType](s"${ctx.lvl}. Typing type ${ty.toString}", r => s"~> $r"):
     def mono(ty: Term, pol: Bool): Type =
       monoOrErr(typeAndSubstType(ty, pol), ty)
@@ -195,22 +195,25 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
       Type.mkComposedType(typeMonoType(lhs), typeMonoType(rhs), pol)
     case _ => error(msg"${ty.toString} is not a valid type" -> ty.toLoc :: Nil) // TODO
 
-  private def genPolyType(tvs: Ls[QuantVar], body: => GeneralType)(using ctx: Ctx) =
+  private def genPolyType(tvs: Ls[QuantVar], body: => GeneralType)(using ctx: Ctx, cctx: CCtx) =
     val bd = tvs.map:
       case QuantVar(sym, ub, lb) =>
         val tv = freshVar
         ub.foreach(ub => tv.state.upperBounds ::= typeMonoType(ub))
         lb.foreach(lb => tv.state.lowerBounds ::= typeMonoType(lb))
+        val lbty = tv.state.lowerBounds.foldLeft[Type](Bot)(_ | _)
+        val ubty = tv.state.upperBounds.foldLeft[Type](Top)(_ & _)
+        constrain(lbty, ubty)
         ctx += sym -> tv // TODO: a type var symbol may be better...
         tv
     PolyType(bd, body)
 
-  private def typeMonoType(ty: Term)(using ctx: Ctx): Type = monoOrErr(typeType(ty), ty)
+  private def typeMonoType(ty: Term)(using ctx: Ctx, cctx: CCtx): Type = monoOrErr(typeType(ty), ty)
 
-  private def typeType(ty: Term)(using ctx: Ctx): GeneralType =
+  private def typeType(ty: Term)(using ctx: Ctx, cctx: CCtx): GeneralType =
     typeAndSubstType(ty, pol = true)(using Map.empty)
   
-  private def instantiate(ty: PolyType)(using ctx: Ctx, cctx: CCtx): GeneralType =
+  private def instantiate(ty: PolyType)(using ctx: Ctx): GeneralType =
     val map = (ty.tvs.map {
       case InfVar(_, uid, state, _) =>
         val nv = freshVar
@@ -218,8 +221,9 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
     }).toMap
     ty.tvs.foreach {
       case InfVar(_, uid, state, _) =>
-        state.upperBounds.foreach(ub => constrain(map(uid), ub.subst(using map)))
-        state.lowerBounds.foreach(lb => constrain(lb.subst(using map), map(uid)))
+        val nv = map(uid)
+        state.upperBounds.foreach(ub => nv.state.upperBounds ::= ub.subst(using map))
+        state.lowerBounds.foreach(lb => nv.state.lowerBounds ::= lb.subst(using map))
     }
     ty.body.subst(using map)
   
@@ -337,7 +341,7 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
     case _ =>
       (error(msg"Cannot quote ${code.toString}" -> code.toLoc :: Nil), Bot, Bot)
 
-  private def typeFunDef(sym: Symbol, lam: Term, sig: Opt[Term], pctx: Ctx)(using ctx: Ctx) = lam match
+  private def typeFunDef(sym: Symbol, lam: Term, sig: Opt[Term], pctx: Ctx)(using ctx: Ctx, cctx: CCtx) = lam match
     case Term.Lam(params, body) => sig match
       case S(sig) =>
         val sigTy = typeType(sig)(using ctx)

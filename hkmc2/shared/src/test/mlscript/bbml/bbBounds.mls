@@ -34,9 +34,33 @@ iid("42")
 //│ ║        	    ^^^^
 //│ ╟── because: cannot constrain  Str  <:  α5_1
 //│ ╟── because: cannot constrain  Str  <:  α5_1
-//│ ╙── because: cannot constrain  Str  <:  ¬(~{Int})
+//│ ╙── because: cannot constrain  Str  <:  Int
 //│ Type: Str
 
 
 iid(42)
 //│ Type: Int
+
+class Foo[A]
+//│ Type: ⊤
+
+fun foo: [A extends Foo[in Nothing out Any] restricts Foo[in Num]] -> A -> A
+foo
+//│ Type: forall α7_2: (α7_2) ->{⊥} α7_2
+//│ Where:
+//│   Foo[in Num] <: α7_2
+//│   α7_2 <: Foo[?]
+
+fun bar: Foo[in Num out Int]
+//│ Type: ⊤
+
+foo(bar)
+//│ Type: Foo[in Num out Int] ∨ Foo[in Num]
+
+:e
+fun badfoo: [A extends Str restricts Int] -> A -> A
+//│ ╔══[ERROR] Type error in block
+//│ ║  l.61: 	fun badfoo: [A extends Str restricts Int] -> A -> A
+//│ ║        	                                             ^^^^^^
+//│ ╙── because: cannot constrain  Int  <:  Str
+//│ Type: ⊤

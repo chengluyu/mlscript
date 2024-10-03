@@ -36,7 +36,7 @@ inc("oops")
 //│ ║        	    ^^^^^^
 //│ ╟── because: cannot constrain  Str  <:  α9_1
 //│ ╟── because: cannot constrain  Str  <:  α9_1
-//│ ╙── because: cannot constrain  Str  <:  ¬(~{Int})
+//│ ╙── because: cannot constrain  Str  <:  ¬¬Int
 //│ Type: Int
 
 fun inc(x) = x + 1
