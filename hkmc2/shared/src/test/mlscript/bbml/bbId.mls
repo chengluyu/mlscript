@@ -21,7 +21,6 @@ id
 fun id(x) = x
 //│ Type: ⊤
 
-
 id : [A] -> A -> A
 //│ Type: forall α6_2: (α6_2) ->{⊥} α6_2
 
