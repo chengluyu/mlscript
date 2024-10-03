@@ -196,17 +196,19 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
     case _ => error(msg"${ty.toString} is not a valid type" -> ty.toLoc :: Nil) // TODO
 
   private def genPolyType(tvs: Ls[QuantVar], body: => GeneralType)(using ctx: Ctx, cctx: CCtx) =
-    val bd = tvs.map:
-      case QuantVar(sym, ub, lb) =>
+    val bds = tvs.map:
+      case qv @ QuantVar(sym, ub, lb) =>
         val tv = freshVar
+        ctx += sym -> tv // TODO: a type var symbol may be better...
+        tv -> qv
+    bds.foreach:
+      case (tv, QuantVar(_, ub, lb)) =>
         ub.foreach(ub => tv.state.upperBounds ::= typeMonoType(ub))
         lb.foreach(lb => tv.state.lowerBounds ::= typeMonoType(lb))
         val lbty = tv.state.lowerBounds.foldLeft[Type](Bot)(_ | _)
         val ubty = tv.state.upperBounds.foldLeft[Type](Top)(_ & _)
         constrain(lbty, ubty)
-        ctx += sym -> tv // TODO: a type var symbol may be better...
-        tv
-    PolyType(bd, body)
+    PolyType(bds.map(_._1), body)
 
   private def typeMonoType(ty: Term)(using ctx: Ctx, cctx: CCtx): Type = monoOrErr(typeType(ty), ty)
 

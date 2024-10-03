@@ -75,16 +75,24 @@ class Elaborator(tl: TraceLogger)(using raise: Raise, state: State):
         sym.decl = S(TyParam(FldFlags.empty, N, sym)) // TODO vce
         boundVars += id.name -> sym
         sym
-      val bds = tvs.collect:
-        case id: Tree.Ident => QuantVar(genSym(id), N, N)
-        case InfixApp(id: Tree.Ident, Keyword.`extends`, ub) => QuantVar(genSym(id), S(term(ub)), N)
-        case InfixApp(id: Tree.Ident, Keyword.`restricts`, lb) => QuantVar(genSym(id), N, S(term(lb)))
-        case InfixApp(InfixApp(id: Tree.Ident, Keyword.`extends`, ub), Keyword.`restricts`, lb) => QuantVar(genSym(id), S(term(ub)), S(term(lb)))
-      if bds.length != tvs.length then
+      val syms = (tvs.collect:
+        case id: Tree.Ident => genSym(id)
+        case InfixApp(id: Tree.Ident, Keyword.`extends`, _) => genSym(id)
+        case InfixApp(id: Tree.Ident, Keyword.`restricts`, _) => genSym(id)
+        case InfixApp(InfixApp(id: Tree.Ident, Keyword.`extends`, _), Keyword.`restricts`, _) => genSym(id)
+      )
+      if syms.length != tvs.length then
         raise(ErrorReport(msg"Illegal forall annotation." -> tree.toLoc :: Nil))
         Term.Error
       else
-        Term.Forall(bds, term(body)(using ctx.copy(locals = ctx.locals ++ boundVars)))
+        val nestCtx = ctx.copy(locals = ctx.locals ++ boundVars)
+        val bds = tvs.collect:
+          case id: Tree.Ident => QuantVar(boundVars(id.name), N, N)
+          case InfixApp(id: Tree.Ident, Keyword.`extends`, ub) => QuantVar(boundVars(id.name), S(term(ub)(using nestCtx)), N)
+          case InfixApp(id: Tree.Ident, Keyword.`restricts`, lb) => QuantVar(boundVars(id.name), N, S(term(lb)(using nestCtx)))
+          case InfixApp(InfixApp(id: Tree.Ident, Keyword.`extends`, ub), Keyword.`restricts`, lb) =>
+            QuantVar(boundVars(id.name), S(term(ub)(using nestCtx)), S(term(lb)(using nestCtx)))
+        Term.Forall(bds, term(body)(using nestCtx))
     case InfixApp(lhs, Keyword.`->`, Effectful(eff, rhs)) =>
       Term.FunTy(term(lhs), term(rhs), S(term(eff)))
     case InfixApp(lhs, Keyword.`->`, rhs) =>

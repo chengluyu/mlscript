@@ -64,3 +64,12 @@ fun badfoo: [A extends Str restricts Int] -> A -> A
 //│ ║        	                                             ^^^^^^
 //│ ╙── because: cannot constrain  Int  <:  Str
 //│ Type: ⊤
+
+
+fun baz: [A extends B, B extends A] -> A -> B
+baz
+//│ Type: (⊤) ->{⊥} ⊤
+
+fun bazbaz: [A extends Int] -> A -> [B extends A] -> B
+bazbaz
+//│ Type: (Int) ->{⊥} forall α13_3: ⊥
