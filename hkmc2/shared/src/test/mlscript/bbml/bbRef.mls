@@ -147,3 +147,34 @@ fun foo(x) =
   region y in x + 1
 //│ Type: ⊤
 
+
+region x in
+  x.ref ((x => x): [A] -> A -> A)
+//│ Type: Ref[α84_1 -> α84_1, ?]
+
+
+fun foo: [A extends Int] -> A -> A
+fun foo(x) = x
+//│ Type: ⊤
+
+foo
+//│ Type: forall α88_2: (α88_2) ->{⊥} α88_2
+//│ Where:
+//│   α88_2 <: Int
+
+region x in x.ref foo
+//│ Type: Ref[in α93_1 -> (α93_1 ∧ Int) out (α93_1 ∧ Int) -> α93_1, ?]
+
+fun bar: ([A] -> A -> A) -> Int
+fun bar(f) = f(42)
+//│ Type: ⊤
+
+bar
+//│ Type: (forall α97_2: (α97_2) ->{⊥} α97_2) ->{⊥} Int
+
+:e
+region x in x.ref bar
+//│ ╔══[ERROR] Can not instantiate (forall α97_2: (α97_2) ->{⊥} α97_2) ->{⊥} Int to mono!.
+//│ ║  l.176: 	region x in x.ref bar
+//│ ╙──       	                  ^^^
+//│ Type: Ref[⊥, ?]

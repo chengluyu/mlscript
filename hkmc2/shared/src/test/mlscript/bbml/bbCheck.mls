@@ -110,7 +110,7 @@ fun baz(z) =
 :fixme // toLoc
 :e
 baz: Int -> (([A] -> A -> A), Int) -> Int
-//│ ╔══[ERROR] General type is not allowed here.
+//│ ╔══[ERROR] Can not instantiate (Int) ->{⊥} (forall α11_2: (α11_2) ->{⊥} α11_2, Int) ->{⊥} Int to mono!.
 //│ ║  l.112: 	baz: Int -> (([A] -> A -> A), Int) -> Int
 //│ ╙──       	^^^
 //│ ╔══[ERROR] General type is not allowed here.
@@ -125,7 +125,7 @@ baz(42)
 :fixme // toLoc
 :e
 baz(42): (([A] -> A -> A), Int) -> Int
-//│ ╔══[ERROR] General type is not allowed here.
+//│ ╔══[ERROR] Can not instantiate (forall α11_2: (α11_2) ->{⊥} α11_2, Int) ->{⊥} Int to mono!.
 //│ ║  l.127: 	baz(42): (([A] -> A -> A), Int) -> Int
 //│ ╙──       	^^^^^^^
 //│ ╔══[ERROR] General type is not allowed here.

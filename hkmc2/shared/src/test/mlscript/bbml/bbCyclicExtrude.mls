@@ -44,7 +44,7 @@ let foo(f) = (f(x => x(x)) : [A] -> A -> A) in foo
 
 :todo
 fun foo(f) = (f(x => x(x)) : [A] -> A -> A)
-//│ ╔══[ERROR] General type is not allowed here.
+//│ ╔══[ERROR] Can not instantiate (α63_2) ->{⊥} forall α64_3: (α64_3) ->{⊥} α64_3 to mono!.
 //│ ║  l.46: 	fun foo(f) = (f(x => x(x)) : [A] -> A -> A)
 //│ ╙──      	        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ Type: ⊤
