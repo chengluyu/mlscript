@@ -59,7 +59,7 @@ object Keyword:
   val `trait` = Keyword("trait", N, N)
   val `mixin` = Keyword("mixin", N, N)
   val `interface` = Keyword("interface", N, N)
-  val `restricts` = Keyword("restricts", nextPrec, nextPrec)
+  val `restricts` = Keyword("restricts", eqPrec, nextPrec)
   val `extends` = Keyword("extends", nextPrec, nextPrec)
   val `with` = Keyword("with", curPrec, curPrec)
   val `override` = Keyword("override", N, N)

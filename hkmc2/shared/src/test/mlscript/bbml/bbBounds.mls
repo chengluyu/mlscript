@@ -73,3 +73,37 @@ baz
 fun bazbaz: [A extends Int] -> A -> [B extends A] -> B
 bazbaz
 //│ Type: (Int) ->{⊥} forall α13_3: ⊥
+
+fun foofun: [A extends Int -> Int restricts Any -> Int] -> A -> Int -> Int
+foofun
+//│ Type: (Int -> Int) ->{⊥} (Int) ->{⊥} Int
+
+foofun(x => x + 1)(42)
+//│ Type: Int
+
+fun bazbaz: [A extends Int] -> A -> [B extends A -> A] -> B -> A
+bazbaz
+//│ Type: forall α17_2: (α17_2) ->{⊥} forall α18_3: (α17_2 -> α17_2) ->{⊥} α17_2
+//│ Where:
+//│   α17_2 <: Int
+
+bazbaz(42)(x => x + 1)
+//│ Type: Int
+
+fun cc: [A extends B -> B restricts B -> B, B extends A -> A restricts A -> A] -> A -> B -> Bool
+cc
+//│ Type: forall α22_2, α23_2: (α22_2) ->{⊥} (α23_2) ->{⊥} Bool
+//│ Where:
+//│   α22_2 -> α22_2 <: α23_2
+//│   α23_2 <: α22_2 -> α22_2
+//│   α23_2 -> α23_2 <: α22_2
+//│   α22_2 <: α23_2 -> α23_2
+
+fun w: Any -> Nothing
+//│ Type: ⊤
+
+cc(w)(w)
+//│ Type: Bool
+
+fun h: [C] -> ([A extends Int] -> A -> [B extends A -> A] -> B -> A) -> C -> Int
+//│ Type: ⊤
