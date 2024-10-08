@@ -1,0 +1,21 @@
+:global
+:noTypeCheck
+
+:ctx
+type List = Nil | Cons
+module Nil
+class (::) Cons(head: Int, tail: List)
+//│ Members:
+//│   Nil -> class:Nil
+//│   Cons -> class:Cons
+//│   List -> class:List
+//│   :: -> class:Cons
+//│ Locals:
+
+Cons(1, Nil)
+
+1 :: 2
+
+fun map(f, xs) = if xs is
+  Nil then Nil
+  x :: xs' then f(x) :: map(f, xs')
