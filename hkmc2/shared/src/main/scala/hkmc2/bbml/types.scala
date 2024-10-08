@@ -265,7 +265,14 @@ case class PolyType(tvs: Ls[InfVar], body: GeneralType) extends GeneralType:
   override def monoOr(fallback: => Type): Type = fallback
   override def map(f: GeneralType => GeneralType): PolyType = PolyType(tvs, f(body))
 
-  override def subst(using map: Map[Uid[InfVar], InfVar]): ThisType = PolyType(tvs, body.subst)
+  override def subst(using map: Map[Uid[InfVar], InfVar]): ThisType =
+    PolyType(tvs.map {
+      case InfVar(lvl, uid, state, skolem) =>
+        val newSt = new VarState()
+        newSt.lowerBounds = state.lowerBounds.map(_.subst)
+        newSt.upperBounds = state.upperBounds.map(_.subst)
+        InfVar(lvl, uid, newSt, skolem)
+    }, body.subst)
 
 object PolyType:
   def generalize(ty: GeneralType, lvl: Int): PolyType =

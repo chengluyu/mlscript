@@ -25,9 +25,9 @@ id
 //│ ║  l.23: 	(x => x + 1): [A] -> A -> A
 //│ ║        	      ^
 //│ ╙── because: cannot constrain  <α>4_2  <:  Int
-//│ ╔══[ERROR] Type error in function literal with expected type (<α>4_2) ->{⊥} <α>4_2
+//│ ╔══[ERROR] Type error in application with expected type <α>4_2
 //│ ║  l.23: 	(x => x + 1): [A] -> A -> A
-//│ ║        	 ^^^^^^^^^^
+//│ ║        	      ^^^^^
 //│ ╙── because: cannot constrain  Int  <:  <α>4_2
 //│ Type: forall α4_2: (α4_2) ->{⊥} α4_2
 
@@ -162,4 +162,4 @@ fun cnt(x) = 42
 //│ Type: ⊤
 
 (x => x): [A] -> A -> A
-//│ Type: forall α85_2: (α85_2) ->{⊥} α85_2
+//│ Type: forall α84_2: (α84_2) ->{⊥} α84_2

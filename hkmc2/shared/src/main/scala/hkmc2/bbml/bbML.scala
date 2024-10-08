@@ -210,7 +210,7 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
         constrain(lbty, ubty)
     PolyType(bds.map(_._1), body)
 
-  private def typeMonoType(ty: Term)(using ctx: Ctx, cctx: CCtx): Type = tryMkMono(typeType(ty), ty)
+  private def typeMonoType(ty: Term)(using ctx: Ctx, cctx: CCtx): Type = monoOrErr(typeType(ty), ty)
 
   private def typeType(ty: Term)(using ctx: Ctx, cctx: CCtx): GeneralType =
     typeAndSubstType(ty, pol = true)(using Map.empty)
@@ -228,37 +228,6 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
         state.lowerBounds.foreach(lb => nv.state.lowerBounds ::= lb.subst(using map))
     }
     ty.body.subst(using map)
-  
-  // * Check if two poly types are equivalent
-  private def checkPoly(lhs: GeneralType, rhs: GeneralType)(using ctx: Ctx): Bool = (lhs, rhs) match
-    case (ClassType(name1, targs1), ClassType(name2, targs2)) if name1.uid == name2.uid && targs1.length == targs2.length =>
-      targs1.zip(targs2).foldLeft(true)((res, p) => p match {
-        case (Wildcard(in1, out1), Wildcard(in2, out2)) =>
-          res && checkPoly(in1, in2) && checkPoly(out1, out2)
-        case (ty: Type, Wildcard(in2, out2)) =>
-          res && checkPoly(ty, in2) && checkPoly(ty, out2)
-        case (Wildcard(in1, out1), ty: Type) =>
-          res && checkPoly(in1, ty) && checkPoly(out1, ty)
-        case (ty1: Type, ty2: Type) => res && checkPoly(ty1, ty2)
-      })
-    case (InfVar(_, uid1, _, _), InfVar(_, uid2, _, _)) => uid1 == uid2
-    case (PolyFunType(args1, ret1, eff1), PolyFunType(args2, ret2, eff2)) if args1.length == args2.length =>
-      args1.zip(args2).foldLeft(checkPoly(ret1, ret2) && checkPoly(eff1, eff2))((res, p) => res && checkPoly(p._1, p._2))
-    case (FunType(args1, ret1, eff1), FunType(args2, ret2, eff2)) if args1.length == args2.length =>
-      args1.zip(args2).foldLeft(checkPoly(ret1, ret2) && checkPoly(eff1, eff2))((res, p) => res && checkPoly(p._1, p._2))
-    case (ComposedType(lhs1, rhs1, pol1), ComposedType(lhs2, rhs2, pol2)) if pol1 == pol2 =>
-      checkPoly(lhs1, lhs2) && checkPoly(rhs1, rhs2)
-    case (NegType(ty1), NegType(ty2)) => checkPoly(ty1, ty2)
-    case (PolyType(tv1, body1), PolyType(tv2, body2)) if tv1.length == tv2.length =>
-      val maps = (tv1.zip(tv2).flatMap{
-        case (InfVar(_, uid1, _, _), InfVar(_, uid2, _, _)) =>
-          val nv = freshVar
-          (uid1 -> nv) :: (uid2 -> nv) :: Nil
-      }).toMap
-      checkPoly(body1.subst(using maps), body2.subst(using maps))
-    case (Top, Top) => true
-    case (Bot, Bot) => true
-    case _ => false
 
   private def extrude(ty: GeneralType)(using ctx: Ctx, pol: Bool): GeneralType = ty match
     case ty: Type => solver.extrude(ty)(using ctx.lvl, pol, HashMap.empty)
@@ -413,13 +382,9 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
             nestCtx += sym -> ty
             ty
         given Ctx = nestCtx
-        val (bodyTy, effTy) = typeCheck(body)
-        if ret.isPoly && !checkPoly(bodyTy, ret) then
-          (error(msg"Cannot type function ${lhs.toString} as ${rhs.toString}" -> lhs.toLoc :: Nil), Bot)
-        else
-          constrain(effTy, eff)
-          if !ret.isPoly then constrain(tryMkMono(bodyTy, body), ret.monoOr(???)) // ret must be mono
-          (ft, Bot)
+        val (_, effTy) = ascribe(body, ret)
+        constrain(effTy, eff)
+        (ft, Bot)
     case (Term.Lam(params, body), ft @ FunType(args, ret, eff)) => ascribe(lhs, PolyFunType(args, ret, eff))
     case (term, pt @ PolyType(tvs, body)) => // * generalize
       val nextCtx = ctx.nextLevel
@@ -435,12 +400,17 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
       (resTy, eff | resEff)
     case (Term.If(branches), ty) => // * propagate
       typeSplit(branches, S(ty))
+    case (Term.Asc(term, ty), rhs) =>
+      ascribe(term, typeType(ty))
+      ascribe(term, rhs)
     case _ =>
       val (lhsTy, eff) = typeCheck(lhs)
-      (lhsTy, rhs) match
-        case (lhsTy: PolyType, rhs) => constrain(tryMkMono(lhsTy, lhs), monoOrErr(rhs, lhs))
-        case _ => constrain(tryMkMono(lhsTy, lhs), monoOrErr(rhs, lhs))
-      (rhs, eff)
+      rhs match
+        case pf: PolyFunType if pf.isPoly =>
+          (error(msg"Cannot type non-function term ${lhs.toString} as ${rhs.toString}" -> lhs.toLoc :: Nil), Bot)
+        case _ =>
+          constrain(tryMkMono(lhsTy, lhs), monoOrErr(rhs, lhs))
+          (rhs, eff)
 
   // TODO: t -> loc when toLoc is implemented
   private def app(lhs: (GeneralType, Type), rhs: Ls[Fld], t: Term)(using ctx: Ctx)(using CCtx): (GeneralType, Type) = lhs match
@@ -468,7 +438,10 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
 
   private def skolemize(tv: Ls[InfVar], body: GeneralType)(using ctx: Ctx) =
     // * Note that by this point, the state is supposed to be frozen/treated as immutable
-    val bds = tv.map(v => (v.uid, InfVar(ctx.lvl, v.uid, v.state, true))).toMap
+    val bds = tv.map(v =>
+      log(s"skolemize $v")
+      (v.uid, InfVar(ctx.lvl, v.uid, v.state, true))
+    ).toMap
     body.subst(using bds)
 
   // TODO: implement toLoc
