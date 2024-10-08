@@ -451,7 +451,7 @@ class BBTyper(using elState: Elaborator.State, tl: TL):
   // * Try to instantiate the given type if it is forall quantified
   private def tryMkMono(ty: GeneralType, sc: Located)(using Ctx): Type = ty match
     case pt: PolyType => tryMkMono(instantiate(pt), sc)
-    case ft: PolyFunType => ft.monoOr(error(msg"Can not instantiate ${ty.toString} to mono!." -> sc.toLoc :: Nil))
+    case ft: PolyFunType => ft.monoOr(error(msg"Can not instantiate a polymorphic type inside ${ty.toString}" -> sc.toLoc :: Nil))
     case ty: Type => ty
   
   private def typeCheck(t: Term)(using ctx: Ctx): (GeneralType, Type) =

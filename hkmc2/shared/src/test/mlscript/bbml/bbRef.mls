@@ -174,7 +174,7 @@ bar
 
 :e
 region x in x.ref bar
-//│ ╔══[ERROR] Can not instantiate (forall α97_2: (α97_2) ->{⊥} α97_2) ->{⊥} Int to mono!.
+//│ ╔══[ERROR] Can not instantiate a polymorphic type inside (forall α97_2: (α97_2) ->{⊥} α97_2) ->{⊥} Int
 //│ ║  l.176: 	region x in x.ref bar
 //│ ╙──       	                  ^^^
 //│ Type: Ref[⊥, ?]
