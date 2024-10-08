@@ -14,30 +14,134 @@ fun abs(x) = if x < 0 then -x else x
 abstract class Option[out T]: (Some[T] | None)
 class Some[out T](val value: T) extends Option[T]
 module None extends Option[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.15: 	class Some[out T](val value: T) extends Option[T]
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.16: 	module None extends Option[nothing]
+//│ ╙──      	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Some),TyTup(List(Modified(keyword 'out',Ident(T))))),Tup(List(TermDef(Val,None,Some(InfixApp(Ident(value),keyword ':',Ident(T))),None)))),keyword 'extends',App(Ident(Option),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 fun (??) getOrElse(o, v) = if o is
   Some(v') then v'
   None then v
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.39: 	  Some(v') then v'
+//│ ╙──      	  ^^^^
 
 abstract class List[out T]: (Cons[T] | Nil)
 class Cons[out T](val head: T, val tail: List[T]) extends List[T]
 module Nil extends List[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.47: 	class Cons[out T](val head: T, val tail: List[T]) extends List[T]
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.48: 	module Nil extends List[nothing]
+//│ ╙──      	       ^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Cons),TyTup(List(Modified(keyword 'out',Ident(T))))),Tup(List(TermDef(Val,None,Some(InfixApp(Ident(head),keyword ':',Ident(T))),None), TermDef(Val,None,Some(InfixApp(Ident(tail),keyword ':',App(Ident(List),TyTup(List(Ident(T)))))),None)))),keyword 'extends',App(Ident(List),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 fun (::) cons(head, tail) = Cons(head, tail)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Cons
+//│ ║  l.70: 	fun (::) cons(head, tail) = Cons(head, tail)
+//│ ╙──      	                            ^^^^
 
 abstract class Tree[out A]: (Empty | Node[A])
 class Node[out A](value: A, left: Tree[A], right: Tree[A], rank: Int) extends Tree[A]
 module Empty extends Tree[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.77: 	class Node[out A](value: A, left: Tree[A], right: Tree[A], rank: Int) extends Tree[A]
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.78: 	module Empty extends Tree[nothing]
+//│ ╙──      	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Node),TyTup(List(Modified(keyword 'out',Ident(A))))),Tup(List(InfixApp(Ident(value),keyword ':',Ident(A)), InfixApp(Ident(left),keyword ':',App(Ident(Tree),TyTup(List(Ident(A))))), InfixApp(Ident(right),keyword ':',App(Ident(Tree),TyTup(List(Ident(A))))), InfixApp(Ident(rank),keyword ':',Ident(Int))))),keyword 'extends',App(Ident(Tree),TyTup(List(Ident(A))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 fun show(t: Tree[Any]): Str = if t is
   Node(v, l, r, _) then
     "(" ++ show(l) ++ " " ++ toString(v) ++ " " ++ show(r) ++ ")"
   Empty then "•"
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Tree
+//│ ║  l.100: 	fun show(t: Tree[Any]): Str = if t is
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Node`.
+//│ ║  l.101: 	  Node(v, l, r, _) then
+//│ ╙──       	  ^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.NotImplementedError: an implementation is missing
+//│ 	at: scala.Predef$.$qmark$qmark$qmark(Predef.scala:344)
+//│ 	at: hkmc2.semantics.Elaborator$VarianceTraverser.traverseType(Elaborator.scala:483)
+//│ 	at: hkmc2.semantics.Elaborator$Traverser.traverseType$$anonfun$7(Elaborator.scala:523)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+//│ 	at: scala.Option.foreach(Option.scala:437)
+//│ 	at: hkmc2.semantics.Elaborator$Traverser.traverseType(Elaborator.scala:523)
+//│ 	at: hkmc2.semantics.Elaborator.go$3$$anonfun$1$$anonfun$1(Elaborator.scala:449)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
 
 fun singleton(x) = Node(x, Empty, Empty, 1)
 fun rank(t) = if t is
   Empty then 0
   Node(_, _, _, r) then r
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Node
+//│ ║  l.125: 	fun singleton(x) = Node(x, Empty, Empty, 1)
+//│ ╙──       	                   ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Empty
+//│ ║  l.125: 	fun singleton(x) = Node(x, Empty, Empty, 1)
+//│ ╙──       	                           ^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Empty
+//│ ║  l.125: 	fun singleton(x) = Node(x, Empty, Empty, 1)
+//│ ╙──       	                                  ^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Node`.
+//│ ║  l.128: 	  Node(_, _, _, r) then r
+//│ ╙──       	  ^^^^
 
 // This can be improved. This can be better.
 fun merge(t1: Tree[Num], t2: Tree[Num]): Tree[Num] =
@@ -51,46 +155,118 @@ fun merge(t1: Tree[Num], t2: Tree[Num]): Tree[Num] =
     t1 is Empty and t2 is Node then t2
     t1 is Node and t2 is Empty then t1
     t1 is Empty and t2 is Empty then Empty
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Tree
+//│ ║  l.147: 	fun merge(t1: Tree[Num], t2: Tree[Num]): Tree[Num] =
+//│ ╙──       	              ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Tree
+//│ ║  l.147: 	fun merge(t1: Tree[Num], t2: Tree[Num]): Tree[Num] =
+//│ ╙──       	                             ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Node`.
+//│ ║  l.149: 	    t1 is Node(v1, l1, r1, _) and t2 is Node(v2, _, _, _) and
+//│ ╙──       	          ^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.NotImplementedError: an implementation is missing
+//│ 	at: scala.Predef$.$qmark$qmark$qmark(Predef.scala:344)
+//│ 	at: hkmc2.semantics.Elaborator$VarianceTraverser.traverseType(Elaborator.scala:483)
+//│ 	at: hkmc2.semantics.Elaborator$Traverser.traverseType$$anonfun$7(Elaborator.scala:523)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+//│ 	at: scala.Option.foreach(Option.scala:437)
+//│ 	at: hkmc2.semantics.Elaborator$Traverser.traverseType(Elaborator.scala:523)
+//│ 	at: hkmc2.semantics.Elaborator.go$3$$anonfun$1$$anonfun$1(Elaborator.scala:449)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+//│ 	at: scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
 
 fun insert(t, v) = merge(t, singleton(v))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: merge
+//│ ║  l.183: 	fun insert(t, v) = merge(t, singleton(v))
+//│ ╙──       	                   ^^^^^
 
 fun getMin(t) =
   if t is
     Empty then None
     Node(x, _, _, _) then Some(x)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Node`.
+//│ ║  l.192: 	    Node(x, _, _, _) then Some(x)
+//│ ╙──       	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.191: 	    Empty then None
+//│ ╙──       	               ^^^^
 
 fun deleteMin(t) =
   if t is
     Empty then Empty
     Node(_, l, r, _) then merge(l, r)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Node`.
+//│ ║  l.205: 	    Node(_, l, r, _) then merge(l, r)
+//│ ╙──       	    ^^^^
 
 fun fromList(t, xs) =
   if xs is
     Cons(x, xs') then fromList(insert(t, x), xs')
     Nil then t
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.213: 	    Cons(x, xs') then fromList(insert(t, x), xs')
+//│ ╙──       	    ^^^^
 
 let tree1 = fromList(Empty, 3 :: 4 :: 1 :: 2 :: Nil)
 tree1 |> show
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Empty
+//│ ║  l.220: 	let tree1 = fromList(Empty, 3 :: 4 :: 1 :: 2 :: Nil)
+//│ ╙──       	                     ^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Nil
+//│ ║  l.220: 	let tree1 = fromList(Empty, 3 :: 4 :: 1 :: 2 :: Nil)
+//│ ╙──       	                                                ^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: show
+//│ ║  l.221: 	tree1 |> show
+//│ ╙──       	         ^^^^
 
 // Remove the smallest element. It should be 1.
 getMin(tree1) ?? "nothing"
 let tree1' = deleteMin(tree1)
 tree1' |> show
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: show
+//│ ║  l.238: 	tree1' |> show
+//│ ╙──       	          ^^^^
 
 // Remove one more element. It should be 2.
 getMin(tree1') ?? "nothing"
 let tree1'' = deleteMin(tree1')
 tree1'' |> show
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: show
+//│ ║  l.247: 	tree1'' |> show
+//│ ╙──       	           ^^^^
 
 // Remove one more element. It should be 3.
 getMin(tree1'') ?? "nothing"
 let tree1''' = deleteMin(tree1'')
 tree1''' |> show
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: show
+//│ ║  l.256: 	tree1''' |> show
+//│ ╙──       	            ^^^^
 
 // Remove the last element. It should be 4.
 getMin(tree1''') ?? "nothing"
 let tree1'''' = deleteMin(tree1''')
 tree1'''' |> show
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: show
+//│ ║  l.265: 	tree1'''' |> show
+//│ ╙──       	             ^^^^
 
 // ===========================================================================
 
@@ -98,14 +274,42 @@ fun drain(t) =
   if getMin(t) is
     None then Nil
     Some(x) then x :: drain(deleteMin(t))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.276: 	    Some(x) then x :: drain(deleteMin(t))
+//│ ╙──       	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Nil
+//│ ║  l.275: 	    None then Nil
+//│ ╙──       	              ^^^
 
 fun sorted(xs) = fromList(Empty, xs) |> drain
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Empty
+//│ ║  l.286: 	fun sorted(xs) = fromList(Empty, xs) |> drain
+//│ ╙──       	                          ^^^^^
 
 fun showList(xs) =
   if xs is
     Cons(x, Nil) then toString(x)
     Cons(x, xs') then toString(x) ++ ", " ++ showList(xs')
     Nil then ""
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.295: 	    Cons(x, xs') then toString(x) ++ ", " ++ showList(xs')
+//│ ╙──       	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.294: 	    Cons(x, Nil) then toString(x)
+//│ ╙──       	    ^^^^
 
 sorted(3 :: 4 :: 1 :: 2 :: Nil) |> showList
 sorted(42 :: 58 :: 19 :: 37 :: 44 :: 99 :: 68 :: 60 :: 77 :: 61 :: Nil) |> showList
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Nil
+//│ ║  l.306: 	sorted(3 :: 4 :: 1 :: 2 :: Nil) |> showList
+//│ ╙──       	                           ^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Nil
+//│ ║  l.307: 	sorted(42 :: 58 :: 19 :: 37 :: 44 :: 99 :: 68 :: 60 :: 77 :: 61 :: Nil) |> showList
+//│ ╙──       	                                                                   ^^^

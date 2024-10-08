@@ -4,20 +4,68 @@
 abstract class List[out T]
 class Cons[out T](head: T, tail: List[T]) extends List[T]
 module Nil extends List[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.5: 	class Cons[out T](head: T, tail: List[T]) extends List[T]
+//│ ╙──     	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.6: 	module Nil extends List[nothing]
+//│ ╙──     	       ^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Cons),TyTup(List(Modified(keyword 'out',Ident(T))))),Tup(List(InfixApp(Ident(head),keyword ':',Ident(T)), InfixApp(Ident(tail),keyword ':',App(Ident(List),TyTup(List(Ident(T)))))))),keyword 'extends',App(Ident(List),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 abstract class Option[out T]
 class Some[out T](value: T) extends Option[T]
 module None extends Option[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.29: 	class Some[out T](value: T) extends Option[T]
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.30: 	module None extends Option[nothing]
+//│ ╙──      	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Some),TyTup(List(Modified(keyword 'out',Ident(T))))),Tup(List(InfixApp(Ident(value),keyword ':',Ident(T))))),keyword 'extends',App(Ident(Option),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 
 fun length(xs) = if xs is
   Nil then 0
   Cons(_, xs) then 1 + length(xs)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.55: 	  Cons(_, xs) then 1 + length(xs)
+//│ ╙──      	  ^^^^
 
 
 fun map(f, xs) = if xs is
   Nil then Nil
   Cons(x, xs) then Cons(f(x), map(f, xs))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.64: 	  Cons(x, xs) then Cons(f(x), map(f, xs))
+//│ ╙──      	  ^^^^
 
 
 fun findFirst(f, xs) =
@@ -25,6 +73,18 @@ fun findFirst(f, xs) =
     Nil then None
     Cons(x, _) and f(x) then Some(x)
     Cons(_, xs) then findFirst(f, xs)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.75: 	    Cons(_, xs) then findFirst(f, xs)
+//│ ╙──      	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.74: 	    Cons(x, _) and f(x) then Some(x)
+//│ ╙──      	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.73: 	    Nil then None
+//│ ╙──      	             ^^^^
 
 
 fun findFirst(f, xs) =
@@ -33,6 +93,18 @@ fun findFirst(f, xs) =
     Cons(x, _) and
       f(x) then Some(x)
     Cons(_, xs) then findFirst(f, xs)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.95: 	    Cons(_, xs) then findFirst(f, xs)
+//│ ╙──      	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.93: 	    Cons(x, _) and
+//│ ╙──      	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.92: 	    Nil then None
+//│ ╙──      	             ^^^^
 
 
 fun findFirst(f, xs) =
@@ -42,3 +114,15 @@ fun findFirst(f, xs) =
       Cons(x, _) and
         f(x) then Some(x)
       Cons(_, xs) then findFirst(f, xs)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.116: 	      Cons(_, xs) then findFirst(f, xs)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.114: 	      Cons(x, _) and
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.113: 	      Nil then None
+//│ ╙──       	               ^^^^

@@ -29,6 +29,26 @@ process(Numb(1), 10)
 abstract class Vec[out T]
 class Cons[out T](head: T, tail: Vec[T]) extends Vec[T]
 module Nil extends Vec[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.30: 	class Cons[out T](head: T, tail: Vec[T]) extends Vec[T]
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.31: 	module Nil extends Vec[nothing]
+//│ ╙──      	       ^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Cons),TyTup(List(Modified(keyword 'out',Ident(T))))),Tup(List(InfixApp(Ident(head),keyword ':',Ident(T)), InfixApp(Ident(tail),keyword ':',App(Ident(Vec),TyTup(List(Ident(T)))))))),keyword 'extends',App(Ident(Vec),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 class Pair[A, B](a: A, b: B)
 
@@ -39,9 +59,15 @@ fun process(e) =
     Pair(Vec(xs), Vec(ys)) then n
     Pair(Vec(n),  Numb(n)) then n
     Pair(Numb(n), Vec(n))  then n
-//│ ╔══[ERROR] Name not found: n
-//│ ║  l.39: 	    Pair(Vec(xs), Vec(ys)) then n
-//│ ╙──      	                                ^
+//│ ╔══[ERROR] Unknown constructor `Vec`.
+//│ ║  l.61: 	    Pair(Numb(n), Vec(n))  then n
+//│ ╙──      	                  ^^^
+//│ ╔══[ERROR] Unknown constructor `Vec`.
+//│ ║  l.60: 	    Pair(Vec(n),  Numb(n)) then n
+//│ ╙──      	         ^^^
+//│ ╔══[ERROR] Unknown constructor `Vec`.
+//│ ║  l.59: 	    Pair(Vec(xs), Vec(ys)) then n
+//│ ╙──      	         ^^^
 
 
 // * FIXME should warn, be rejected, or compare both values for equality

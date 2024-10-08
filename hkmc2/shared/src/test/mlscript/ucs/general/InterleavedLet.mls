@@ -5,12 +5,36 @@
 abstract class List[out T]
 class Cons[out T](head: T, tail: List[T]) extends List[T]
 module Nil extends List[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.6: 	class Cons[out T](head: T, tail: List[T]) extends List[T]
+//│ ╙──     	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.7: 	module Nil extends List[nothing]
+//│ ╙──     	       ^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Cons),TyTup(List(Modified(keyword 'out',Ident(T))))),Tup(List(InfixApp(Ident(head),keyword ':',Ident(T)), InfixApp(Ident(tail),keyword ':',App(Ident(List),TyTup(List(Ident(T)))))))),keyword 'extends',App(Ident(List),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 
 fun map(f, xs) = if xs is
   Nil then Nil
   let xs' = map(f, xs)
   Cons(x, xs) then Cons(f(x), xs')
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Cons`.
+//│ ║  l.33: 	  Cons(x, xs) then Cons(f(x), xs')
+//│ ╙──      	  ^^^^
 
 
 module Bot
@@ -19,6 +43,26 @@ module Bot
 abstract class Option[T]
 class Some[T](value: T) extends Option[T]
 module None extends Option[nothing]
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.44: 	class Some[T](value: T) extends Option[T]
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.45: 	module None extends Option[nothing]
+//│ ╙──      	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Some),TyTup(List(Ident(T)))),Tup(List(InfixApp(Ident(value),keyword ':',Ident(T))))),keyword 'extends',App(Ident(Option),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 
 fun normalize(tp) = ()
@@ -34,3 +78,7 @@ fun merge(tp1, tp2) = if
   let m = merge(tp1_n, tp2_n)
   m is Some(tp) then tp
   m is None     then glb(tp1_n, tp2_n)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.79: 	  m is Some(tp) then tp
+//│ ╙──      	       ^^^^

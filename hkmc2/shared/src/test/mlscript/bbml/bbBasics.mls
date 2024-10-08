@@ -199,10 +199,32 @@ class Pair[A, B](fst: A, snd: B)
 
 
 if 1 < 2 then 1 else 0
-//│ Type: Int
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@132),LitPat(BoolLit(true)),Else(Lit(IntLit(1)))),Else(Lit(IntLit(0)))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:564)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:490)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typePurely(bbML.scala:605)
+//│ 	at: hkmc2.BbmlDiffMaker.processTerm(BbmlDiffMaker.scala:29)
 
 if false then 1 else "1"
-//│ Type: Int ∨ Str
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@134),LitPat(BoolLit(true)),Else(Lit(IntLit(1)))),Else(Lit(StrLit(1)))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:564)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:490)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typePurely(bbML.scala:605)
+//│ 	at: hkmc2.BbmlDiffMaker.processTerm(BbmlDiffMaker.scala:29)
 
 
 if 1 is Int then 1 else 0
@@ -223,41 +245,63 @@ test("1")
 
 fun fact(n) =
   if n > 1 then n * fact(n - 1) else 1
-//│ Type: ⊤
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@148),LitPat(BoolLit(true)),Else(App(Ref(*),Tup(List(Fld(‹›,Ref(n@146),None), Fld(‹›,App(Ref(fact),Tup(List(Fld(‹›,App(Ref(-),Tup(List(Fld(‹›,Ref(n@146),None), Fld(‹›,Lit(IntLit(1)),None)))),None)))),None)))))),Else(Lit(IntLit(1)))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:564)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:506)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typeFunDef(bbML.scala:326)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3$$anonfun$1(bbML.scala:485)
 
 fact
-//│ Type: Int -> Int
+//│ Type: ⊥
 
 fact(1)
-//│ Type: Int
+//│ Type: ⊥
 
 
 fun fact2 = case
   0 then 1
   n then n * fact2(n - 1)
-//│ Type: ⊤
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@161),LitPat(BoolLit(true)),Else(Lit(IntLit(1)))),Else(App(Ref(*),Tup(List(Fld(‹›,Ref(n@157),None), Fld(‹›,App(Ref(fact2),Tup(List(Fld(‹›,App(Ref(-),Tup(List(Fld(‹›,Ref(n@157),None), Fld(‹›,Lit(IntLit(1)),None)))),None)))),None)))))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:564)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3(bbML.scala:506)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck(bbML.scala:602)
+//│ 	at: hkmc2.bbml.BBTyper.typeFunDef(bbML.scala:326)
+//│ 	at: hkmc2.bbml.BBTyper.typeCheck$$anonfun$3$$anonfun$1(bbML.scala:485)
 
 fact2
-//│ Type: Int -> Int
+//│ Type: ⊥
 
 fact2(0)
-//│ Type: Int
+//│ Type: ⊥
 
 
 class Foo[A](x: A -> A)
 //│ Type: ⊤
 
 new Foo(x => x)
-//│ Type: Foo[α73_1]
+//│ Type: Foo[α74_1]
 
 fun f(g) = new Foo(g)
 f
-//│ Type: forall α76_2: (α76_2 -> α76_2) -> Foo[α76_2]
+//│ Type: forall α77_2: (α77_2 -> α77_2) -> Foo[α77_2]
 
 f(x => x).Foo#x
-//│ Type: (α78_1) ->{⊥} α78_1
+//│ Type: (α79_1) ->{⊥} α79_1
 
 g => (new Foo(g)).Foo#x
-//│ Type: (α83_1 -> α83_1) ->{⊥} (α83_1) ->{⊥} α83_1
+//│ Type: (α84_1 -> α84_1) ->{⊥} (α84_1) ->{⊥} α84_1
 
 

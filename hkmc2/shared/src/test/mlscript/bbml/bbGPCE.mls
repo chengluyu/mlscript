@@ -6,7 +6,18 @@ fun power(x) = case
   0 then `1.0
   n then x `*. power(x)(n - 1)
 power
-//│ Type: forall α1_2: (CodeBase[out Num, out α1_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Num, out α1_2, ?]
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@35),LitPat(BoolLit(true)),Else(Quoted(Lit(DecLit(1.0))))),Else(Quoted(App(Ref(*.),Tup(List(Fld(‹›,Unquoted(Ref(x@29)),None), Fld(‹›,Unquoted(App(App(Ref(power),Tup(List(Fld(‹›,Ref(x@29),None)))),Tup(List(Fld(‹›,App(Ref(-),Tup(List(Fld(‹›,Ref(n@30),None), Fld(‹›,Lit(IntLit(1)),None)))),None))))),None))))))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:402)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
 
 
 fun id: [A] -> A -> A
@@ -21,6 +32,9 @@ fun assertNotZero(x) =
   `if (x `== `0.0) then `error else x
 let checkedDiv = x `=> y `=> x `/. (assertNotZero(y))
 run(checkedDiv)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Cannot quote If(Let(scrut@59,Unquoted(Quoted(App(Ref(==),Tup(List(Fld(‹›,Unquoted(Ref(x@58)),None), Fld(‹›,Unquoted(Quoted(Lit(DecLit(0.0)))),None)))))),Cons(Branch(Ref(scrut@59),LitPat(BoolLit(true)),Else(Unquoted(Quoted(Ref(error))))),Else(Unquoted(Ref(x@58))))))
+//│ ╙──
 //│ Type: Num -> (Num -> Num)
 
 
@@ -32,7 +46,7 @@ show
 fun inc(dbg) =
   x `=> let c = x `+ `1 in let t = dbg(c) in c
 inc
-//│ Type: forall α78_2: (CodeBase[out Int, ?, ?] ->{α78_2} ⊤) ->{α78_2} CodeBase[out Int -> Int, ⊥, ?]
+//│ Type: forall α61_2: (CodeBase[out Int, ?, ?] ->{α61_2} ⊤) ->{α61_2} CodeBase[out Int -> Int, ⊥, ?]
 
 inc(c => log(show(c)))
 //│ Type: CodeBase[out Int -> Int, ⊥, ?]
@@ -45,11 +59,22 @@ fun body(x, y) = case
 fun gib_naive(n) =
   (x, y) `=> body(x, y)(n)
 let gn5 = run(gib_naive(5))
-//│ Type: ⊤
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@99),LitPat(BoolLit(true)),Else(Ref(x@90))),Let(scrut@97,App(Ref(==),Tup(List(Fld(‹›,Ref(n@92),None), Fld(‹›,Lit(IntLit(1)),None)))),Cons(Branch(Ref(scrut@97),LitPat(BoolLit(true)),Else(Ref(y@91))),Else(App(App(Ref(body),Tup(List(Fld(‹›,Ref(y@91),None), Fld(‹›,Quoted(App(Ref(+),Tup(List(Fld(‹›,Unquoted(Ref(x@90)),None), Fld(‹›,Unquoted(Ref(y@91)),None))))),None)))),Tup(List(Fld(‹›,App(Ref(-),Tup(List(Fld(‹›,Ref(n@92),None), Fld(‹›,Lit(IntLit(1)),None)))),None)))))))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:402)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
 
 fun bind(rhs, k) = `let x = rhs `in k(x)
 bind
-//│ Type: forall α145_2, α146_2, α150_2, α153_2, α156_2, α157_2: (CodeBase[out α145_2, out α146_2, ?], CodeBase[in α150_2 out α150_2 ∨ α145_2, ?, ⊥] ->{α153_2} CodeBase[out α156_2, out α157_2, ?]) ->{α153_2} CodeBase[out α156_2, out α146_2 ∨ α157_2, ?]
+//│ Type: forall α96_2, α97_2, α101_2, α104_2, α107_2, α108_2: (CodeBase[out α96_2, out α97_2, ?], CodeBase[in α101_2 out α101_2 ∨ α96_2, ?, ⊥] ->{α104_2} CodeBase[out α107_2, out α108_2, ?]) ->{α104_2} CodeBase[out α107_2, out α97_2 ∨ α108_2, ?]
 
 :e
 fun body: [G] -> (CodeBase[out Int, out G, out Any], CodeBase[out Int, out G, out Any]) -> Int -> CodeBase[out Int, out G, out Any]
@@ -57,21 +82,23 @@ fun body(x, y) = case
   0 then x
   1 then y
   n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out C, out Any]
-//│ ╔══[ERROR] Type error in application with expected type CodeBase[out Int, out <α>164_2, ?]
-//│ ║  l.59: 	  n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out C, out Any]
-//│ ║        	         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ ╟── because: cannot constrain  CodeBase[out α177_2, out α169_2 ∨ α180_2, ?]  <:  CodeBase[out Int, out <α>164_2, ?]
-//│ ╟── because: cannot constrain  D( α169_2 || α180_2 )  <:  <α>164_2
-//│ ╟── because: cannot constrain  α180_2  <:  ¬(~<α>164_2)
-//│ ╟── because: cannot constrain  α179_2  <:  ¬(~<α>164_2)
-//│ ╟── because: cannot constrain  α179_2  <:  ¬(~<α>164_2)
-//│ ╙── because: cannot constrain    <:  ¬(~<α>164_2)
-//│ Type: ⊤
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@134),LitPat(BoolLit(true)),Else(Ref(x@122))),Let(scrut@132,App(Ref(==),Tup(List(Fld(‹›,Ref(n@124),None), Fld(‹›,Lit(IntLit(1)),None)))),Cons(Branch(Ref(scrut@132),LitPat(BoolLit(true)),Else(Ref(y@123))),Else(App(Ref(bind),Tup(List(Fld(‹›,Quoted(App(Ref(+),Tup(List(Fld(‹›,Unquoted(Ref(x@122)),None), Fld(‹›,Unquoted(Ref(y@123)),None))))),None), Fld(‹›,Lam(List(Param(‹›,z@127,None)),App(App(Ref(body),Tup(List(Fld(‹›,Ref(y@123),None), Fld(‹›,Ref(z@127),None)))),Tup(List(Fld(‹›,App(Ref(-),Tup(List(Fld(‹›,Ref(n@124),None), Fld(‹›,Lit(IntLit(1)),None)))),None))))),Some(Forall(List(QuantVar(C@131,None,None)),FunTy(Tup(List(Fld(‹›,TyApp(Ref(class:CodeBase),List(WildcardTy(None,Some(Ref(class:Int))), WildcardTy(None,Some(Ref(C@131))), WildcardTy(None,Some(Ref(class:Any))))),None))),TyApp(Ref(class:CodeBase),List(WildcardTy(None,Some(Ref(C@131))), WildcardTy(None,Some(Ref(class:Any))))),None))))))))))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:402)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
 
 fun bind: [G] -> (CodeBase[out Int, out G, out Any], [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out Int, out C | G, out Any]) -> CodeBase[out Int, out G, out Any]
 fun bind(rhs, k) = `let x = rhs `in k(x)
 bind
-//│ Type: forall α197_2: (CodeBase[out Int, out α197_2, ?], forall α198_3: (CodeBase[out Int, out α198_3, ?]) ->{⊥} CodeBase[out Int, out α198_3 ∨ α197_2, ?]) ->{⊥} CodeBase[out Int, out α197_2, ?]
+//│ Type: forall α120_2: (CodeBase[out Int, out α120_2, ?], forall α121_3: (CodeBase[out Int, out α121_3, ?]) ->{⊥} CodeBase[out Int, out α121_3 ∨ α120_2, ?]) ->{⊥} CodeBase[out Int, out α120_2, ?]
 
 
 fun body: [G] -> (CodeBase[out Int, out G, out Any], CodeBase[out Int, out G, out Any]) -> Int -> CodeBase[out Int, out G, out Any]
@@ -80,7 +107,18 @@ fun body(x, y) = case
   1 then y
   n then bind of x `+ y, (z => body(y, z)(n - 1)): [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out Int, out C, out Any]
 body
-//│ Type: forall α207_2: (CodeBase[out Int, out α207_2, ?], CodeBase[out Int, out α207_2, ?]) ->{⊥} (Int) ->{⊥} CodeBase[out Int, out α207_2, ?]
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: Cons(Branch(Ref(scrut@164),LitPat(BoolLit(true)),Else(Ref(x@152))),Let(scrut@162,App(Ref(==),Tup(List(Fld(‹›,Ref(n@154),None), Fld(‹›,Lit(IntLit(1)),None)))),Cons(Branch(Ref(scrut@162),LitPat(BoolLit(true)),Else(Ref(y@153))),Else(App(Ref(bind),Tup(List(Fld(‹›,Quoted(App(Ref(+),Tup(List(Fld(‹›,Unquoted(Ref(x@152)),None), Fld(‹›,Unquoted(Ref(y@153)),None))))),None), Fld(‹›,Lam(List(Param(‹›,z@157,None)),App(App(Ref(body),Tup(List(Fld(‹›,Ref(y@153),None), Fld(‹›,Ref(z@157),None)))),Tup(List(Fld(‹›,App(Ref(-),Tup(List(Fld(‹›,Ref(n@154),None), Fld(‹›,Lit(IntLit(1)),None)))),None))))),Some(Forall(List(QuantVar(C@161,None,None)),FunTy(Tup(List(Fld(‹›,TyApp(Ref(class:CodeBase),List(WildcardTy(None,Some(Ref(class:Int))), WildcardTy(None,Some(Ref(C@161))), WildcardTy(None,Some(Ref(class:Any))))),None))),TyApp(Ref(class:CodeBase),List(WildcardTy(None,Some(Ref(class:Int))), WildcardTy(None,Some(Ref(C@161))), WildcardTy(None,Some(Ref(class:Any))))),None))))))))))) (of class hkmc2.semantics.Split$Cons)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:368)
+//│ 	at: hkmc2.bbml.BBTyper.typeSplit(bbML.scala:363)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:402)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe(bbML.scala:413)
+//│ 	at: hkmc2.bbml.BBTyper.ascribe$$anonfun$3(bbML.scala:385)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
 
 fun gib(n) = (x, y) `=> body(x, y)(n)
 let g5 = run(gib(5))

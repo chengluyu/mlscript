@@ -9,6 +9,26 @@ abstract class Option[T]
 class Some[T](value: T) extends Option[T]
 module None extends Option[nothing]
 class Pair[A, B](x: A, y: B)
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.9: 	class Some[T](value: T) extends Option[T]
+//│ ╙──     	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
+//│ ║  l.10: 	module None extends Option[nothing]
+//│ ╙──      	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ FAILURE: Unexpected exception
+//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Some),TyTup(List(Ident(T)))),Tup(List(InfixApp(Ident(value),keyword ':',Ident(T))))),keyword 'extends',App(Ident(Option),TyTup(List(Ident(T))))) (of class hkmc2.syntax.Tree$InfixApp)
+//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
+//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
+//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
+//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
+//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
+//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
+//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
+//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
+//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
+//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 // All `add_n` functions should be inferred to have the same type.
 
@@ -18,11 +38,55 @@ fun add_1(x, y) =
     x is Some(xv) and y is None     then xv
     x is None     and y is Some(yv) then yv
     x is None     and y is None     then 0
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.39: 	    x is None     and y is Some(yv) then yv
+//│ ╙──      	                           ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.38: 	    x is Some(xv) and y is None     then xv
+//│ ╙──      	         ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.37: 	    x is Some(xv) and y is Some(yv) then xv + yv
+//│ ╙──      	         ^^^^
 
 add_1(None, None)
 add_1(Some(5), None)
 add_1(None, Some(9))
 add_1(Some(5), Some(9))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.54: 	add_1(None, None)
+//│ ╙──      	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.54: 	add_1(None, None)
+//│ ╙──      	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.55: 	add_1(Some(5), None)
+//│ ╙──      	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.55: 	add_1(Some(5), None)
+//│ ╙──      	               ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.56: 	add_1(None, Some(9))
+//│ ╙──      	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.56: 	add_1(None, Some(9))
+//│ ╙──      	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.57: 	add_1(Some(5), Some(9))
+//│ ╙──      	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.57: 	add_1(Some(5), Some(9))
+//│ ╙──      	               ^^^^
 
 fun add_2(x, y) =
   if x is
@@ -32,11 +96,51 @@ fun add_2(x, y) =
     None and y is
       Some(yv) then yv
       None     then 0
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.97: 	      Some(yv) then yv
+//│ ╙──      	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.93: 	    Some(xv) and y is
+//│ ╙──      	    ^^^^
 
 add_2(None, None)
 add_2(Some(5), None)
 add_2(None, Some(9))
 add_2(Some(5), Some(9))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.108: 	add_2(None, None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.108: 	add_2(None, None)
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.109: 	add_2(Some(5), None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.109: 	add_2(Some(5), None)
+//│ ╙──       	               ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.110: 	add_2(None, Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.110: 	add_2(None, Some(9))
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.111: 	add_2(Some(5), Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.111: 	add_2(Some(5), Some(9))
+//│ ╙──       	               ^^^^
 
 
 fun add_3(x, y) =
@@ -45,11 +149,63 @@ fun add_3(x, y) =
     Pair(Some(xv), None)     then xv
     Pair(None,     Some(yv)) then yv
     Pair(None,     None)     then 0
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Pair
+//│ ║  l.147: 	  if Pair(x, y) is
+//│ ╙──       	     ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Pair`.
+//│ ║  l.151: 	    Pair(None,     None)     then 0
+//│ ╙──       	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Pair`.
+//│ ║  l.150: 	    Pair(None,     Some(yv)) then yv
+//│ ╙──       	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Pair`.
+//│ ║  l.149: 	    Pair(Some(xv), None)     then xv
+//│ ╙──       	    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Pair`.
+//│ ║  l.148: 	    Pair(Some(xv), Some(yv)) then xv + yv
+//│ ╙──       	    ^^^^
 
 add_3(None, None)
 add_3(Some(5), None)
 add_3(None, Some(9))
 add_3(Some(5), Some(9))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.173: 	add_3(None, None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.173: 	add_3(None, None)
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.174: 	add_3(Some(5), None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.174: 	add_3(Some(5), None)
+//│ ╙──       	               ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.175: 	add_3(None, Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.175: 	add_3(None, Some(9))
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.176: 	add_3(Some(5), Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.176: 	add_3(Some(5), Some(9))
+//│ ╙──       	               ^^^^
 
 
 :fixme
@@ -70,17 +226,49 @@ fun add_4(x, y) =
             is
               None     then 0
 //│ ╔══[PARSE ERROR] Unexpected 'is' keyword here
-//│ ║  l.59: 	      is
-//│ ╙──      	      ^^
+//│ ║  l.215: 	      is
+//│ ╙──       	      ^^
 //│ ╔══[ERROR] Unrecognized term split.
-//│ ║  l.58: 	    x
-//│ ╙──      	    ^
+//│ ║  l.214: 	    x
+//│ ╙──       	    ^
 
 
 add_4(None, None)
 add_4(Some(5), None)
 add_4(None, Some(9))
 add_4(Some(5), Some(9))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.236: 	add_4(None, None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.236: 	add_4(None, None)
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.237: 	add_4(Some(5), None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.237: 	add_4(Some(5), None)
+//│ ╙──       	               ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.238: 	add_4(None, Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.238: 	add_4(None, Some(9))
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.239: 	add_4(Some(5), Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.239: 	add_4(Some(5), Some(9))
+//│ ╙──       	               ^^^^
 
 
 fun add_5(x, y) =
@@ -89,12 +277,56 @@ fun add_5(x, y) =
     y is None     and x is Some(xv) then xv
     x is None     and y is Some(yv) then yv
     y is None     and x is None     then 0
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.278: 	    x is None     and y is Some(yv) then yv
+//│ ╙──       	                           ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.277: 	    y is None     and x is Some(xv) then xv
+//│ ╙──       	                           ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.276: 	    x is Some(xv) and y is Some(yv) then xv + yv
+//│ ╙──       	         ^^^^
 
 
 add_5(None, None)
 add_5(Some(5), None)
 add_5(None, Some(9))
 add_5(Some(5), Some(9))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.294: 	add_5(None, None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.294: 	add_5(None, None)
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.295: 	add_5(Some(5), None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.295: 	add_5(Some(5), None)
+//│ ╙──       	               ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.296: 	add_5(None, Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.296: 	add_5(None, Some(9))
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.297: 	add_5(Some(5), Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.297: 	add_5(Some(5), Some(9))
+//│ ╙──       	               ^^^^
 
 
 :fixme
@@ -105,22 +337,54 @@ fun add_6(x, y) =
     [None,     Some(yv)] then yv
     [None,     None]     then 0
 //│ ╔══[ERROR] Name not found: yv
-//│ ║  l.105: 	    [None,     Some(yv)] then yv
+//│ ║  l.337: 	    [None,     Some(yv)] then yv
 //│ ╙──       	                              ^^
 //│ ╔══[ERROR] Name not found: xv
-//│ ║  l.104: 	    [Some(xv), None]     then xv
+//│ ║  l.336: 	    [Some(xv), None]     then xv
 //│ ╙──       	                              ^^
 //│ ╔══[ERROR] Name not found: xv
-//│ ║  l.103: 	    [Some(xv), Some(yv)] then xv + yv
+//│ ║  l.335: 	    [Some(xv), Some(yv)] then xv + yv
 //│ ╙──       	                              ^^
 //│ ╔══[ERROR] Name not found: yv
-//│ ║  l.103: 	    [Some(xv), Some(yv)] then xv + yv
+//│ ║  l.335: 	    [Some(xv), Some(yv)] then xv + yv
 //│ ╙──       	                                   ^^
 
 add_6(None, None)
 add_6(Some(5), None)
 add_6(None, Some(9))
 add_6(Some(5), Some(9))
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.352: 	add_6(None, None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.352: 	add_6(None, None)
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.353: 	add_6(Some(5), None)
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.353: 	add_6(Some(5), None)
+//│ ╙──       	               ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: None
+//│ ║  l.354: 	add_6(None, Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.354: 	add_6(None, Some(9))
+//│ ╙──       	            ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.355: 	add_6(Some(5), Some(9))
+//│ ╙──       	      ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Name not found: Some
+//│ ║  l.355: 	add_6(Some(5), Some(9))
+//│ ╙──       	               ^^^^
 
 
 fun p(x) = true
@@ -134,6 +398,22 @@ fun add_6(x, y) =
     y is None     and x is Some(xv) then xv
     x is None     and y is Some(yv) then yv
     y is None     and x is None     then 0
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.399: 	    x is None     and y is Some(yv) then yv
+//│ ╙──       	                           ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.398: 	    y is None     and x is Some(xv) then xv
+//│ ╙──       	                           ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.397: 	    y is None     and p(x) and x is Some(xv) then 42
+//│ ╙──       	                                    ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.396: 	    x is Some(xv) and y is Some(yv) then xv + yv
+//│ ╙──       	         ^^^^
 
 fun add_7(x, y) =
   if
@@ -143,6 +423,22 @@ fun add_7(x, y) =
     y is Some(yv) and p(yv) and x is None then 36
     y is Some(yv) and x is None then yv
     y is None     and x is None     then 0
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.424: 	    y is Some(yv) and x is None then yv
+//│ ╙──       	         ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.423: 	    y is Some(yv) and p(yv) and x is None then 36
+//│ ╙──       	         ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.422: 	    y is None     and x is Some(xv) then xv
+//│ ╙──       	                           ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.420: 	    x is Some(xv) and y is Some(yv) then xv + yv
+//│ ╙──       	         ^^^^
 
 fun add_8(x, y) =
   if
@@ -152,3 +448,23 @@ fun add_8(x, y) =
     y is Some(yv) and p(yv) and x is None then 36
     y is Some(yv) and x is None then yv
     y is None     and x is None     then 0
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.449: 	    y is Some(yv) and x is None then yv
+//│ ╙──       	         ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.448: 	    y is Some(yv) and p(yv) and x is None then 36
+//│ ╙──       	         ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.447: 	    y is None     and x is Some(xv) then xv
+//│ ╙──       	                           ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.446: 	    y is None    and p(x) and x is Some(xv) then 42
+//│ ╙──       	                                   ^^^^
+//│ FAILURE: Unexpected type error
+//│ ╔══[ERROR] Unknown constructor `Some`.
+//│ ║  l.445: 	    x is Some(xv) and y is Some(yv) then xv + yv
+//│ ╙──       	         ^^^^
