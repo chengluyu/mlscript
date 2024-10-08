@@ -4,73 +4,21 @@
 abstract class Option[A]: Some[A] | None
 class Some[A](value: A) extends Option[A]
 module None extends Option
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.5: 	class Some[A](value: A) extends Option[A]
-//│ ╙──     	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.6: 	module None extends Option
-//│ ╙──     	       ^^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected exception
-//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Some),TyTup(List(Ident(A)))),Tup(List(InfixApp(Ident(value),keyword ':',Ident(A))))),keyword 'extends',App(Ident(Option),TyTup(List(Ident(A))))) (of class hkmc2.syntax.Tree$InfixApp)
-//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
-//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
-//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
-//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
-//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
-//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
-//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
-//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
-//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
-//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 abstract class Either[out A, out B]: Left[A] | Right[B]
 class Left[A](leftValue: A) extends Either[A, nothing]
 class Right[B](rightValue: B) extends Either[nothing, B]
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.29: 	class Left[A](leftValue: A) extends Either[A, nothing]
-//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.30: 	class Right[B](rightValue: B) extends Either[nothing, B]
-//│ ╙──      	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected exception
-//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(App(Ident(Left),TyTup(List(Ident(A)))),Tup(List(InfixApp(Ident(leftValue),keyword ':',Ident(A))))),keyword 'extends',App(Ident(Either),TyTup(List(Ident(A), Ident(nothing))))) (of class hkmc2.syntax.Tree$InfixApp)
-//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
-//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
-//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:387)
-//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
-//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
-//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
-//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
-//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
-//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
-//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 fun f(x, y) =
   if x is
     Left(xv) and y is Left(yv) then xv + yv
     Right(xv) and y is Right(yv) then xv * yv
     None and y is None then 0
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Right`.
-//│ ║  l.55: 	    Right(xv) and y is Right(yv) then xv * yv
-//│ ╙──      	    ^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Left`.
-//│ ║  l.54: 	    Left(xv) and y is Left(yv) then xv + yv
-//│ ╙──      	    ^^^^
 
 fun f(x, y) =
   if x is
     Left(xv) and y is Left(yv) then xv + yv
     None then 0
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Left`.
-//│ ║  l.68: 	    Left(xv) and y is Left(yv) then xv + yv
-//│ ╙──      	    ^^^^
 
 fun f(x, y) =
   if x is
@@ -78,10 +26,6 @@ fun f(x, y) =
       Left(yv) then xv + yv
       Right(yv) then xv * yv
     None then 0
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Left`.
-//│ ║  l.77: 	    Left(xv) and y is
-//│ ╙──      	    ^^^^
 
 fun f(x) =
   if x is
@@ -90,19 +34,11 @@ fun f(x) =
       v > 0 then "positive"
       _     then "zero"
     None then "nothing"
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.88: 	    Some(v) and
-//│ ╙──      	    ^^^^
 
 fun f(x, y) =
   if x is
     Some(x) and y is
       Some(y) then 0
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.100: 	    Some(x) and y is
-//│ ╙──       	    ^^^^
 
 class A[T](value: T)
 class B[T](value: T)
@@ -127,10 +63,6 @@ fun f(x, y) =
   if x is
     Some(xv) and y is Some(yv) then xv + yv
     None and y is None then 0
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.128: 	    Some(xv) and y is Some(yv) then xv + yv
-//│ ╙──       	    ^^^^
 
 // :e
 fun f(x, y) =
@@ -140,14 +72,6 @@ fun f(x, y) =
       None then xv * 2
     None and y is
       Some(yv) then yv * 3
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.142: 	      Some(yv) then yv * 3
-//│ ╙──       	      ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.138: 	    Some(xv) and y is
-//│ ╙──       	    ^^^^
 
 fun f(x, y) =
   if x is
@@ -169,9 +93,6 @@ fun f(x, y) =
       >  0 then "gt"
       <  0 then "le"
       == 0 then "eq"
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.168: 	    Some(x) and y
-//│ ╙──       	    ^^^^
 
 
 fun isValid(x) = if x then false else true
@@ -182,10 +103,6 @@ fun f(x, allowNone) =
     Some(x) and isValid(x) then "good"
     None and allowNone then "okay"
     else "bad"
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.182: 	    Some(x) and isValid(x) then "good"
-//│ ╙──       	    ^^^^
 
 fun f(x) =
   if x is
@@ -193,10 +110,6 @@ fun f(x) =
     Some(x) then "roll"
     _ and x == 0 then 0
     _ then "rock"
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.193: 	    Some(x) then "roll"
-//│ ╙──       	    ^^^^
 
 fun f(x, a, b) =
   if x is
@@ -213,14 +126,11 @@ fun f(x, y, b) =
     Some(xv) and b then xv + b
     _ then "roll"
 //│ ╔══[PARSE ERROR] Unexpected 'is' keyword here
-//│ ║  l.211: 	      is Some(yv) then "bruh"
+//│ ║  l.124: 	      is Some(yv) then "bruh"
 //│ ╙──       	      ^^
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.213: 	    Some(xv) and b then xv + b
-//│ ╙──       	    ^^^^
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.210: 	    Some(xv) and y
-//│ ╙──       	    ^^^^
+//│ ╔══[ERROR] Unrecognized term split.
+//│ ║  l.123: 	    Some(xv) and y
+//│ ╙──       	                 ^
 
 :fixme
 fun g(x, y, b) =
@@ -231,26 +141,15 @@ fun g(x, y, b) =
     Some(xv) and b then xv + b
     _ then "roll"
 //│ ╔══[PARSE ERROR] Unexpected 'is' keyword here
-//│ ║  l.229: 	      is Some(yv) then yv
+//│ ║  l.139: 	      is Some(yv) then yv
 //│ ╙──       	      ^^
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.231: 	    Some(xv) and b then xv + b
-//│ ╙──       	    ^^^^
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.228: 	    Some(xv) and y
-//│ ╙──       	    ^^^^
+//│ ╔══[ERROR] Unrecognized term split.
+//│ ║  l.138: 	    Some(xv) and y
+//│ ╙──       	                 ^
 
 
 fun foo(x, y, z) =
   if x - y > 0 then Some(x + y + z) else None
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: None
-//│ ║  l.245: 	  if x - y > 0 then Some(x + y + z) else None
-//│ ╙──       	                                         ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: Some
-//│ ║  l.245: 	  if x - y > 0 then Some(x + y + z) else None
-//│ ╙──       	                    ^^^^
 
 // Uncomment this block to make the following block work.
 // fun foo(x, y, z) =
@@ -265,21 +164,9 @@ fun f(u, v, w) =
       Left(_) then "left-defined"
       Right(_) then "right-defined"
     None then "undefined"
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.264: 	    Some(x) and x is
-//│ ╙──       	    ^^^^
 
 
 fun p(x) = if x >= 0 then Right(x) else Left(x)
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: Left
-//│ ║  l.274: 	fun p(x) = if x >= 0 then Right(x) else Left(x)
-//│ ╙──       	                                        ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: Right
-//│ ║  l.274: 	fun p(x) = if x >= 0 then Right(x) else Left(x)
-//│ ╙──       	                          ^^^^^
 
 
 fun g(a, b) =
@@ -290,61 +177,17 @@ fun g(a, b) =
     Right(x) and b is
       Some(y) then x * y
       None    then x
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Right`.
-//│ ║  l.290: 	    Right(x) and b is
-//│ ╙──       	    ^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Left`.
-//│ ║  l.287: 	    Left(x) and b is
-//│ ╙──       	    ^^^^
 
 g(5, None)
 g(5, Some(7))
 g(0 - 5, None)
 g(0 - 5, Some(9))
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: None
-//│ ║  l.302: 	g(5, None)
-//│ ╙──       	     ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: Some
-//│ ║  l.303: 	g(5, Some(7))
-//│ ╙──       	     ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: None
-//│ ║  l.304: 	g(0 - 5, None)
-//│ ╙──       	         ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: Some
-//│ ║  l.305: 	g(0 - 5, Some(9))
-//│ ╙──       	         ^^^^
 
 class Var(name: Str)
 abstract class ValBase: (IntVal | BoolVal)
 class IntVal(value: Int) extends ValBase
 class BoolVal(value: Bool) extends ValBase
 class Lit(value: ValBase)
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.325: 	class IntVal(value: Int) extends ValBase
-//│ ╙──       	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.326: 	class BoolVal(value: Bool) extends ValBase
-//│ ╙──       	      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected exception
-//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(App(Ident(IntVal),Tup(List(InfixApp(Ident(value),keyword ':',Ident(Int))))),keyword 'extends',Ident(ValBase)) (of class hkmc2.syntax.Tree$InfixApp)
-//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
-//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
-//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:385)
-//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
-//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
-//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
-//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
-//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
-//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
-//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 fun p(e, context) =
   if e is
@@ -353,18 +196,6 @@ fun p(e, context) =
       Some(BoolVal(v)) then Right(v)
     Lit(IntVal(v)) then Left(v)
     Lit(BoolVal(v)) then Right(v)
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Lit`.
-//│ ║  l.355: 	    Lit(BoolVal(v)) then Right(v)
-//│ ╙──       	    ^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Lit`.
-//│ ║  l.354: 	    Lit(IntVal(v)) then Left(v)
-//│ ╙──       	    ^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Var`.
-//│ ║  l.351: 	    Var(x) and context.get(x) is
-//│ ╙──       	    ^^^
 
 class Nil()
 
@@ -376,9 +207,9 @@ fun f(x) =
     0 ::
       Nil() then "oh"
 //│ ╔══[ERROR] Unrecognized pattern split.
-//│ ║  l.376: 	    0 ::
+//│ ║  l.207: 	    0 ::
 //│ ║         	    ^^^^
-//│ ║  l.377: 	      Nil() then "oh"
+//│ ║  l.208: 	      Nil() then "oh"
 //│ ╙──       	^^^^^^^^^^^^^^^^^^^^^
 
 
@@ -391,14 +222,6 @@ fun f(x) =
 
 fun helper(x) =
   if x == 0 then None else Some(x)
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: Some
-//│ ║  l.393: 	  if x == 0 then None else Some(x)
-//│ ╙──       	                           ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: None
-//│ ║  l.393: 	  if x == 0 then None else Some(x)
-//│ ╙──       	                 ^^^^
 
 
 fun g(x, y) =
@@ -411,14 +234,6 @@ fun g(x, y) =
       None then 1
   else
     0
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.410: 	      Some(b) then 2 + b
-//│ ╙──       	      ^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Unknown constructor `Some`.
-//│ ║  l.406: 	    Some(a) and helper(y) is
-//│ ╙──       	    ^^^^
 
 
 fun test(x) = if x then 0 else "oops"

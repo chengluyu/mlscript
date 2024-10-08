@@ -8,43 +8,11 @@ module Heart extends Suit
 module Diamond extends Suit
 module Spade extends Suit
 module Club extends Suit
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.7: 	module Heart extends Suit
-//│ ╙──     	       ^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.8: 	module Diamond extends Suit
-//│ ╙──     	       ^^^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.9: 	module Spade extends Suit
-//│ ╙──     	       ^^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Expected a valid definition head, found infix application instead
-//│ ║  l.10: 	module Club extends Suit
-//│ ╙──      	       ^^^^^^^^^^^^^^^^^
-//│ FAILURE: Unexpected exception
-//│ /!!!\ Uncaught error: scala.MatchError: InfixApp(Ident(Heart),keyword 'extends',Ident(Suit)) (of class hkmc2.syntax.Tree$InfixApp)
-//│ 	at: hkmc2.semantics.Elaborator.processHead$1(Elaborator.scala:360)
-//│ 	at: hkmc2.semantics.Elaborator.go$1(Elaborator.scala:362)
-//│ 	at: hkmc2.semantics.Elaborator.block$$anonfun$3(Elaborator.scala:385)
-//│ 	at: hkmc2.utils.TraceLogger.trace(TraceLogger.scala:17)
-//│ 	at: hkmc2.semantics.Elaborator.block(Elaborator.scala:387)
-//│ 	at: hkmc2.semantics.Elaborator.topLevel(Elaborator.scala:441)
-//│ 	at: hkmc2.MLsDiffMaker.processTrees(MLsDiffMaker.scala:121)
-//│ 	at: hkmc2.MLsDiffMaker.processOrigin(MLsDiffMaker.scala:105)
-//│ 	at: hkmc2.DiffMaker.processBlock(DiffMaker.scala:155)
-//│ 	at: hkmc2.DiffMaker.rec(DiffMaker.scala:249)
 
 fun suit(x) = if x is Card(a) then a
 
 let card = Card(Heart)
 suit of card
-//│ FAILURE: Unexpected type error
-//│ ╔══[ERROR] Name not found: Heart
-//│ ║  l.42: 	let card = Card(Heart)
-//│ ╙──      	                ^^^^^
 
 :ucs desugared normalized
 fun foo(x) = if x is
@@ -55,22 +23,20 @@ fun foo(x) = if x is
   else 4
 //│ | | Desugared if: 
 //│ if
-//│   x@31 is Card(param0@38) and
-//│     let Heart@39 = param0@38#0
-//│     else 0
-//│   x@31 is Card(param0@36) and
-//│     let Diamond@37 = param0@36#0
-//│     else 1
-//│   x@31 is Card(param0@34) and
-//│     let Spade@35 = param0@34#0
-//│     else 2
-//│   x@31 is Card(param0@32) and
-//│     let Club@33 = param0@32#0
-//│     else 3
+//│   x@31 is Card(param0@35) param0@35 is Heart then 0
+//│   x@31 is Card(param0@34) param0@34 is Diamond then 1
+//│   x@31 is Card(param0@33) param0@33 is Spade then 2
+//│   x@31 is Card(param0@32) param0@32 is Club then 3
 //│   else 4
 //│ | | Desugared if: 
 //│ if
-//│   x@31 is Card(param0@38) and
-//│     let Heart@39 = param0@38#0
-//│     else 0
+//│   x@31 is Card(param0@35) and
+//│     param0@35 is Heart then 0
+//│     let param0@34 = param0@35#3
+//│     param0@34 is Diamond then 1
+//│     let param0@33 = param0@35#2
+//│     param0@33 is Spade then 2
+//│     let param0@32 = param0@35#1
+//│     param0@32 is Club then 3
+//│     else 4
 //│   else 4

@@ -358,6 +358,9 @@ class Elaborator(tl: TraceLogger)(using raise: Raise, state: State):
           case InfixApp(lhs, Keyword.`:`, rhs) =>
             // Elaborate the signature
             processHead(lhs)
+          case InfixApp(derived, Keyword.`extends`, base) =>
+            processHead(derived)
+
           // case _ => ???
         val (nme, tps, ps, newCtx) = processHead(head)
         log(s"Processing type definition $nme")
