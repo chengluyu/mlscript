@@ -1,11 +1,7 @@
-:global
-:noTypeCheck
-
-
 :import ../prelude/List.mls
-//│ Imported 26 members
-:import ../prelude/String.mls
 //│ Imported 28 members
+:import ../prelude/String.mls
+//│ Imported 30 members
 
 
 fun (|>) pipe(x, f) = f(x)
