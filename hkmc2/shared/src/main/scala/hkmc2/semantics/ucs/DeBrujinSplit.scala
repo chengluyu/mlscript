@@ -99,16 +99,19 @@ object DeBrujinSplit:
         Branch(_, Literal(IntLit(-n)), _, _)
       case App(Ident("-"), Tup(DecLit(n) :: Nil)) =>
         Branch(_, Literal(DecLit(-n)), _, _)
-      // BEGIN TODO: Support range patterns. This is just to suppress the errors.
-      case (lo: StrLit) to (incl, hi: StrLit) =>
-        (_, _, alternative) => alternative
-      case (lo: IntLit) to (incl, hi: IntLit) =>
-        (_, _, alternative) => alternative
-      case (lo: DecLit) to (incl, hi: DecLit) =>
-        (_, _, alternative) => alternative
-      case (lo: syntax.Literal) to (_, hi: syntax.Literal) =>
-        (_, _, alternative) => alternative
-      // END TODO: Support range patterns
+      case lower to (incl, upper) => (lower, upper) match
+        case (lower: StrLit, upper: StrLit) =>
+          if isValidCharacterRange(lower, upper) then
+            Branch(_, Range(lower, upper, incl), _, _)
+          else
+            ((_, _, alternative) => alternative): F
+        case (lower: IntLit, upper: IntLit) =>
+          Branch(_, Range(lower, upper, incl), _, _)
+        case (lower: DecLit, upper: DecLit) =>
+          Branch(_, Range(lower, upper, incl), _, _)
+        case _ =>
+          incompatibleRangeType(lower, upper)
+          (_, _, alternative) => alternative
       case App(ctor: (Ident | Sel), Tup(params)) => dealWithCtor(ctor, params)
       case literal: syntax.Literal => Branch(_, Literal(literal), _, _)
     scoped("ucs:rp:elaborate"):
@@ -326,6 +329,7 @@ extension (split: DeBrujinSplit)
     scoped("ucs:rp:split"):
       val desugaring = new DesugaringBase:
         val elaborator = elab
+      import desugaring.{makeLocalPatternBranch, makeRange}
       def go(split: DeBrujinSplit, ctx: Vector[() => Term.Ref]): Split =
         split match
         case Binder(body) => go(body, ctx)
@@ -333,9 +337,12 @@ extension (split: DeBrujinSplit)
           log(s"pattern is ${pattern.showDbg}")
           lazy val nullaryConsequent = consequence.unbind match
             case (0, body) => go(body, ctx)
+          import semantics.Branch
           pattern match
             case Literal(value) => 
-              semantics.Branch(ctx(scrutinee - 1)(), Pattern.Lit(value), nullaryConsequent) ~: go(alternative, ctx)
+              Branch(ctx(scrutinee - 1)(), Pattern.Lit(value), nullaryConsequent) ~: go(alternative, ctx)
+            case Range(lower, upper, inclusive) =>
+              makeRange(ctx(scrutinee - 1), lower, upper, inclusive, nullaryConsequent) ~~: go(alternative, ctx)
             case ClassLike(ConstructorLike.Symbol(symbol: ClassSymbol)) =>
               log(s"make temporary symbols for $symbol")
               val subSymbols = (1 to symbol.arity).map(i => TempSymbol(N, s"arg_$i")).toList
@@ -348,15 +355,15 @@ extension (split: DeBrujinSplit)
               val select = scoped("ucs:sel"):
                 elab.reference(symbol).getOrElse(Term.Error)
               val pattern = Pattern.ClassLike(symbol, select, S(subSymbols), false)(Empty())
-              semantics.Branch(ctx(scrutinee - 1)(), pattern, consequent2) ~: go(alternative, ctx)
+              Branch(ctx(scrutinee - 1)(), pattern, consequent2) ~: go(alternative, ctx)
             case ClassLike(ConstructorLike.Symbol(symbol: ModuleSymbol)) =>
               val select = scoped("ucs:sel"):
                 elab.reference(symbol).getOrElse(Term.Error)
               val pattern = Pattern.ClassLike(symbol, select, N, false)(Empty())
-              semantics.Branch(ctx(scrutinee - 1)(), pattern, nullaryConsequent) ~: go(alternative, ctx)
+              Branch(ctx(scrutinee - 1)(), pattern, nullaryConsequent) ~: go(alternative, ctx)
             case ClassLike(ConstructorLike.LocalPattern(id)) =>
               log(s"apply scrutinee $scrutinee to local pattern $id")
-              desugaring.makeLocalPatternBranch(ctx(scrutinee - 1)(), localPatterns(id), nullaryConsequent)(go(alternative, ctx))
+              makeLocalPatternBranch(ctx(scrutinee - 1)(), localPatterns(id), nullaryConsequent)(go(alternative, ctx))
             case ClassLike(ConstructorLike.Nested(split)) => // The arity of embedded splits is always 1.
               val innerConsequent = consequence.unbind match
                 case (0, body) => go(body, ctx)
@@ -491,7 +498,7 @@ extension (split: DeBrujinSplit)
   def specialize(scrutinee: Int, pattern: PatternStub, parameters: Range)(using tl: TraceLogger): DeBrujinSplit =
     import PatternStub.*, ConstructorLike.*, tl.*
     require(parameters.length == pattern.arity)
-    def go(split: DeBrujinSplit)(using target: Int, parameters: Range): DeBrujinSplit =
+    def go(split: DeBrujinSplit)(using target: Int, parameters: scala.Range): DeBrujinSplit =
       split match
         case Binder(body) =>
           log("go into the binder")

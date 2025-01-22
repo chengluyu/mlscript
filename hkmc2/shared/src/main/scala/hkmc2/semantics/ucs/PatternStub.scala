@@ -4,7 +4,7 @@ package ucs
 
 import collection.immutable.NumericRange
 import mlscript.utils.*, shorthands.*
-import syntax.Tree
+import syntax.Tree, Tree.{StrLit, IntLit, DecLit}
 
 enum ConstructorLike:
   case Symbol(symbol: ClassSymbol | ModuleSymbol)
@@ -62,9 +62,12 @@ enum ConstructorLike:
 enum PatternStub:  
   /** Match the current scrutinee with a literal. */
   case Literal(value: syntax.Literal)
-  
-  /** Match the current scrutinee with a range of characters. */
-  case CharClass(range: NumericRange[Char])
+
+  /** Match the current scrutinee with a range. The lower and upper bounds can
+    * only be strings, integers, or decimals. We don't indicate the type of the
+    * range.
+    */
+  case Range(lower: syntax.Literal, upper: syntax.Literal, inclusive: Bool)
   
   /** Match the current scrutinee with a class-like symbol. If the class-like
    *  symbol has extractions, each extraction has to match the corresponding
@@ -77,7 +80,7 @@ enum PatternStub:
   
   lazy val arity: Int = this match
     case Literal(_) => 0
-    case CharClass(_) => 0
+    case Range(_, _, _) => 0
     case ClassLike(symbol) => symbol.arity
     case Wildcard => 0
     
@@ -85,13 +88,13 @@ enum PatternStub:
   
   def showDbg: Str = this match
     case Literal(value) => value.idStr
-    case CharClass(range) => range.isInclusive match
-      case true => s"'${range.start}' to '${range.end}'"
-      case false => s"'${range.start}' until '${range.end}'"
+    case Range(lower, upper, inclusive) =>
+      val left = lower match
+        case StrLit(value) => s"'$value'"
+        case _ => lower.idStr
+      val right = upper match
+        case StrLit(value) => s"'$value'"
+        case _ => upper.idStr
+      s"'$left' ${if inclusive then "to" else "until"} '$right'"
     case ClassLike(symbol) => symbol.showDbg
     case Wildcard => "_"
-
-object PatternStub:
-  object CharClass:
-    def apply(start: Char, end: Char, inclusive: Bool): PatternStub =
-      if inclusive then CharClass(start to end) else CharClass(start until end)

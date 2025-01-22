@@ -8,19 +8,6 @@ import Split.display, ucs.Normalization
 import syntax.{Fun, Keyword, Literal, ParamBind, Tree}, Tree.*, Keyword.`as`
 import scala.collection.mutable.{Buffer, Set as MutSet}
 
-object Translator:
-  /** String range bounds must be single characters. */
-  def isInvalidStringBounds(lo: StrLit, hi: StrLit)(using Raise): Bool =
-    val ds = Buffer.empty[(Message, Option[Loc])]
-    if lo.value.length != 1 then
-      ds += msg"String range bounds must have only one character." -> lo.toLoc
-    if hi.value.length != 1 then
-      ds += msg"String range bounds must have only one character." -> hi.toLoc
-    if ds.nonEmpty then error(ds.toSeq*)
-    ds.nonEmpty
-
-import Translator.*
-
 /** This class translates a tree describing a pattern into functions that can
  *  perform pattern matching on terms described by the pattern.
  */
@@ -39,13 +26,6 @@ class Translator(val elaborator: Elaborator)
   
   private type PrefixInner = (CaptureMap, Scrut) => Split
   
-  private def makeRange(scrut: Scrut, lo: Literal, hi: Literal, rightInclusive: Bool, inner: Inner) =
-    def scrutFld = fld(scrut())
-    val test1 = app(lteq.ref(), tup(fld(Term.Lit(lo)), scrutFld), "gtLo")
-    val upperOp = if rightInclusive then lteq else lt
-    val test2 = app(upperOp.ref(), tup(scrutFld, fld(Term.Lit(hi))), "ltHi")
-    plainTest(test1, "gtLo")(plainTest(test2, "ltHi")(inner(Map.empty)))
-  
   /** Generate a split that consumes the entire scrutinee. */
   private def full(scrut: Scrut, pat: Tree, inner: Inner)(using patternParams: Ls[Param], raise: Raise): Split = trace(
     pre = s"full <<< $pat", 
@@ -53,13 +33,11 @@ class Translator(val elaborator: Elaborator)
   ):
     pat.deparenthesized match
       case lhs or rhs => full(scrut, lhs, inner) ~~: full(scrut, rhs, inner)
-      case (lo: StrLit) to (incl, hi: StrLit) => if isInvalidStringBounds(lo, hi) then failure else
-        makeRange(scrut, lo, hi, incl, inner)
-      case (lo: IntLit) to (incl, hi: IntLit) => makeRange(scrut, lo, hi, incl, inner) 
-      case (lo: DecLit) to (incl, hi: DecLit) => makeRange(scrut, lo, hi, incl, inner)
-      case (lo: Literal) to (_, hi: Literal) =>
-        error(msg"Incompatible range types: ${lo.describe} to ${hi.describe}" -> pat.toLoc)
-        failure
+      case (lo: StrLit) to (incl, hi: StrLit) =>
+        if isValidCharacterRange(lo, hi) then makeRange(scrut, lo, hi, incl, inner(Map.empty)) else failure
+      case (lo: IntLit) to (incl, hi: IntLit) => makeRange(scrut, lo, hi, incl, inner(Map.empty)) 
+      case (lo: DecLit) to (incl, hi: DecLit) => makeRange(scrut, lo, hi, incl, inner(Map.empty))
+      case (lo: Literal) to (_, hi: Literal) => incompatibleRangeType(lo, hi); failure
       case lit: Literal => Branch(scrut(), Pattern.Lit(lit), inner(Map.empty)) ~: Split.End
       case App(Ident("-"), Tup(IntLit(value) :: Nil)) =>
         Branch(scrut(), Pattern.Lit(IntLit(-value)), inner(Map.empty)) ~: Split.End
@@ -114,20 +92,17 @@ class Translator(val elaborator: Elaborator)
   ):
     pat.deparenthesized match
     case lhs or rhs => stringPrefix(scrut, lhs, inner) ~~: stringPrefix(scrut, rhs, inner)
-    case (lo: StrLit) to (incl, hi: StrLit) => if isInvalidStringBounds(lo, hi) then failure else
+    case (lo: StrLit) to (incl, hi: StrLit) => if !isValidCharacterRange(lo, hi) then failure else
       val emptyTest = app(eq.ref(), tup(fld(scrut()), fld(str(""))), "test empty")
       val headTerm = callStringGet(scrut(), 0, "head")
       val tailTerm = callStringDrop(scrut(), 1, "tail")
       plainTest(emptyTest, "emptyTest")(failure) ~~:
         tempLet("head", headTerm): headSym =>
           tempLet("tail", tailTerm): tailSym =>
-            makeRange(() => headSym.ref(), lo, hi, incl, captures =>
-              inner(Map.empty, () => tailSym.ref()))
+            makeRange(() => headSym.ref(), lo, hi, incl, inner(Map.empty, () => tailSym.ref()))
     case (lo: IntLit) to (incl, hi: IntLit) => Split.End
     case (lo: DecLit) to (incl, hi: DecLit) => Split.End
-    case (lo: Literal) to (_, hi: Literal) =>
-      error(msg"Incompatible range types: ${lo.describe} to ${hi.describe}" -> pat.toLoc)
-      errorSplit
+    case (lo: Literal) to (_, hi: Literal) => incompatibleRangeType(lo, hi); errorSplit
     case lit @ StrLit(value) =>
       plainTest(callStringStartsWith(scrut(), Term.Lit(lit), "startsWith")):
         tempLet("sliced", callStringDrop(scrut(), value.length, "sliced")): slicedSym =>

@@ -20,6 +20,8 @@ object HelperExtractors:
     infix def unapply(tree: Tree): Opt[(Tree, (Bool, Tree))] = tree match
       case App(Ident("..="), Tup(lhs :: rhs :: Nil)) => S(lhs, (true, rhs))
       case App(Ident("..<"), Tup(lhs :: rhs :: Nil)) => S(lhs, (false, rhs))
+      case App(Ident("to"), Tup(lhs :: rhs :: Nil)) => S(lhs, (true, rhs))
+      case App(Ident("until"), Tup(lhs :: rhs :: Nil)) => S(lhs, (false, rhs))
       case _ => N
       
   object `~`:

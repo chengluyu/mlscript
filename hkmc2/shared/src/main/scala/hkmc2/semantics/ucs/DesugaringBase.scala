@@ -3,7 +3,7 @@ package semantics
 package ucs
 
 import mlscript.utils.*, shorthands.*
-import syntax.Tree.*, Elaborator.{Ctxl, ctx}
+import syntax.Tree.*, syntax.Literal, Elaborator.{Ctxl, ctx}
 
 /** Contains some helpers that makes UCS desugaring easier. */
 trait DesugaringBase(using state: Elaborator.State):
@@ -89,6 +89,13 @@ trait DesugaringBase(using state: Elaborator.State):
   protected lazy val lteq = state.builtinOpsMap("<=")
   protected lazy val lt = state.builtinOpsMap("<")
   protected lazy val eq = state.builtinOpsMap("==")
+  
+  def makeRange(scrut: () => Term.Ref, lo: Literal, hi: Literal, rightInclusive: Bool, inner: => Split) =
+    def scrutFld = fld(scrut())
+    val test1 = app(lteq.ref(), tup(fld(Term.Lit(lo)), scrutFld), "gtLo")
+    val upperOp = if rightInclusive then lteq else lt
+    val test2 = app(upperOp.ref(), tup(scrutFld, fld(Term.Lit(hi))), "ltHi")
+    plainTest(test1, "gtLo")(plainTest(test2, "ltHi")(inner))
   
   def makeMatchResult(captures: Term)(using Elaborator.Ctx) =
     app(matchResultClass._1, tup(fld(captures)), FlowSymbol("result of `MatchResult`"))

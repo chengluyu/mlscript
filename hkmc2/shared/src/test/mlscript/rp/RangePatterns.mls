@@ -11,6 +11,15 @@ pattern Lower = "a"..="z"
 "0" is Lower
 //│ = false
 
+"a" is @compile Lower
+//│ = true
+
+"z" is @compile Lower
+//│ = true
+
+"0" is @compile Lower
+//│ = false
+
 pattern Upper = "A"..="Z"
 
 "A" is Upper
@@ -22,27 +31,61 @@ pattern Upper = "A"..="Z"
 "b" is Upper
 //│ = false
 
+"A" is @compile Upper
+//│ = true
+
+"Q" is @compile Upper
+//│ = true
+
+"b" is @compile Upper
+//│ = false
+
 pattern UnsignedShort = 0 ..< 65536
 
 0 is UnsignedShort
 //│ = true
 
+0 is @compile UnsignedShort
+//│ = true
+
 -1 is UnsignedShort
+//│ = false
+
+-1 is @compile UnsignedShort
 //│ = false
 
 65535 is UnsignedShort
 //│ = true
 
+65535 is @compile UnsignedShort
+//│ = true
+
 65536 is UnsignedShort
+//│ = false
+
+65536 is @compile UnsignedShort
 //│ = false
 
 2147483647 is UnsignedShort
 //│ = false
 
+2147483647 is @compile UnsignedShort
+//│ = false
+
 "b" is UnsignedShort
 //│ = false
 
+"b" is @compile UnsignedShort
+//│ = false
+
+// The empty array ([]) is converted to a primitive using toString(), resulting
+// in "". Then, the empty string is then converted to 0 when used in a numeric
+// comparison. That's why `0 <= []` is true. The same applies to `[] < 65536`.
+
 [] is UnsignedShort
+//│ = true
+
+[] is @compile UnsignedShort
 //│ = true
 
 :pe
@@ -50,26 +93,29 @@ pattern UnsignedShort = 0 ..< 65536
 // Don't forget to add a space between numbers and the range operator.
 pattern UnsignedByte = 0..< 256
 //│ ╔══[LEXICAL ERROR] Expect at least one digit after the  decimal point
-//│ ║  l.51: 	pattern UnsignedByte = 0..< 256
+//│ ║  l.94: 	pattern UnsignedByte = 0..< 256
 //│ ╙──      	                         ^
 //│ ╔══[ERROR] Name not found: .<
-//│ ║  l.51: 	pattern UnsignedByte = 0..< 256
+//│ ║  l.94: 	pattern UnsignedByte = 0..< 256
 //│ ╙──      	                         ^^
 //│ ╔══[ERROR] Name not found: .<
-//│ ║  l.51: 	pattern UnsignedByte = 0..< 256
+//│ ║  l.94: 	pattern UnsignedByte = 0..< 256
 //│ ╙──      	                         ^^
 //│ ╔══[ERROR] Name not found: .<
-//│ ║  l.51: 	pattern UnsignedByte = 0..< 256
+//│ ║  l.94: 	pattern UnsignedByte = 0..< 256
 //│ ╙──      	                         ^^
 //│ ╔══[ERROR] Cannot use this identifier as an extractor
-//│ ║  l.51: 	pattern UnsignedByte = 0..< 256
+//│ ║  l.94: 	pattern UnsignedByte = 0..< 256
 //│ ╙──      	                         ^^
 
 :e
 pattern BadRange = "s"..=0
+//│ ╔══[ERROR] Range bounds must be of the same type.
+//│ ║  l.112: 	pattern BadRange = "s"..=0
+//│ ╙──       	                   ^^^^^^^
 //│ ╔══[ERROR] Incompatible range types: string literal to integer literal
-//│ ║  l.69: 	pattern BadRange = "s"..=0
-//│ ╙──      	                   ^^^^^^^
+//│ ║  l.112: 	pattern BadRange = "s"..=0
+//│ ╙──       	                   ^^^^^^^
 
 // It becomes an absurd pattern.
 0 is BadRange
@@ -77,15 +123,24 @@ pattern BadRange = "s"..=0
 
 :e
 pattern BadRange = 0 ..= "s"
+//│ ╔══[ERROR] Range bounds must be of the same type.
+//│ ║  l.125: 	pattern BadRange = 0 ..= "s"
+//│ ╙──       	                   ^^^^^^^^^
 //│ ╔══[ERROR] Incompatible range types: integer literal to string literal
-//│ ║  l.79: 	pattern BadRange = 0 ..= "s"
-//│ ╙──      	                   ^^^^^^^^^
+//│ ║  l.125: 	pattern BadRange = 0 ..= "s"
+//│ ╙──       	                   ^^^^^^^^^
 
 :e
 pattern BadRange = "yolo" ..= "swag"
-//│ ╔══[ERROR] String range bounds must have only one character.
-//│ ║  l.85: 	pattern BadRange = "yolo" ..= "swag"
-//│ ║        	                   ^^^^^^
-//│ ╟── String range bounds must have only one character.
-//│ ║  l.85: 	pattern BadRange = "yolo" ..= "swag"
-//│ ╙──      	                              ^^^^^^
+//│ ╔══[ERROR] The lower bound of the character range must be a single character.
+//│ ║  l.134: 	pattern BadRange = "yolo" ..= "swag"
+//│ ║         	                   ^^^^^^
+//│ ╟── The upper bound of the character range must be a single character.
+//│ ║  l.134: 	pattern BadRange = "yolo" ..= "swag"
+//│ ╙──       	                              ^^^^^^
+//│ ╔══[ERROR] The lower bound of the character range must be a single character.
+//│ ║  l.134: 	pattern BadRange = "yolo" ..= "swag"
+//│ ║         	                   ^^^^^^
+//│ ╟── The upper bound of the character range must be a single character.
+//│ ║  l.134: 	pattern BadRange = "yolo" ..= "swag"
+//│ ╙──       	                              ^^^^^^
