@@ -83,7 +83,7 @@ class MLsCompiler(preludeFile: os.Path, mkOutput: ((Str => Unit) => Unit) => Uni
       val blk = blk0.copy(stats = semantics.Import(State.runtimeSymbol, runtimeFile.toString) :: blk0.stats)
       val low = ltl.givenIn:
         new codegen.Lowering()
-          with codegen.LoweringSelSanityChecks
+          // with codegen.LoweringSelSanityChecks
       val jsb = ltl.givenIn:
         codegen.js.JSBuilder()
       val le = low.program(blk)
