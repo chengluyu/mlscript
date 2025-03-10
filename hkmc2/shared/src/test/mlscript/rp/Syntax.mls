@@ -21,8 +21,8 @@ pattern Test(pattern A, a) = A as a
 //│ >    pattern = NonTerminal:
 //│ >      symbol = A
 //│ >      patternParameters = Nil
-//│ >      extractions = Nil
-//│ >    parameters = Vector of 
+//│ >      subPatterns = Nil
+//│ >    extracts = Vector of 
 //│ >      Path of $
 
 :e
@@ -33,11 +33,12 @@ pattern Test(a) = Int as b
 
 :todo
 pattern Test = Int as b
+//│ /!!!\ Uncaught error: java.lang.IllegalArgumentException: requirement failed
 
 :e
 pattern Test(a) = a(Foo)
 //│ ╔══[ERROR] Extraction variables cannot have parameters.
-//│ ║  l.38: 	pattern Test(a) = a(Foo)
+//│ ║  l.39: 	pattern Test(a) = a(Foo)
 //│ ╙──      	                  ^
 
 :e
@@ -46,38 +47,36 @@ pattern Test = Pair(Int)
 //│ ║  l.8: 	class Pair(a, b)
 //│ ║       	      ^^^^
 //│ ╟── But only 1 sub-pattern is given.
-//│ ║  l.44: 	pattern Test = Pair(Int)
+//│ ║  l.45: 	pattern Test = Pair(Int)
 //│ ╙──      	                    ^^^
 
 :ucs npc:elab
 pattern Test = Pair(x, y) => x + y
 //│ Elaborated: Transformed:
-//│ >    pattern = Transformed:
-//│ >      pattern = Constructor:
-//│ >        symbol = class:Pair
-//│ >        parameters = Vector of 
-//│ >          Wildcard
-//│ >          Wildcard
-//│ >      parameters = Vector of 
-//│ >        Path of 0 -> $
-//│ >        Path of 1 -> $
-//│ >    parameters = Nil
+//│ >    pattern = Constructor:
+//│ >      symbol = class:Pair
+//│ >      subPatterns = Vector of 
+//│ >        Wildcard
+//│ >        Wildcard
+//│ >    extracts = Vector of 
+//│ >      Path of 0 -> $
+//│ >      Path of 1 -> $
 
 :e
 :ucs npc:elab
 pattern Test(a) = Pair(x, y) => x + y
 //│ ╔══[ERROR] Pattern transformation appears here
-//│ ║  l.68: 	pattern Test(a) = Pair(x, y) => x + y
+//│ ║  l.67: 	pattern Test(a) = Pair(x, y) => x + y
 //│ ║        	                                ^^^^^
 //│ ╙── but it conflicts with the extraction parameter list
 //│ Elaborated: Transformed:
 //│ >    pattern = Transformed:
 //│ >      pattern = Constructor:
 //│ >        symbol = class:Pair
-//│ >        parameters = Vector of 
+//│ >        subPatterns = Vector of 
 //│ >          Wildcard
 //│ >          Wildcard
-//│ >      parameters = Vector of 
+//│ >      extracts = Vector of 
 //│ >        Path of 0 -> $
 //│ >        Path of 1 -> $
-//│ >    parameters = Nil
+//│ >    extracts = Nil

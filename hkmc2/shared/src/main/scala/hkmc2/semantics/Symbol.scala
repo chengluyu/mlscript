@@ -212,7 +212,12 @@ type FieldSymbol = MemberSymbol[?]
 sealed trait ClassLikeSymbol extends Symbol:
   self: MemberSymbol[? <: ClassDef | ModuleDef] =>
   def subst(using sub: SymbolSubst): ClassLikeSymbol
-
+  /** Return the number of parameters in the first parameter list (used for
+   *  pattern matching to determine arity). */
+  def arity: Int = this match
+    case symbol: ClassSymbol =>
+      symbol.tree.paramLists.headOption.fold(0)(_.fields.length)
+    case _: ModuleSymbol => 0
 
 /** This is the symbol associated to specific definitions.
   * One overloaded `BlockMemberSymbol` may correspond to multiple `InnerSymbol`s
@@ -229,8 +234,6 @@ class ClassSymbol(val tree: Tree.TypeDef, val id: Tree.Ident)(using State)
   def nme = id.name
   def toLoc: Option[Loc] = id.toLoc // TODO track source tree of classe here
   override def toString: Str = s"class:$nme${State.dbgUid(uid)}"
-  /** Compute the arity. */
-  def arity: Int = tree.paramLists.headOption.fold(0)(_.fields.length)
   
   override def subst(using sub: SymbolSubst): ClassSymbol = sub.mapClsSym(this)
 
@@ -267,13 +270,22 @@ class PatternSymbol(val id: Tree.Ident, val params: Opt[Tree.Tup], val body: Tre
     */
   var patternParams: Ls[Param] = Nil
   
-  var elaborated: Opt[ucs.rp.Pattern] = N
+  private var _pattern: Opt[ucs.rp.Pattern] = N
+  def pattern_=(pattern: ucs.rp.Pattern): Unit =
+    if _pattern.isDefined then
+      lastWords(s"The pattern definition $nme was compiled repeatedly.")
+    else
+      _pattern = S(pattern)
+  def pattern: ucs.rp.Pattern = _pattern.getOrElse:
+    lastWords(s"The pattern symbol $nme has not been compiled yet.")
   
   lazy val patternParameterCount = params.map(_.fields).getOrElse(Nil).count:
     case Tree.TypeDef(Pat, _, _, _) => true
     case _ => false
   
   def parameterCount = params.map(_.fields.size).getOrElse(0)
+  
+  lazy val extractionCount = parameterCount - patternParameterCount
   
   override def subst(using sub: SymbolSubst): PatternSymbol = sub.mapPatSym(this)
 

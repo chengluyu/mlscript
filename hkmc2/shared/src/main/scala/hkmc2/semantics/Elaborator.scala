@@ -1190,16 +1190,17 @@ extends Importer:
               case S(ParamList(_, params, _)) => params.partition:
                 case Param(flags, _, _) => flags.pat
               case N => (Nil, Nil)
+            log(s"pattern parameters: ${patternParams.mkString("{ ", ", ", " }")}")
+            patSym.patternParams = patternParams
             if state.useNewPatternCompiler then
               // New compilation scheme.
               td.rhs match
                 case N => raise(ErrorReport(msg"Pattern definitions must have a body." -> td.toLoc :: Nil))
-                case S(tree) => scoped("ucs:npc"):
+                case S(tree) =>
                   val pattern = ucs.rp.elaborate(patternParams, extractionParams, tree, this)
-                  scoped("ucs:npc:elab"):
-                    log("Elaborated: " + pattern.showAsTree)
-                  patSym.elaborated = S(pattern)
-              // Dummy object definition. Back port syntaxes to the translator later.
+                  scoped("ucs:npc:elab")(log("Elaborated: " + pattern.showAsTree))
+                  patSym.pattern = pattern
+              // Dummy object. TODO: Back port new pattern syntax to `Translator` later.
               val pd = PatternDef(owner, patSym, sym, tps, ps,
                 ObjBody(Blk(Nil, Term.Lit(UnitLit(false)))), annotations)
               patSym.defn = S(pd)
@@ -1212,8 +1213,6 @@ extends Importer:
                   if extractionParams.nonEmpty then
                     raise(ErrorReport(msg"Pattern extraction parameters are not yet supported." ->
                       Loc(extractionParams.iterator.map(_.sym)) :: Nil))
-                  log(s"pattern parameters: ${patternParams.mkString("{ ", ", ", " }")}")
-                  patSym.patternParams = patternParams
                   val split = ucs.DeBrujinSplit.elaborate(patternParams, tree, this)
                   scoped("ucs:rp:elaborated"):
                     log(s"elaborated ${patSym.nme}:\n${split.display}")

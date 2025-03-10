@@ -7,7 +7,7 @@ import mlscript.utils.*, shorthands.*
 import syntax.Tree
 
 enum ConstructorLike:
-  case Symbol(symbol: ClassSymbol | ModuleSymbol)
+  case Symbol(symbol: ClassLikeSymbol)
   /** "Virtual" constructor for string joining operator `~`. */
   case StringJoin
   /** Describe the size of tuples. If `infinite` is `false`, it represents
@@ -28,8 +28,7 @@ enum ConstructorLike:
   case Nested(split: DeBrujinSplit)
   
   lazy val arity: Int = this match
-    case Symbol(symbol: ClassSymbol) => symbol.arity
-    case Symbol(symbol: ModuleSymbol) => 0
+    case Symbol(symbol: ClassLikeSymbol) => symbol.arity
     case StringJoin => 2
     case TupleCapacity(size, infinite) => ???
     // Note that `arguments` here are higher-order patterns. The `arity` method

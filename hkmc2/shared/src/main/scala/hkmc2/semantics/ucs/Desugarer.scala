@@ -20,6 +20,7 @@ object Desugarer:
   
   class ScrutineeData:
     val classes: HashMap[ClassSymbol, List[BlockLocalSymbol]] = HashMap.empty
+    val patterns: HashMap[PatternSymbol, List[BlockLocalSymbol]] = HashMap.empty
     val tupleLead: HashMap[Int, BlockLocalSymbol] = HashMap.empty
     val tupleLast: HashMap[Int, BlockLocalSymbol] = HashMap.empty
 end Desugarer
@@ -105,6 +106,10 @@ class Desugarer(val elaborator: Elaborator)
     def getSubScrutinees(cls: ClassSymbol): List[BlockLocalSymbol] =
       subScrutineeMap.getOrElseUpdate(symbol, new ScrutineeData).classes.getOrElseUpdate(cls, {
         (0 until cls.arity).map(i => TempSymbol(N, s"param$i")).toList
+      })
+    def getSubScrutinees(pat: PatternSymbol): List[BlockLocalSymbol] =
+      subScrutineeMap.getOrElseUpdate(symbol, new ScrutineeData).patterns.getOrElseUpdate(pat, {
+        (0 until pat.extractionCount).map(i => TempSymbol(N, s"param$i")).toList
       })
     def getTupleLeadSubScrutinee(index: Int): BlockLocalSymbol =
       val data = subScrutineeMap.getOrElseUpdate(symbol, new ScrutineeData)
@@ -464,7 +469,7 @@ class Desugarer(val elaborator: Elaborator)
             msg"But no arguments were given" -> ctor.toLoc)
           fallback
         else
-          Branch(ref, Pattern.Synonym(pat, Nil), sequel(ctx)) ~: fallback
+          Branch(ref, Pattern.Synonym(pat, Nil, N), sequel(ctx)) ~: fallback
       case S(_: PatternSymbol) =>
         makeUnapplyBranch(ref, clsTrm, sequel(ctx))(fallback)
       case N =>
@@ -493,21 +498,32 @@ class Desugarer(val elaborator: Elaborator)
           subMatches(params zip args, sequel)(Split.End)(ctx)
         ) ~: fallback
       case S(pat: PatternSymbol) if compile =>
-        // When we support extraction parameters, they need to be handled here.
-        val patArgs = args.map:
-          DeBrujinSplit.elaborate(Nil, _, elaborator)
-        if pat.patternParams.size != patArgs.size then
-          error(
-            msg"Pattern `${pat.nme}` expects ${"pattern argument".pluralize(pat.patternParams.size, true)}" ->
-              pat.patternParams.foldLeft[Opt[Loc]](N):
-              case (N, param) => param.sym.toLoc
-              case (S(loc), param) => S(loc ++ param.sym.toLoc),
-            msg"But ${"pattern argument".pluralize(patArgs.size, true)} were given" -> args.foldLeft[Opt[Loc]](N):
-              case (N, arg) => arg.toLoc
-              case (S(loc), arg) => S(loc ++ arg.toLoc))
+        // Check the number of arguments. The number of arguments should be
+        // equal to the number of pattern parameters or the number of all parameters.
+        if args.length < pat.patternParameterCount then
+          error(msg"Pattern `${pat.nme}` expects ${
+              "pattern argument".pluralize(pat.patternParameterCount, true)
+            }" -> Loc(pat.patternParams),
+            msg"But ${"argument".pluralize(args.size, true)} were given" -> Loc(args))
+          fallback
+        else if args.length != pat.parameterCount then
+          error(msg"Pattern `${pat.nme}` expects ${
+              "extraction parameter".pluralize(pat.extractionCount, true)
+            }" -> Loc(pat.patternParams),
+            msg"But ${"argument".pluralize(args.size - pat.parameterCount, true)} were given" ->
+              Loc(args.iterator.drop(pat.patternParameterCount)))
           fallback
         else
-          Branch(ref, Pattern.Synonym(pat, patArgs.zip(args)), sequel(ctx)) ~: fallback
+          // The first few are pattern arguments, and the rest are extraction sub-patterns.
+          val (patternTrees, extractionTrees) = args.splitAt(pat.patternParameterCount)
+          val patternArguments = patternTrees.map:
+            DeBrujinSplit.elaborate(Nil, _, elaborator)
+          val subScrutinees = scrutSymbol.getSubScrutinees(pat)
+          Branch(
+            ref,
+            Pattern.Synonym(pat, patternArguments.zip(args), S(subScrutinees)),
+            subMatches(subScrutinees zip extractionTrees, sequel)(Split.End)(ctx)
+          ) ~: fallback
       case S(_: PatternSymbol) =>
         makeUnapplyBranch(ref, clsTrm, sequel(ctx))(fallback)
       case _ =>

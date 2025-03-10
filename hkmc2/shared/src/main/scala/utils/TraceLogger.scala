@@ -18,6 +18,12 @@ abstract class TraceLogger:
     if post isnt noPostTrace then log(post(res))
     res
   }
+  def trace[T](pre: => Str, post: T => Str, scope: Str)(thunk: => T): T = scoped(scope):
+    log(pre)
+    indent += 1
+    val res = try thunk finally indent -= 1
+    if post isnt noPostTrace then log(post(res))
+    res
   inline def traceNot[T](pre: => Str, post: T => Str = noPostTrace)(thunk: => T): T =
     thunk
   

@@ -6,34 +6,32 @@ import "../../mlscript-compile/Stack.mls"
 open Stack
 
 class Pair(a, b)
+class Triplet(a, b, c)
 object A
 object B
+object C
 
 :ucs npc:elab
 pattern Test = "literal"
-//│ Elaborated: Transformed:
-//│ >    pattern = Constant of StrLit of "literal"
-//│ >    parameters = Nil
+//│ Elaborated: Constant of StrLit of "literal"
 
 :ucs npc:elab
-pattern Test = Pair(A, B)
-//│ Elaborated: Transformed:
-//│ >    pattern = Constructor:
-//│ >      symbol = class:Pair
-//│ >      parameters = Vector of 
-//│ >        Constructor:
-//│ >          symbol = object:A
-//│ >          parameters = Nil
-//│ >        Constructor:
-//│ >          symbol = object:B
-//│ >          parameters = Nil
-//│ >    parameters = Nil
+pattern AB = Pair(A, B)
+//│ Elaborated: Constructor:
+//│ >    symbol = class:Pair
+//│ >    subPatterns = Vector of 
+//│ >      Constructor:
+//│ >        symbol = object:A
+//│ >        subPatterns = Nil
+//│ >      Constructor:
+//│ >        symbol = object:B
+//│ >        subPatterns = Nil
 
 :ucs npc:elab
 pattern Foo(value) = value
 //│ Elaborated: Transformed:
 //│ >    pattern = Wildcard
-//│ >    parameters = Vector of 
+//│ >    extracts = Vector of 
 //│ >      Path of $
 
 :ucs npc:elab
@@ -42,105 +40,398 @@ pattern Foo(pattern A, value) = A as value
 //│ >    pattern = NonTerminal:
 //│ >      symbol = A
 //│ >      patternParameters = Nil
-//│ >      extractions = Nil
-//│ >    parameters = Vector of 
+//│ >      subPatterns = Nil
+//│ >    extracts = Vector of 
 //│ >      Path of $
 
 
 :ucs npc:elab
 pattern Test(pattern A) = Pair(Pair(A, B), Pair(B, A))
-//│ Elaborated: Transformed:
-//│ >    pattern = Constructor:
-//│ >      symbol = class:Pair
-//│ >      parameters = Vector of 
-//│ >        Constructor:
-//│ >          symbol = class:Pair
-//│ >          parameters = Vector of 
-//│ >            NonTerminal:
-//│ >              symbol = A
-//│ >              patternParameters = Nil
-//│ >              extractions = Nil
-//│ >            Constructor:
-//│ >              symbol = object:B
-//│ >              parameters = Nil
-//│ >        Constructor:
-//│ >          symbol = class:Pair
-//│ >          parameters = Vector of 
-//│ >            Constructor:
-//│ >              symbol = object:B
-//│ >              parameters = Nil
-//│ >            NonTerminal:
-//│ >              symbol = A
-//│ >              patternParameters = Nil
-//│ >              extractions = Nil
-//│ >    parameters = Nil
-
-:ucs npc:elab
-pattern StackLike(pattern A) = null | Pair(A, StackLike(A))
-//│ Elaborated: Transformed:
-//│ >    pattern = Alternative:
-//│ >      first = Constant of UnitLit of true
-//│ >      second = Constructor:
+//│ Elaborated: Constructor:
+//│ >    symbol = class:Pair
+//│ >    subPatterns = Vector of 
+//│ >      Constructor:
 //│ >        symbol = class:Pair
-//│ >        parameters = Vector of 
+//│ >        subPatterns = Vector of 
 //│ >          NonTerminal:
 //│ >            symbol = A
 //│ >            patternParameters = Nil
-//│ >            extractions = Nil
+//│ >            subPatterns = Nil
+//│ >          Constructor:
+//│ >            symbol = object:B
+//│ >            subPatterns = Nil
+//│ >      Constructor:
+//│ >        symbol = class:Pair
+//│ >        subPatterns = Vector of 
+//│ >          Constructor:
+//│ >            symbol = object:B
+//│ >            subPatterns = Nil
+//│ >          NonTerminal:
+//│ >            symbol = A
+//│ >            patternParameters = Nil
+//│ >            subPatterns = Nil
+
+:ucs npc:elab
+pattern StackLike(pattern A) = null | Pair(A, StackLike(A))
+//│ Elaborated: Alternative:
+//│ >    first = Constant of UnitLit of true
+//│ >    second = Constructor:
+//│ >      symbol = class:Pair
+//│ >      subPatterns = Vector of 
+//│ >        NonTerminal:
+//│ >          symbol = A
+//│ >          patternParameters = Nil
+//│ >          subPatterns = Nil
+//│ >        NonTerminal:
+//│ >          symbol = pattern:StackLike
+//│ >          patternParameters = Ls of 
+//│ >            NonTerminal:
+//│ >              symbol = A
+//│ >              patternParameters = Nil
+//│ >              subPatterns = Nil
+//│ >          subPatterns = Nil
+
+
+:ucs npc:elab
+pattern Literals = ((((Int as n) => n.toString()) | Str) as s) => s + "x"
+//│ Elaborated: Transformed:
+//│ >    pattern = Alternative:
+//│ >      first = Transformed:
+//│ >        pattern = Constructor:
+//│ >          symbol = class:Int
+//│ >          subPatterns = Nil
+//│ >        extracts = Vector of 
+//│ >          Path of $
+//│ >      second = Constructor:
+//│ >        symbol = class:Str
+//│ >        subPatterns = Nil
+//│ >    extracts = Vector of 
+//│ >      Path of $
+
+:ucs npc:elab
+pattern StackLike(pattern A) =
+  (Pair(A as head, StackLike(A) as tail) => head :: tail) | (null => Nil)
+//│ Elaborated: Alternative:
+//│ >    first = Transformed:
+//│ >      pattern = Constructor:
+//│ >        symbol = class:Pair
+//│ >        subPatterns = Vector of 
+//│ >          NonTerminal:
+//│ >            symbol = A
+//│ >            patternParameters = Nil
+//│ >            subPatterns = Nil
 //│ >          NonTerminal:
 //│ >            symbol = pattern:StackLike
 //│ >            patternParameters = Ls of 
 //│ >              NonTerminal:
 //│ >                symbol = A
 //│ >                patternParameters = Nil
-//│ >                extractions = Nil
-//│ >            extractions = Nil
-//│ >    parameters = Nil
+//│ >                subPatterns = Nil
+//│ >            subPatterns = Nil
+//│ >      extracts = Vector of 
+//│ >        Path of 0 -> $
+//│ >        Path of 1 -> $
+//│ >    second = Transformed:
+//│ >      pattern = Constant of UnitLit of true
+//│ >      extracts = Nil
 
+:ucs npc
+fun test1(x) = if x is @compile AB then 42 else 98
+//│ compile <<< AB
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< AB
+//│ | | Expanded situations:
+//│ | | >  * Pair(A, B) => <tupled> ~> 0
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: A
+//│ | | | | Unique: A
+//│ | | | | Mapping:
+//│ | | | | >  0. A <- () where A
+//│ | | | Column 1
+//│ | | | | Original: B
+//│ | | | | Unique: B
+//│ | | | | Mapping:
+//│ | | | | >  0. B <- () where B
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 2
+//│ | buildMatchFunction <<< A
+//│ | | Expanded situations:
+//│ | | >  * A => <tupled> ~> 0
+//│ | | Group of A
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< B
+//│ | | Expanded situations:
+//│ | | >  * B => <tupled> ~> 0
+//│ | | Group of B
+//│ | buildMatchFunction >>> 
+//│ compile >>> 
 
-:ucs npc:elab
-pattern Literals = ((((Int as n) => n.toString()) | Str) as s) => s + "x"
-//│ Elaborated: Transformed:
-//│ >    pattern = Transformed:
-//│ >      pattern = Alternative:
-//│ >        first = Transformed:
-//│ >          pattern = Constructor:
-//│ >            symbol = class:Int
-//│ >            parameters = Nil
-//│ >          parameters = Vector of 
-//│ >            Path of $
-//│ >        second = Constructor:
-//│ >          symbol = class:Str
-//│ >          parameters = Nil
-//│ >      parameters = Vector of 
-//│ >        Path of $
-//│ >    parameters = Nil
+:ucs npc
+:todo
+fun test2(xs) = if xs is @compile StackLike(Int) then 42 else 99
+//│ pattern <<< Ident(Int)
+//│ pattern >>>
+//│ compile <<< StackLike(Int)
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< StackLike(Int)
+//│ | | Expanded situations:
+//│ | | >  * Pair(Int as head, StackLike(Int) as tail) => (member:Stack#666.)Cons‹member:Cons›(head#666, tail#666) ~> 0
+//│ | | >  * null => (member:Stack#666.)Nil‹member:Nil› ~> 0
+//│ | | Group of null
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: Int as head
+//│ | | | | Unique: Int
+//│ | | | | Mapping:
+//│ | | | | >  0. Int as head <- (head = t₀) where Int as t₀
+//│ | | | Column 1
+//│ | | | | Original: StackLike(Int) as tail
+//│ | | | | Unique: StackLike(Int)
+//│ | | | | Mapping:
+//│ | | | | >  0. StackLike(Int) as tail <- (head = t₀) where StackLike(Int) as t₀
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 2
+//│ | buildMatchFunction <<< Int as x₀
+//│ | | Expanded situations:
+//│ | | >  * Int as x₀ => <tupled> ~> 0
+//│ | | Group of Int
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< StackLike(Int) as x₀
+//│ /!!!\ Uncaught error: scala.NotImplementedError: This is not a simple pattern: StackLike(Int) as x₀ (of class String)
 
-:ucs npc:elab
-pattern StackLike(pattern A) =
-  (Pair(A as head, StackLike(A) as tail) => head :: tail) | (null => Nil)
-//│ Elaborated: Transformed:
-//│ >    pattern = Alternative:
-//│ >      first = Transformed:
-//│ >        pattern = Constructor:
-//│ >          symbol = class:Pair
-//│ >          parameters = Vector of 
-//│ >            NonTerminal:
-//│ >              symbol = A
-//│ >              patternParameters = Nil
-//│ >              extractions = Nil
-//│ >            NonTerminal:
-//│ >              symbol = pattern:StackLike
-//│ >              patternParameters = Ls of 
-//│ >                NonTerminal:
-//│ >                  symbol = A
-//│ >                  patternParameters = Nil
-//│ >                  extractions = Nil
-//│ >              extractions = Nil
-//│ >        parameters = Vector of 
-//│ >          Path of 0 -> $
-//│ >          Path of 1 -> $
-//│ >      second = Transformed:
-//│ >        pattern = Constant of UnitLit of true
-//│ >        parameters = Nil
-//│ >    parameters = Nil
+pattern Arbitrary0 =
+  (Pair(Pair(x, y), Pair(a, b)) => x * y + a * b) |
+  (Pair(k,          Pair(p, q)) => k * (p + q)  ) |
+  (Pair(Pair(_, _), _         ) => 42           ) |
+  (Pair(m,          n         ) => m * n        )
+
+:ucs npc
+fun test3(x) = if x is @compile Arbitrary0 then 42 else 100
+//│ compile <<< Arbitrary0
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< Arbitrary0
+//│ | | Expanded situations:
+//│ | | >  * Pair(Pair(x, y), Pair(a, b)) => builtin:+#1(builtin:*#0(x#666, y#666), builtin:*#1(a#666, b#666)) ~> 0
+//│ | | >  * Pair(k, Pair(p, q)) => builtin:*#2(k#666, builtin:+#2(p#666, q#666)) ~> 0
+//│ | | >  * Pair(Pair(_, _), _) => 42 ~> 0
+//│ | | >  * Pair(m, n) => builtin:*#3(m#666, n#666) ~> 0
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: Pair(x, y) | k | Pair(_, _) | m
+//│ | | | | Unique: Pair(_, _) | _
+//│ | | | | Mapping:
+//│ | | | | >  0. Pair(x, y) <- (x = t₀, y = t₁) where Pair(t₀, t₁)
+//│ | | | | >  1. k <- (k = t₀) where t₀
+//│ | | | | >  2. Pair(_, _) <- () where Pair(t₀, t₁)
+//│ | | | | >  3. m <- (m = t₀) where t₀
+//│ | | | Column 1
+//│ | | | | Original: Pair(a, b) | Pair(p, q) | _ | n
+//│ | | | | Unique: Pair(_, _) | _
+//│ | | | | Mapping:
+//│ | | | | >  0. Pair(a, b) <- (x = t₀, y = t₁) where Pair(t₀, t₁)
+//│ | | | | >  1. Pair(p, q) <- (k = t₀, p = t₁) where Pair(t₀, t₁)
+//│ | | | | >  2. _ <- () where t₀
+//│ | | | | >  3. n <- (m = t₀) where t₀
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< Pair(x₀, x₁) | x₀
+//│ | | Expanded situations:
+//│ | | >  * Pair(x₀, x₁) => <tupled> ~> 0
+//│ | | >  * x₀ => <tupled> ~> 1
+//│ | | Group of _
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: x₀
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
+//│ | | | Column 1
+//│ | | | | Original: x₁
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. x₁ <- (x₀ = t₀) where t₀
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< x₀
+//│ | | Expanded situations:
+//│ | | >  * x₀ => <tupled> ~> 0
+//│ | | Group of _
+//│ | buildMatchFunction >>> 
+//│ compile >>> 
+
+pattern Arbitrary1 =
+  (Pair(A, Pair(Pair(a, _), Pair(_, c))) => (a + c) * 2) |
+  (Pair(B, Pair(Pair(_, u), v)) => (u + v) * 3) |
+  (Pair(C, Pair(p, Pair(q, _))) => (p + q) * 5)
+
+:ucs npc
+fun test4(x) = if x is @compile Arbitrary1 then 42 else 100
+//│ compile <<< Arbitrary1
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< Arbitrary1
+//│ | | Expanded situations:
+//│ | | >  * Pair(A, Pair(Pair(a, _), Pair(_, c))) => builtin:*#4(builtin:+#3(a#666, c#666), 2) ~> 0
+//│ | | >  * Pair(B, Pair(Pair(_, u), v)) => builtin:*#5(builtin:+#4(u#666, v#666), 3) ~> 0
+//│ | | >  * Pair(C, Pair(p, Pair(q, _))) => builtin:*#6(builtin:+#5(p#666, q#666), 5) ~> 0
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: A | B | C
+//│ | | | | Unique: A | B | C
+//│ | | | | Mapping:
+//│ | | | | >  0. A <- () where A
+//│ | | | | >  1. B <- () where B
+//│ | | | | >  2. C <- () where C
+//│ | | | Column 1
+//│ | | | | Original: Pair(Pair(a, _), Pair(_, c)) | Pair(Pair(_, u), v) | Pair(p, Pair(q, _))
+//│ | | | | Unique: Pair(Pair(_, _), Pair(_, _)) | Pair(Pair(_, _), _) | Pair(_, Pair(_, _))
+//│ | | | | Mapping:
+//│ | | | | >  0. Pair(Pair(a, _), Pair(_, c)) <- (a = t₀, c = t₁) where Pair(Pair(t₀, _), Pair(_, t₁))
+//│ | | | | >  1. Pair(Pair(_, u), v) <- (u = t₀, v = t₁) where Pair(Pair(_, t₀), t₁)
+//│ | | | | >  2. Pair(p, Pair(q, _)) <- (p = t₀, q = t₁) where Pair(t₀, Pair(t₁, _))
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 2
+//│ | buildMatchFunction <<< A | B | C
+//│ | | Expanded situations:
+//│ | | >  * A => <tupled> ~> 0
+//│ | | >  * B => <tupled> ~> 1
+//│ | | >  * C => <tupled> ~> 2
+//│ | | Group of A
+//│ | | Group of B
+//│ | | Group of C
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< Pair(Pair(x₀, _), Pair(_, x₁)) | Pair(Pair(_, x₀), x₁) | Pair(x₀, Pair(x₁, _))
+//│ | | Expanded situations:
+//│ | | >  * Pair(Pair(x₀, _), Pair(_, x₁)) => <tupled> ~> 0
+//│ | | >  * Pair(Pair(_, x₀), x₁) => <tupled> ~> 1
+//│ | | >  * Pair(x₀, Pair(x₁, _)) => <tupled> ~> 2
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: Pair(x₀, _) | Pair(_, x₀) | x₀
+//│ | | | | Unique: Pair(_, _) | _
+//│ | | | | Mapping:
+//│ | | | | >  0. Pair(x₀, _) <- (x₀ = t₀) where Pair(t₀, t₁)
+//│ | | | | >  1. Pair(_, x₀) <- (x₀ = t₁) where Pair(t₀, t₁)
+//│ | | | | >  2. x₀ <- (x₀ = t₀) where t₀
+//│ | | | Column 1
+//│ | | | | Original: Pair(_, x₁) | x₁ | Pair(x₁, _)
+//│ | | | | Unique: Pair(_, _) | _
+//│ | | | | Mapping:
+//│ | | | | >  0. Pair(_, x₁) <- (x₀ = t₀) where Pair(t₁, t₀)
+//│ | | | | >  1. x₁ <- (x₀ = t₀) where t₀
+//│ | | | | >  2. Pair(x₁, _) <- (x₀ = t₁) where Pair(t₁, t₀)
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 2
+//│ | buildMatchFunction <<< Pair(x₀, x₁) | x₀
+//│ | | Expanded situations:
+//│ | | >  * Pair(x₀, x₁) => <tupled> ~> 0
+//│ | | >  * x₀ => <tupled> ~> 1
+//│ | | Group of _
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: x₀
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
+//│ | | | Column 1
+//│ | | | | Original: x₁
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. x₁ <- (x₀ = t₀) where t₀
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 2
+//│ | buildMatchFunction <<< Pair(x₁, x₀) | x₀
+//│ | | Expanded situations:
+//│ | | >  * Pair(x₁, x₀) => <tupled> ~> 0
+//│ | | >  * x₀ => <tupled> ~> 1
+//│ | | Group of _
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: x₁
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. x₁ <- (x₀ = t₀) where t₀
+//│ | | | Column 1
+//│ | | | | Original: x₀
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< x₀
+//│ | | Expanded situations:
+//│ | | >  * x₀ => <tupled> ~> 0
+//│ | | Group of _
+//│ | buildMatchFunction >>> 
+//│ compile >>> 
+
+pattern Arbitrary2 =
+  (Pair(A, Triplet(_, A, c)) => c * 2) |
+  (Pair(B, Triplet(a, B, _)) => a * 3)
+// (Pair(C, Triplet(_, b, _)) => b * 5)
+
+:ucs npc
+fun test5(x) = if x is @compile Arbitrary2 then 42 else 100
+//│ compile <<< Arbitrary2
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< Arbitrary2
+//│ | | Expanded situations:
+//│ | | >  * Pair(A, Triplet(_, A, c)) => builtin:*#7(c#666, 2) ~> 0
+//│ | | >  * Pair(B, Triplet(a, B, _)) => builtin:*#8(a#666, 3) ~> 0
+//│ | | Group of Pair(_, _)
+//│ | | | Column 0
+//│ | | | | Original: A | B
+//│ | | | | Unique: A | B
+//│ | | | | Mapping:
+//│ | | | | >  0. A <- () where A
+//│ | | | | >  1. B <- () where B
+//│ | | | Column 1
+//│ | | | | Original: Triplet(_, A, c) | Triplet(a, B, _)
+//│ | | | | Unique: Triplet(_, A, _) | Triplet(_, B, _)
+//│ | | | | Mapping:
+//│ | | | | >  0. Triplet(_, A, c) <- (c = t₀) where Triplet(_, A, t₀)
+//│ | | | | >  1. Triplet(a, B, _) <- (a = t₀) where Triplet(t₀, B, _)
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 2
+//│ | buildMatchFunction <<< A | B
+//│ | | Expanded situations:
+//│ | | >  * A => <tupled> ~> 0
+//│ | | >  * B => <tupled> ~> 1
+//│ | | Group of A
+//│ | | Group of B
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< Triplet(_, A, x₀) | Triplet(x₀, B, _)
+//│ | | Expanded situations:
+//│ | | >  * Triplet(_, A, x₀) => <tupled> ~> 0
+//│ | | >  * Triplet(x₀, B, _) => <tupled> ~> 1
+//│ | | Group of Triplet(_, _, _)
+//│ | | | Column 0
+//│ | | | | Original: _ | x₀
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. _ <- () where t₀
+//│ | | | | >  1. x₀ <- (x₀ = t₀) where t₀
+//│ | | | Column 1
+//│ | | | | Original: A | B
+//│ | | | | Unique: A | B
+//│ | | | | Mapping:
+//│ | | | | >  0. A <- () where A
+//│ | | | | >  1. B <- () where B
+//│ | | | Column 2
+//│ | | | | Original: x₀ | _
+//│ | | | | Unique: _
+//│ | | | | Mapping:
+//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
+//│ | | | | >  1. _ <- () where t₀
+//│ | buildMatchFunction >>> 
+//│ | Number of pending builds: 1
+//│ | buildMatchFunction <<< x₀
+//│ | | Expanded situations:
+//│ | | >  * x₀ => <tupled> ~> 0
+//│ | | Group of _
+//│ | buildMatchFunction >>> 
+//│ compile >>> 
