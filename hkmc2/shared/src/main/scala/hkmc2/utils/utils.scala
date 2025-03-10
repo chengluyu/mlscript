@@ -65,6 +65,7 @@ extension (t: Product)
         val (sl, _, sc) = origin.fph.getLineColAt(start)
         val (el, _, ec) = origin.fph.getLineColAt(end)
         s"Loc at :$sl:$sc-$el:$ec"
+      case path: semantics.ucs.rp.Pattern.Path => s"Path of $path"
       case arg: CtxArg => arg.term match
         case N =>
           s"CtxArg"

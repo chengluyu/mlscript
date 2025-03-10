@@ -50,6 +50,12 @@ abstract class MLsDiffMaker extends DiffMaker:
   val showContext = NullaryCommand("ctx")
   val parseOnly = NullaryCommand("parseOnly")
   
+  // * Use the new pattern compliation scheme. The flag is introduced to
+  // * progressively test the migration and to allow for comparative testing
+  // * during development. The old pattern compiler will eventually be replaced,
+  // * and this flag will be removed by then.
+  val newPatternCompiler = NullaryCommand("npc")
+  
   val typeCheck = FlagCommand(false, "typeCheck")
   
   
@@ -97,6 +103,8 @@ abstract class MLsDiffMaker extends DiffMaker:
       || dbgElab.isSet
       || dbgResolving.isSet
       || debug.isSet
+    override def useNewPatternCompiler: Bool =
+      newPatternCompiler.isSet
   
   val etl = new TraceLogger:
     override def doTrace = dbgElab.isSet || scope.exists:

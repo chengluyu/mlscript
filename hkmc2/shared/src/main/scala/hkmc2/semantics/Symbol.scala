@@ -267,6 +267,14 @@ class PatternSymbol(val id: Tree.Ident, val params: Opt[Tree.Tup], val body: Tre
     */
   var patternParams: Ls[Param] = Nil
   
+  var elaborated: Opt[ucs.rp.Pattern] = N
+  
+  lazy val patternParameterCount = params.map(_.fields).getOrElse(Nil).count:
+    case Tree.TypeDef(Pat, _, _, _) => true
+    case _ => false
+  
+  def parameterCount = params.map(_.fields.size).getOrElse(0)
+  
   override def subst(using sub: SymbolSubst): PatternSymbol = sub.mapPatSym(this)
 
 class TopLevelSymbol(blockNme: Str)(using State)

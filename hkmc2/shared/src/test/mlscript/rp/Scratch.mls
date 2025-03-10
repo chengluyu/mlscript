@@ -1,0 +1,146 @@
+:js
+:npc
+
+import "../../mlscript-compile/Stack.mls"
+
+open Stack
+
+class Pair(a, b)
+object A
+object B
+
+:ucs npc:elab
+pattern Test = "literal"
+//│ Elaborated: Transformed:
+//│ >    pattern = Constant of StrLit of "literal"
+//│ >    parameters = Nil
+
+:ucs npc:elab
+pattern Test = Pair(A, B)
+//│ Elaborated: Transformed:
+//│ >    pattern = Constructor:
+//│ >      symbol = class:Pair
+//│ >      parameters = Vector of 
+//│ >        Constructor:
+//│ >          symbol = object:A
+//│ >          parameters = Nil
+//│ >        Constructor:
+//│ >          symbol = object:B
+//│ >          parameters = Nil
+//│ >    parameters = Nil
+
+:ucs npc:elab
+pattern Foo(value) = value
+//│ Elaborated: Transformed:
+//│ >    pattern = Wildcard
+//│ >    parameters = Vector of 
+//│ >      Path of $
+
+:ucs npc:elab
+pattern Foo(pattern A, value) = A as value
+//│ Elaborated: Transformed:
+//│ >    pattern = NonTerminal:
+//│ >      symbol = A
+//│ >      patternParameters = Nil
+//│ >      extractions = Nil
+//│ >    parameters = Vector of 
+//│ >      Path of $
+
+
+:ucs npc:elab
+pattern Test(pattern A) = Pair(Pair(A, B), Pair(B, A))
+//│ Elaborated: Transformed:
+//│ >    pattern = Constructor:
+//│ >      symbol = class:Pair
+//│ >      parameters = Vector of 
+//│ >        Constructor:
+//│ >          symbol = class:Pair
+//│ >          parameters = Vector of 
+//│ >            NonTerminal:
+//│ >              symbol = A
+//│ >              patternParameters = Nil
+//│ >              extractions = Nil
+//│ >            Constructor:
+//│ >              symbol = object:B
+//│ >              parameters = Nil
+//│ >        Constructor:
+//│ >          symbol = class:Pair
+//│ >          parameters = Vector of 
+//│ >            Constructor:
+//│ >              symbol = object:B
+//│ >              parameters = Nil
+//│ >            NonTerminal:
+//│ >              symbol = A
+//│ >              patternParameters = Nil
+//│ >              extractions = Nil
+//│ >    parameters = Nil
+
+:ucs npc:elab
+pattern StackLike(pattern A) = null | Pair(A, StackLike(A))
+//│ Elaborated: Transformed:
+//│ >    pattern = Alternative:
+//│ >      first = Constant of UnitLit of true
+//│ >      second = Constructor:
+//│ >        symbol = class:Pair
+//│ >        parameters = Vector of 
+//│ >          NonTerminal:
+//│ >            symbol = A
+//│ >            patternParameters = Nil
+//│ >            extractions = Nil
+//│ >          NonTerminal:
+//│ >            symbol = pattern:StackLike
+//│ >            patternParameters = Ls of 
+//│ >              NonTerminal:
+//│ >                symbol = A
+//│ >                patternParameters = Nil
+//│ >                extractions = Nil
+//│ >            extractions = Nil
+//│ >    parameters = Nil
+
+
+:ucs npc:elab
+pattern Literals = ((((Int as n) => n.toString()) | Str) as s) => s + "x"
+//│ Elaborated: Transformed:
+//│ >    pattern = Transformed:
+//│ >      pattern = Alternative:
+//│ >        first = Transformed:
+//│ >          pattern = Constructor:
+//│ >            symbol = class:Int
+//│ >            parameters = Nil
+//│ >          parameters = Vector of 
+//│ >            Path of $
+//│ >        second = Constructor:
+//│ >          symbol = class:Str
+//│ >          parameters = Nil
+//│ >      parameters = Vector of 
+//│ >        Path of $
+//│ >    parameters = Nil
+
+:ucs npc:elab
+pattern StackLike(pattern A) =
+  (Pair(A as head, StackLike(A) as tail) => head :: tail) | (null => Nil)
+//│ Elaborated: Transformed:
+//│ >    pattern = Alternative:
+//│ >      first = Transformed:
+//│ >        pattern = Constructor:
+//│ >          symbol = class:Pair
+//│ >          parameters = Vector of 
+//│ >            NonTerminal:
+//│ >              symbol = A
+//│ >              patternParameters = Nil
+//│ >              extractions = Nil
+//│ >            NonTerminal:
+//│ >              symbol = pattern:StackLike
+//│ >              patternParameters = Ls of 
+//│ >                NonTerminal:
+//│ >                  symbol = A
+//│ >                  patternParameters = Nil
+//│ >                  extractions = Nil
+//│ >              extractions = Nil
+//│ >        parameters = Vector of 
+//│ >          Path of 0 -> $
+//│ >          Path of 1 -> $
+//│ >      second = Transformed:
+//│ >        pattern = Constant of UnitLit of true
+//│ >        parameters = Nil
+//│ >    parameters = Nil

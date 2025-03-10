@@ -1,0 +1,83 @@
+:js
+:npc
+
+import "../../mlscript-compile/Stack.mls"
+
+open Stack
+
+class Pair(a, b)
+object Foo
+object Bar
+object Baz
+object Qux
+
+:ucs npc npc:elab
+pattern Test(pattern A, a) = A as a
+//│ pattern <<< InfixApp(Ident(A),keyword 'as',Ident(a))
+//│ | pattern <<< Ident(A)
+//│ | pattern >>>
+//│ pattern >>>
+//│ Elaborated: Transformed:
+//│ >    pattern = NonTerminal:
+//│ >      symbol = A
+//│ >      patternParameters = Nil
+//│ >      extractions = Nil
+//│ >    parameters = Vector of 
+//│ >      Path of $
+
+:e
+pattern Test(a) = Int as b
+//│ ╔══[ERROR] Unknown extraction name: b
+//│ ║  l.29: 	pattern Test(a) = Int as b
+//│ ╙──      	                         ^
+
+:todo
+pattern Test = Int as b
+
+:e
+pattern Test(a) = a(Foo)
+//│ ╔══[ERROR] Extraction variables cannot have parameters.
+//│ ║  l.38: 	pattern Test(a) = a(Foo)
+//│ ╙──      	                  ^
+
+:e
+pattern Test = Pair(Int)
+//│ ╔══[ERROR] The class `Pair` expected 2 arguments.
+//│ ║  l.8: 	class Pair(a, b)
+//│ ║       	      ^^^^
+//│ ╟── But only 1 sub-pattern is given.
+//│ ║  l.44: 	pattern Test = Pair(Int)
+//│ ╙──      	                    ^^^
+
+:ucs npc:elab
+pattern Test = Pair(x, y) => x + y
+//│ Elaborated: Transformed:
+//│ >    pattern = Transformed:
+//│ >      pattern = Constructor:
+//│ >        symbol = class:Pair
+//│ >        parameters = Vector of 
+//│ >          Wildcard
+//│ >          Wildcard
+//│ >      parameters = Vector of 
+//│ >        Path of 0 -> $
+//│ >        Path of 1 -> $
+//│ >    parameters = Nil
+
+:e
+:ucs npc:elab
+pattern Test(a) = Pair(x, y) => x + y
+//│ ╔══[ERROR] Pattern transformation appears here
+//│ ║  l.68: 	pattern Test(a) = Pair(x, y) => x + y
+//│ ║        	                                ^^^^^
+//│ ╙── but it conflicts with the extraction parameter list
+//│ Elaborated: Transformed:
+//│ >    pattern = Transformed:
+//│ >      pattern = Constructor:
+//│ >        symbol = class:Pair
+//│ >        parameters = Vector of 
+//│ >          Wildcard
+//│ >          Wildcard
+//│ >      parameters = Vector of 
+//│ >        Path of 0 -> $
+//│ >        Path of 1 -> $
+//│ >    parameters = Nil
