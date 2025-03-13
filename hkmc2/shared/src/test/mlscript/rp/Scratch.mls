@@ -138,34 +138,60 @@ pattern StackLike(pattern A) =
 :ucs npc
 fun test1(x) = if x is @compile AB then 42 else 98
 //│ compile <<< AB
-//│ | Number of pending builds: 1
+//│ | Scheduled AB as 0
+//│ | 
 //│ | buildMatchFunction <<< AB
 //│ | | Expanded situations:
-//│ | | >  * Pair(A, B) => <tupled> ~> 0
+//│ | | >  * Pair(A, B) ~> 0
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: A
-//│ | | | | Unique: A
-//│ | | | | Mapping:
-//│ | | | | >  0. A <- () where A
+//│ | | | | Original patterns: A
+//│ | | | | Unified patterns: A
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. A ~> A ()
+//│ | | | | Scheduled A as 1
+//│ | | | | Match function: 1
 //│ | | | Column 1
-//│ | | | | Original: B
-//│ | | | | Unique: B
-//│ | | | | Mapping:
-//│ | | | | >  0. B <- () where B
+//│ | | | | Original patterns: B
+//│ | | | | Unified patterns: B
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. B ~> B ()
+//│ | | | | Scheduled B as 2
+//│ | | | | Match function: 2
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 2
+//│ | 
 //│ | buildMatchFunction <<< A
 //│ | | Expanded situations:
-//│ | | >  * A => <tupled> ~> 0
+//│ | | >  * A ~> 0
 //│ | | Group of A
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
+//│ | 
 //│ | buildMatchFunction <<< B
 //│ | | Expanded situations:
-//│ | | >  * B => <tupled> ~> 0
+//│ | | >  * B ~> 0
 //│ | | Group of B
 //│ | buildMatchFunction >>> 
+//│ | Implemented.makeFunction <<< 0, match0
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match1#0($t₀#0), $match2#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 1, match1
+//│ | | Make the split for group A
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 2, match2
+//│ | | Make the split for group B
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 0
+//│ | Implemented.makeFunction >>>
 //│ compile >>> 
 
 :ucs npc
@@ -174,31 +200,36 @@ fun test2(xs) = if xs is @compile StackLike(Int) then 42 else 99
 //│ pattern <<< Ident(Int)
 //│ pattern >>>
 //│ compile <<< StackLike(Int)
-//│ | Number of pending builds: 1
+//│ | Scheduled StackLike(Int) as 0
+//│ | 
 //│ | buildMatchFunction <<< StackLike(Int)
 //│ | | Expanded situations:
 //│ | | >  * Pair(Int as head, StackLike(Int) as tail) => (member:Stack#666.)Cons‹member:Cons›(head#666, tail#666) ~> 0
 //│ | | >  * null => (member:Stack#666.)Nil‹member:Nil› ~> 0
-//│ | | Group of null
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: Int as head
-//│ | | | | Unique: Int
-//│ | | | | Mapping:
-//│ | | | | >  0. Int as head <- (head = t₀) where Int as t₀
+//│ | | | | Original patterns: Int as head
+//│ | | | | Unified patterns: Int as t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. Int as head ~> Int as t₀ (head = t₀)
+//│ | | | | Scheduled Int as x₀ as 1
+//│ | | | | Match function: 1
 //│ | | | Column 1
-//│ | | | | Original: StackLike(Int) as tail
-//│ | | | | Unique: StackLike(Int)
-//│ | | | | Mapping:
-//│ | | | | >  0. StackLike(Int) as tail <- (head = t₀) where StackLike(Int) as t₀
+//│ | | | | Original patterns: StackLike(Int) as tail
+//│ | | | | Unified patterns: StackLike(Int) as t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. StackLike(Int) as tail ~> StackLike(Int) as t₀ (head = t₀)
+//│ | | | | Scheduled StackLike(Int) as x₀ as 2
+//│ | | | | Match function: 2
+//│ | | Group of null
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 2
+//│ | 
 //│ | buildMatchFunction <<< Int as x₀
 //│ | | Expanded situations:
-//│ | | >  * Int as x₀ => <tupled> ~> 0
+//│ | | >  * Int as x₀ => [x₀#0] ~> 0
 //│ | | Group of Int
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
+//│ | 
 //│ | buildMatchFunction <<< StackLike(Int) as x₀
 //│ /!!!\ Uncaught error: scala.NotImplementedError: This is not a simple pattern: StackLike(Int) as x₀ (of class String)
 
@@ -211,7 +242,8 @@ pattern Arbitrary0 =
 :ucs npc
 fun test3(x) = if x is @compile Arbitrary0 then 42 else 100
 //│ compile <<< Arbitrary0
-//│ | Number of pending builds: 1
+//│ | Scheduled Arbitrary0 as 0
+//│ | 
 //│ | buildMatchFunction <<< Arbitrary0
 //│ | | Expanded situations:
 //│ | | >  * Pair(Pair(x, y), Pair(a, b)) => builtin:+#1(builtin:*#0(x#666, y#666), builtin:*#1(a#666, b#666)) ~> 0
@@ -220,46 +252,83 @@ fun test3(x) = if x is @compile Arbitrary0 then 42 else 100
 //│ | | >  * Pair(m, n) => builtin:*#3(m#666, n#666) ~> 0
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: Pair(x, y) | k | Pair(_, _) | m
-//│ | | | | Unique: Pair(_, _) | _
-//│ | | | | Mapping:
-//│ | | | | >  0. Pair(x, y) <- (x = t₀, y = t₁) where Pair(t₀, t₁)
-//│ | | | | >  1. k <- (k = t₀) where t₀
-//│ | | | | >  2. Pair(_, _) <- () where Pair(t₀, t₁)
-//│ | | | | >  3. m <- (m = t₀) where t₀
+//│ | | | | Original patterns: Pair(x, y) | k | Pair(_, _) | m
+//│ | | | | Unified patterns: Pair(t₀, t₁) | t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. Pair(x, y) ~> Pair(t₀, t₁) (x = t₀, y = t₁)
+//│ | | | | >  1. k ~> t₀ (k = t₀)
+//│ | | | | >  2. Pair(_, _) ~> Pair(t₀, t₁) ()
+//│ | | | | >  3. m ~> t₀ (m = t₀)
+//│ | | | | Scheduled Pair(x₀, x₁) | x₀ as 1
+//│ | | | | Match function: 1
 //│ | | | Column 1
-//│ | | | | Original: Pair(a, b) | Pair(p, q) | _ | n
-//│ | | | | Unique: Pair(_, _) | _
-//│ | | | | Mapping:
-//│ | | | | >  0. Pair(a, b) <- (x = t₀, y = t₁) where Pair(t₀, t₁)
-//│ | | | | >  1. Pair(p, q) <- (k = t₀, p = t₁) where Pair(t₀, t₁)
-//│ | | | | >  2. _ <- () where t₀
-//│ | | | | >  3. n <- (m = t₀) where t₀
+//│ | | | | Original patterns: Pair(a, b) | Pair(p, q) | _ | n
+//│ | | | | Unified patterns: Pair(t₀, t₁) | t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. Pair(a, b) ~> Pair(t₀, t₁) (x = t₀, y = t₁)
+//│ | | | | >  1. Pair(p, q) ~> Pair(t₀, t₁) (k = t₀, p = t₁)
+//│ | | | | >  2. _ ~> t₀ ()
+//│ | | | | >  3. n ~> t₀ (m = t₀)
+//│ | | | | Forwarded Pair(x₀, x₁) | x₀ as 2 to 1
+//│ | | | | Match function: 2
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
+//│ | 
 //│ | buildMatchFunction <<< Pair(x₀, x₁) | x₀
 //│ | | Expanded situations:
-//│ | | >  * Pair(x₀, x₁) => <tupled> ~> 0
-//│ | | >  * x₀ => <tupled> ~> 1
-//│ | | Group of _
+//│ | | >  * Pair(x₀, x₁) => [x₀#0, x₁#0] ~> 0
+//│ | | >  * x₀ => [x₀#0] ~> 1
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: x₀
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
+//│ | | | | Original patterns: x₀
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₀ ~> t₀ (x₀ = t₀)
+//│ | | | | Scheduled x₀ as 2
+//│ | | | | Match function: 2
 //│ | | | Column 1
-//│ | | | | Original: x₁
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. x₁ <- (x₀ = t₀) where t₀
-//│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
-//│ | buildMatchFunction <<< x₀
-//│ | | Expanded situations:
-//│ | | >  * x₀ => <tupled> ~> 0
+//│ | | | | Original patterns: x₁
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₁ ~> t₀ (x₀ = t₀)
+//│ | | | | Forwarded x₀ as 3 to 2
+//│ | | | | Match function: 3
 //│ | | Group of _
 //│ | buildMatchFunction >>> 
+//│ | 
+//│ | buildMatchFunction <<< x₀
+//│ | | Expanded situations:
+//│ | | >  * x₀ => [x₀#0] ~> 0
+//│ | | Group of _
+//│ | buildMatchFunction >>> 
+//│ | Implemented.makeFunction <<< 1, match1
+//│ | | Make the split for group _
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 1
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match2#0($t₀#0), $match3#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 2, match2
+//│ | | Make the split for group _
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 0, match0
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match1#0($t₀#0), $match2#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [1, 1] then 0
+//│ | | | Branch: [s0, s1] is [0, 1] then 0
+//│ | | | Branch: [s0, s1] is [1, 0] then 0
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
 //│ compile >>> 
 
 pattern Arbitrary1 =
@@ -270,7 +339,8 @@ pattern Arbitrary1 =
 :ucs npc
 fun test4(x) = if x is @compile Arbitrary1 then 42 else 100
 //│ compile <<< Arbitrary1
-//│ | Number of pending builds: 1
+//│ | Scheduled Arbitrary1 as 0
+//│ | 
 //│ | buildMatchFunction <<< Arbitrary1
 //│ | | Expanded situations:
 //│ | | >  * Pair(A, Pair(Pair(a, _), Pair(_, c))) => builtin:*#4(builtin:+#3(a#666, c#666), 2) ~> 0
@@ -278,160 +348,376 @@ fun test4(x) = if x is @compile Arbitrary1 then 42 else 100
 //│ | | >  * Pair(C, Pair(p, Pair(q, _))) => builtin:*#6(builtin:+#5(p#666, q#666), 5) ~> 0
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: A | B | C
-//│ | | | | Unique: A | B | C
-//│ | | | | Mapping:
-//│ | | | | >  0. A <- () where A
-//│ | | | | >  1. B <- () where B
-//│ | | | | >  2. C <- () where C
+//│ | | | | Original patterns: A | B | C
+//│ | | | | Unified patterns: A | B | C
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. A ~> A ()
+//│ | | | | >  1. B ~> B ()
+//│ | | | | >  2. C ~> C ()
+//│ | | | | Scheduled A | B | C as 1
+//│ | | | | Match function: 1
 //│ | | | Column 1
-//│ | | | | Original: Pair(Pair(a, _), Pair(_, c)) | Pair(Pair(_, u), v) | Pair(p, Pair(q, _))
-//│ | | | | Unique: Pair(Pair(_, _), Pair(_, _)) | Pair(Pair(_, _), _) | Pair(_, Pair(_, _))
-//│ | | | | Mapping:
-//│ | | | | >  0. Pair(Pair(a, _), Pair(_, c)) <- (a = t₀, c = t₁) where Pair(Pair(t₀, _), Pair(_, t₁))
-//│ | | | | >  1. Pair(Pair(_, u), v) <- (u = t₀, v = t₁) where Pair(Pair(_, t₀), t₁)
-//│ | | | | >  2. Pair(p, Pair(q, _)) <- (p = t₀, q = t₁) where Pair(t₀, Pair(t₁, _))
+//│ | | | | Original patterns: Pair(Pair(a, _), Pair(_, c)) | Pair(Pair(_, u), v) | Pair(p, Pair(q, _))
+//│ | | | | Unified patterns: Pair(Pair(t₀, _), Pair(_, t₁)) | Pair(Pair(_, t₀), t₁) | Pair(t₀, Pair(t₁, _))
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. Pair(Pair(a, _), Pair(_, c)) ~> Pair(Pair(t₀, _), Pair(_, t₁)) (a = t₀, c = t₁)
+//│ | | | | >  1. Pair(Pair(_, u), v) ~> Pair(Pair(_, t₀), t₁) (u = t₀, v = t₁)
+//│ | | | | >  2. Pair(p, Pair(q, _)) ~> Pair(t₀, Pair(t₁, _)) (p = t₀, q = t₁)
+//│ | | | | Scheduled Pair(Pair(x₀, _), Pair(_, x₁)) | Pair(Pair(_, x₀), x₁) | Pair(x₀, Pair(x₁, _)) as 2
+//│ | | | | Match function: 2
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 2
+//│ | 
 //│ | buildMatchFunction <<< A | B | C
 //│ | | Expanded situations:
-//│ | | >  * A => <tupled> ~> 0
-//│ | | >  * B => <tupled> ~> 1
-//│ | | >  * C => <tupled> ~> 2
+//│ | | >  * A ~> 0
+//│ | | >  * B ~> 1
+//│ | | >  * C ~> 2
 //│ | | Group of A
 //│ | | Group of B
 //│ | | Group of C
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
+//│ | 
 //│ | buildMatchFunction <<< Pair(Pair(x₀, _), Pair(_, x₁)) | Pair(Pair(_, x₀), x₁) | Pair(x₀, Pair(x₁, _))
 //│ | | Expanded situations:
-//│ | | >  * Pair(Pair(x₀, _), Pair(_, x₁)) => <tupled> ~> 0
-//│ | | >  * Pair(Pair(_, x₀), x₁) => <tupled> ~> 1
-//│ | | >  * Pair(x₀, Pair(x₁, _)) => <tupled> ~> 2
+//│ | | >  * Pair(Pair(x₀, _), Pair(_, x₁)) => [x₀#0, x₁#0] ~> 0
+//│ | | >  * Pair(Pair(_, x₀), x₁) => [x₀#0, x₁#0] ~> 1
+//│ | | >  * Pair(x₀, Pair(x₁, _)) => [x₀#0, x₁#0] ~> 2
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: Pair(x₀, _) | Pair(_, x₀) | x₀
-//│ | | | | Unique: Pair(_, _) | _
-//│ | | | | Mapping:
-//│ | | | | >  0. Pair(x₀, _) <- (x₀ = t₀) where Pair(t₀, t₁)
-//│ | | | | >  1. Pair(_, x₀) <- (x₀ = t₁) where Pair(t₀, t₁)
-//│ | | | | >  2. x₀ <- (x₀ = t₀) where t₀
+//│ | | | | Original patterns: Pair(x₀, _) | Pair(_, x₀) | x₀
+//│ | | | | Unified patterns: Pair(t₀, t₁) | t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. Pair(x₀, _) ~> Pair(t₀, t₁) (x₀ = t₀)
+//│ | | | | >  1. Pair(_, x₀) ~> Pair(t₀, t₁) (x₀ = t₁)
+//│ | | | | >  2. x₀ ~> t₀ (x₀ = t₀)
+//│ | | | | Scheduled Pair(x₀, x₁) | x₀ as 3
+//│ | | | | Match function: 3
 //│ | | | Column 1
-//│ | | | | Original: Pair(_, x₁) | x₁ | Pair(x₁, _)
-//│ | | | | Unique: Pair(_, _) | _
-//│ | | | | Mapping:
-//│ | | | | >  0. Pair(_, x₁) <- (x₀ = t₀) where Pair(t₁, t₀)
-//│ | | | | >  1. x₁ <- (x₀ = t₀) where t₀
-//│ | | | | >  2. Pair(x₁, _) <- (x₀ = t₁) where Pair(t₁, t₀)
+//│ | | | | Original patterns: Pair(_, x₁) | x₁ | Pair(x₁, _)
+//│ | | | | Unified patterns: Pair(t₁, t₀) | t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. Pair(_, x₁) ~> Pair(t₁, t₀) (x₀ = t₀)
+//│ | | | | >  1. x₁ ~> t₀ (x₀ = t₀)
+//│ | | | | >  2. Pair(x₁, _) ~> Pair(t₁, t₀) (x₀ = t₁)
+//│ | | | | Scheduled Pair(x₁, x₀) | x₀ as 4
+//│ | | | | Match function: 4
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 2
+//│ | 
 //│ | buildMatchFunction <<< Pair(x₀, x₁) | x₀
 //│ | | Expanded situations:
-//│ | | >  * Pair(x₀, x₁) => <tupled> ~> 0
-//│ | | >  * x₀ => <tupled> ~> 1
-//│ | | Group of _
+//│ | | >  * Pair(x₀, x₁) => [x₀#0, x₁#0] ~> 0
+//│ | | >  * x₀ => [x₀#0] ~> 1
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: x₀
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
+//│ | | | | Original patterns: x₀
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₀ ~> t₀ (x₀ = t₀)
+//│ | | | | Scheduled x₀ as 5
+//│ | | | | Match function: 5
 //│ | | | Column 1
-//│ | | | | Original: x₁
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. x₁ <- (x₀ = t₀) where t₀
+//│ | | | | Original patterns: x₁
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₁ ~> t₀ (x₀ = t₀)
+//│ | | | | Forwarded x₀ as 6 to 5
+//│ | | | | Match function: 6
+//│ | | Group of _
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 2
+//│ | 
 //│ | buildMatchFunction <<< Pair(x₁, x₀) | x₀
 //│ | | Expanded situations:
-//│ | | >  * Pair(x₁, x₀) => <tupled> ~> 0
-//│ | | >  * x₀ => <tupled> ~> 1
-//│ | | Group of _
+//│ | | >  * Pair(x₁, x₀) => [x₀#0, x₁#0] ~> 0
+//│ | | >  * x₀ => [x₀#0] ~> 1
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: x₁
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. x₁ <- (x₀ = t₀) where t₀
+//│ | | | | Original patterns: x₁
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₁ ~> t₀ (x₀ = t₀)
+//│ | | | | Forwarded x₀ as 6 to 5
+//│ | | | | Match function: 6
 //│ | | | Column 1
-//│ | | | | Original: x₀
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
-//│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
-//│ | buildMatchFunction <<< x₀
-//│ | | Expanded situations:
-//│ | | >  * x₀ => <tupled> ~> 0
+//│ | | | | Original patterns: x₀
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₀ ~> t₀ (x₀ = t₀)
+//│ | | | | Forwarded x₀ as 6 to 5
+//│ | | | | Match function: 6
 //│ | | Group of _
 //│ | buildMatchFunction >>> 
+//│ | 
+//│ | buildMatchFunction <<< x₀
+//│ | | Expanded situations:
+//│ | | >  * x₀ => [x₀#0] ~> 0
+//│ | | Group of _
+//│ | buildMatchFunction >>> 
+//│ | Implemented.makeFunction <<< 2, match2
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match3#0($t₀#0), $match4#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [1, 0] then 2
+//│ | | | Branch: [s0, s1] is [0, 1] then 1
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 3, match3
+//│ | | Make the split for group _
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 1
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match5#0($t₀#0), $match6#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 4, match4
+//│ | | Make the split for group _
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 1
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match6#0($t₀#0), $match6#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 0, match0
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match1#0($t₀#0), $match2#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [2, 2] then 0
+//│ | | | Branch: [s0, s1] is [1, 1] then 0
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 5, match5
+//│ | | Make the split for group _
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 1, match1
+//│ | | Make the split for group C
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 2
+//│ | | Make the split for group B
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 1
+//│ | | Make the split for group A
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 0
+//│ | Implemented.makeFunction >>>
 //│ compile >>> 
 
 pattern Arbitrary2 =
-  (Pair(A, Triplet(_, A, c)) => c * 2) |
-  (Pair(B, Triplet(a, B, _)) => a * 3)
-// (Pair(C, Triplet(_, b, _)) => b * 5)
+  (Pair(A, Triplet(_, _, c)) => c * 2) |
+  (Pair(B, Triplet(a, _, _)) => a * 3) |
+  (Pair(C, Triplet(_, b, _)) => b * 5)
 
 :ucs npc
+:sjs
 fun test5(x) = if x is @compile Arbitrary2 then 42 else 100
 //│ compile <<< Arbitrary2
-//│ | Number of pending builds: 1
+//│ | Scheduled Arbitrary2 as 0
+//│ | 
 //│ | buildMatchFunction <<< Arbitrary2
 //│ | | Expanded situations:
-//│ | | >  * Pair(A, Triplet(_, A, c)) => builtin:*#7(c#666, 2) ~> 0
-//│ | | >  * Pair(B, Triplet(a, B, _)) => builtin:*#8(a#666, 3) ~> 0
+//│ | | >  * Pair(A, Triplet(_, _, c)) => builtin:*#7(c#666, 2) ~> 0
+//│ | | >  * Pair(B, Triplet(a, _, _)) => builtin:*#8(a#666, 3) ~> 0
+//│ | | >  * Pair(C, Triplet(_, b, _)) => builtin:*#9(b#666, 5) ~> 0
 //│ | | Group of Pair(_, _)
 //│ | | | Column 0
-//│ | | | | Original: A | B
-//│ | | | | Unique: A | B
-//│ | | | | Mapping:
-//│ | | | | >  0. A <- () where A
-//│ | | | | >  1. B <- () where B
+//│ | | | | Original patterns: A | B | C
+//│ | | | | Unified patterns: A | B | C
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. A ~> A ()
+//│ | | | | >  1. B ~> B ()
+//│ | | | | >  2. C ~> C ()
+//│ | | | | Scheduled A | B | C as 1
+//│ | | | | Match function: 1
 //│ | | | Column 1
-//│ | | | | Original: Triplet(_, A, c) | Triplet(a, B, _)
-//│ | | | | Unique: Triplet(_, A, _) | Triplet(_, B, _)
-//│ | | | | Mapping:
-//│ | | | | >  0. Triplet(_, A, c) <- (c = t₀) where Triplet(_, A, t₀)
-//│ | | | | >  1. Triplet(a, B, _) <- (a = t₀) where Triplet(t₀, B, _)
+//│ | | | | Original patterns: Triplet(_, _, c) | Triplet(a, _, _) | Triplet(_, b, _)
+//│ | | | | Unified patterns: Triplet(t₁, t₂, t₀)
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. Triplet(_, _, c) ~> Triplet(t₁, t₂, t₀) (c = t₀)
+//│ | | | | >  1. Triplet(a, _, _) ~> Triplet(t₁, t₂, t₀) (a = t₁)
+//│ | | | | >  2. Triplet(_, b, _) ~> Triplet(t₁, t₂, t₀) (b = t₂)
+//│ | | | | Scheduled Triplet(x₁, x₂, x₀) as 2
+//│ | | | | Match function: 2
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 2
-//│ | buildMatchFunction <<< A | B
+//│ | 
+//│ | buildMatchFunction <<< A | B | C
 //│ | | Expanded situations:
-//│ | | >  * A => <tupled> ~> 0
-//│ | | >  * B => <tupled> ~> 1
+//│ | | >  * A ~> 0
+//│ | | >  * B ~> 1
+//│ | | >  * C ~> 2
 //│ | | Group of A
 //│ | | Group of B
+//│ | | Group of C
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
-//│ | buildMatchFunction <<< Triplet(_, A, x₀) | Triplet(x₀, B, _)
+//│ | 
+//│ | buildMatchFunction <<< Triplet(x₁, x₂, x₀)
 //│ | | Expanded situations:
-//│ | | >  * Triplet(_, A, x₀) => <tupled> ~> 0
-//│ | | >  * Triplet(x₀, B, _) => <tupled> ~> 1
+//│ | | >  * Triplet(x₁, x₂, x₀) => [x₀#0, x₁#0, x₂#0] ~> 0
 //│ | | Group of Triplet(_, _, _)
 //│ | | | Column 0
-//│ | | | | Original: _ | x₀
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. _ <- () where t₀
-//│ | | | | >  1. x₀ <- (x₀ = t₀) where t₀
+//│ | | | | Original patterns: x₁
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₁ ~> t₀ (x₀ = t₀)
+//│ | | | | Scheduled x₀ as 3
+//│ | | | | Match function: 3
 //│ | | | Column 1
-//│ | | | | Original: A | B
-//│ | | | | Unique: A | B
-//│ | | | | Mapping:
-//│ | | | | >  0. A <- () where A
-//│ | | | | >  1. B <- () where B
+//│ | | | | Original patterns: x₂
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₂ ~> t₀ (x₀ = t₀)
+//│ | | | | Forwarded x₀ as 4 to 3
+//│ | | | | Match function: 4
 //│ | | | Column 2
-//│ | | | | Original: x₀ | _
-//│ | | | | Unique: _
-//│ | | | | Mapping:
-//│ | | | | >  0. x₀ <- (x₀ = t₀) where t₀
-//│ | | | | >  1. _ <- () where t₀
+//│ | | | | Original patterns: x₀
+//│ | | | | Unified patterns: t₀
+//│ | | | | Mapping of extracts:
+//│ | | | | >  0. x₀ ~> t₀ (x₀ = t₀)
+//│ | | | | Forwarded x₀ as 4 to 3
+//│ | | | | Match function: 4
 //│ | buildMatchFunction >>> 
-//│ | Number of pending builds: 1
+//│ | 
 //│ | buildMatchFunction <<< x₀
 //│ | | Expanded situations:
-//│ | | >  * x₀ => <tupled> ~> 0
+//│ | | >  * x₀ => [x₀#0] ~> 0
 //│ | | Group of _
 //│ | buildMatchFunction >>> 
+//│ | Implemented.makeFunction <<< 2, match2
+//│ | | Make the split for group Triplet(_, _, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁, t₂
+//│ | | | The scrutinee: [$match3#0($t₀#0), $match4#0($t₁#0), $match4#0($t₂#0)]
+//│ | | | The destructed tuple elements are s0, s1, s2
+//│ | | | Branch: [s0, s1, s2] is [0, 0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 0, match0
+//│ | | Make the split for group Pair(_, _)
+//│ | | SituationGroup.makeSplit <<< t₀, t₁
+//│ | | | The scrutinee: [$match1#0($t₀#0), $match2#0($t₁#0)]
+//│ | | | The destructed tuple elements are s0, s1
+//│ | | | Branch: [s0, s1] is [2, 0] then 0
+//│ | | | Branch: [s0, s1] is [1, 0] then 0
+//│ | | | Branch: [s0, s1] is [0, 0] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 3, match3
+//│ | | Make the split for group _
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 0
+//│ | Implemented.makeFunction >>>
+//│ | Implemented.makeFunction <<< 1, match1
+//│ | | Make the split for group C
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 2
+//│ | | Make the split for group B
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 1
+//│ | | Make the split for group A
+//│ | | SituationGroup.makeSplit <<< 
+//│ | | | The scrutinee: []
+//│ | | | The destructed tuple elements are 
+//│ | | | Branch: [] is [] then 0
+//│ | Implemented.makeFunction >>>
 //│ compile >>> 
+//│ JS (unsanitized):
+//│ let test5;
+//│ test5 = function test5(x) {
+//│   let match0, match1, match2, match3, match4, match41, tmp, tmp1, tmp2, lambda, lambda1, lambda2, lambda3, lambda4, lambda5;
+//│   lambda = (undefined, function (scrut) {
+//│     let t$_, t$_1, t$_2, scrut1, s0, s1, s2, tmp3, tmp4, tmp5;
+//│     if (scrut instanceof Triplet1.class) {
+//│       t$_ = scrut.a;
+//│       t$_1 = scrut.b;
+//│       t$_2 = scrut.c;
+//│       tmp3 = runtime.safeCall(match3(t$_));
+//│       tmp4 = runtime.safeCall(match4(t$_1));
+//│       tmp5 = runtime.safeCall(match41(t$_2));
+//│       scrut1 = [
+//│         tmp3,
+//│         tmp4,
+//│         tmp5
+//│       ];
+//│       s0 = scrut1[0];
+//│       s1 = scrut1[1];
+//│       s2 = scrut1[2];
+//│       return 0
+//│     } else {
+//│       throw new globalThis.Error("match error");
+//│     }
+//│   });
+//│   tmp = lambda;
+//│   match2 = tmp;
+//│   lambda1 = (undefined, function (scrut) {
+//│     let t$_, t$_1, scrut1, s0, s1, tmp3, tmp4;
+//│     if (scrut instanceof Pair1.class) {
+//│       t$_ = scrut.a;
+//│       t$_1 = scrut.b;
+//│       tmp3 = runtime.safeCall(match1(t$_));
+//│       tmp4 = runtime.safeCall(match2(t$_1));
+//│       scrut1 = [
+//│         tmp3,
+//│         tmp4
+//│       ];
+//│       s0 = scrut1[0];
+//│       s1 = scrut1[1];
+//│       return 0
+//│     } else {
+//│       throw new globalThis.Error("match error");
+//│     }
+//│   });
+//│   tmp1 = lambda1;
+//│   match0 = tmp1;
+//│   lambda2 = (undefined, function (scrut) {
+//│     let scrut1;
+//│     scrut1 = [];
+//│     return 0
+//│   });
+//│   match3 = lambda2;
+//│   lambda3 = (undefined, function (scrut) {
+//│     let scrut1, scrut2, scrut3;
+//│     if (scrut instanceof A1.class) {
+//│       scrut3 = [];
+//│       return 0
+//│     } else if (scrut instanceof B1.class) {
+//│       scrut2 = [];
+//│       return 1
+//│     } else if (scrut instanceof C1.class) {
+//│       scrut1 = [];
+//│       return 2
+//│     } else {
+//│       throw new globalThis.Error("match error");
+//│     }
+//│   });
+//│   tmp2 = lambda3;
+//│   match1 = tmp2;
+//│   lambda4 = (undefined, function (scrut) {
+//│     return runtime.safeCall(match3(scrut))
+//│   });
+//│   match4 = lambda4;
+//│   lambda5 = (undefined, function (scrut) {
+//│     return runtime.safeCall(match3(scrut))
+//│   });
+//│   match41 = lambda5;
+//│   throw new globalThis.Error("match error");
+//│ };

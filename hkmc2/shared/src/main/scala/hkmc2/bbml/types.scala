@@ -236,7 +236,7 @@ object BasicType:
     case ty :: Nil => ty
     case ty :: tys => ComposedType(ty, inter(tys), false)
 
-case class ClassLikeType(name: TypeSymbol | ModuleSymbol, targs: Ls[TypeArg]) extends BasicType with CachedNorm[ClassLikeType]:
+case class ClassLikeType(name: TypeSymbol | ClassLikeSymbol, targs: Ls[TypeArg]) extends BasicType with CachedNorm[ClassLikeType]:
   def mkNorm(using TL): ClassLikeType =
     ClassLikeType(name,
       targs.map:

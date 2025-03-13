@@ -93,9 +93,9 @@ class Normalization(elaborator: Elaborator)(using raise: Raise, ctx: Ctx):
       val compiler = new rp.Compiler(elaborator)
       // For now, we start with only one pattern.
       val pattern = rp.Pattern.NonTerminal(symbol, patternArguments, Vector.empty)
-      val matchFunction = compiler.compile(Vector(pattern))
-      Split.End
-      
+      val matchFunctions = compiler.compile(Vector(pattern))
+      matchFunctions.foldRight(Split.End):
+        case ((symbol, lambda), inner) => Split.Let(symbol, lambda, inner)
     
     /** Old pattern compiler's implementation. Kept for reference, it will be
      *  removed after the new pattern compiler is implemented. */

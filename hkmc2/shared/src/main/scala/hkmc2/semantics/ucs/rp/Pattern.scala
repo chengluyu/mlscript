@@ -85,6 +85,12 @@ object Pattern:
   extension (iterator: Iterator[String])
     def joined(start: String, sep: String, end: String, empty: => String): String =
       if iterator.hasNext then iterator.iterator.mkString(start, sep, end) else empty
+      
+  private[rp] def displayWithTemporaryNames(pattern: Pattern, extracts: Vector[Path]): String =
+    val extractsWithTemporaryNames = extracts.iterator.zipWithIndex.map:
+      case (extract, index) => (extract, s"t${index.toSubscriptString}")
+    .toVector
+    display(pattern, extractsWithTemporaryNames)
   
   private[rp] def display(pattern: Pattern, paths: Vector[(Path, String)]): String =
     val make =

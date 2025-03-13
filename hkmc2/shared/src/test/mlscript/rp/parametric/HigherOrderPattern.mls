@@ -16,12 +16,10 @@ null is @compile Nullable
 
 :e
 null is @compile Nullable(A, A)
-//│ ╔══[ERROR] Pattern `Nullable` expects 1 pattern argument
-//│ ║  l.3: 	pattern Nullable(pattern T) = null | T
-//│ ║       	                         ^
-//│ ╟── But 2 pattern arguments were given
+//│ ╔══[ERROR] Pattern `Nullable` expects 0 extraction parameters
+//│ ╟── But 1 argument were given
 //│ ║  l.18: 	null is @compile Nullable(A, A)
-//│ ╙──      	                          ^^^^
+//│ ╙──      	                             ^
 //│ = false
 
 pattern Nullable(pattern T) = null | T
@@ -39,7 +37,52 @@ data class Pair[A, B](val first: A, val second: B)
 
 pattern Stack(pattern T) = null | Pair(T, Stack(T))
 
+:sjs
 null is @compile Stack(A)
+//│ JS (unsanitized):
+//│ let scrut5, match1, arg_1, arg_2, matchResult, tmp, lambda;
+//│ scrut5 = null;
+//│ lambda = (undefined, function (param1) {
+//│   let arg_11, arg_21, matchResult1;
+//│   if (param1 === null) {
+//│     return runtime.safeCall(runtime.MatchResult([]))
+//│   } else if (param1 instanceof Pair1.class) {
+//│     arg_11 = param1.first;
+//│     arg_21 = param1.second;
+//│     if (arg_11 instanceof A1.class) {
+//│       matchResult1 = runtime.safeCall(match1(arg_21));
+//│       if (matchResult1 instanceof runtime.MatchResult.class) {
+//│         return runtime.safeCall(runtime.MatchResult([]))
+//│       } else {
+//│         return runtime.safeCall(runtime.MatchFailure())
+//│       }
+//│     } else {
+//│       return runtime.safeCall(runtime.MatchFailure())
+//│     }
+//│   } else {
+//│     return runtime.safeCall(runtime.MatchFailure())
+//│   }
+//│ });
+//│ tmp = lambda;
+//│ match1 = tmp;
+//│ if (scrut5 === null) {
+//│   true
+//│ } else if (scrut5 instanceof Pair1.class) {
+//│   arg_1 = scrut5.first;
+//│   arg_2 = scrut5.second;
+//│   if (arg_1 instanceof A1.class) {
+//│     matchResult = runtime.safeCall(match1(arg_2));
+//│     if (matchResult instanceof runtime.MatchResult.class) {
+//│       true
+//│     } else {
+//│       false
+//│     }
+//│   } else {
+//│     false
+//│   }
+//│ } else {
+//│   false
+//│ }
 //│ = true
 
 fun (#:) pair(a, b) = Pair(a, b)

@@ -8,5 +8,34 @@
 :d
 :todo
 
+fun g(x) = x
+//│ Elab: ( ‹› fun member:g‹536›(Param(‹›,x‹538›,None), ) = x‹538›#666; )
 
+:ucs normalized
+fun f(x) = if g(x) is
+  [x, y] then x + y
+  "b" then 7
+//│ Normalized:
+//│ >  if
+//│ >    let $scrut‹546› = member:g‹536›#666(x‹544›#666)
+//│ >    $scrut‹546› is []=2 and
+//│ >      let $first0‹548› = ($scrut‹546›#2.)0
+//│ >      let $first1‹547› = ($scrut‹546›#3.)1
+//│ >      let x‹549› = $first0‹548›#0
+//│ >      let y‹550› = $first1‹547›#0
+//│ >      else builtin:+‹27›#0(x‹549›#666, y‹550›#666)
+//│ >    $scrut‹546› is "b" then 7
+//│ Elab: ( ‹› fun member:f‹542›(Param(‹›,x‹544›,None), ) = if { let $scrut‹546› = member:g‹536›#666(x‹544›#666); scrut is []=2 -> { let $first0‹548› = ($scrut‹546›#2.)0; let $first1‹547› = ($scrut‹546›#3.)1; let x‹549› = $first0‹548›#0; let y‹550› = $first1‹547›#0; else builtin:+‹27›#0(x‹549›#666, y‹550›#666) }; scrut is "b" -> { else 7 };  }; )
 
+let xs = [1, 2]
+//│ Elab: ( let xs‹555›; xs‹555› = [1, 2]; )
+//│ xs = [1, 2]
+
+:pt
+xs.0
+//│ Parsed tree:
+//│ Sel:
+//│   prefix = Ident of "xs"
+//│   name = Ident of "0"
+//│ Elab: ( xs‹555›#666.0 )
+//│ = 1

@@ -9,7 +9,7 @@ import ucs.DeBrujinSplit
 enum Pattern extends AutoLocated:
   case Lit(literal: Literal)
   case ClassLike(
-      sym: ClassSymbol | ModuleSymbol,
+      sym: ClassLikeSymbol,
       trm: Term,
       parameters: Opt[List[BlockLocalSymbol]],
       var refined: Bool
