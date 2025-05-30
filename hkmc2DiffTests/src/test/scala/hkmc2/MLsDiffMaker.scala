@@ -7,6 +7,7 @@ import utils.*
 
 import hkmc2.semantics.Elaborator
 import hkmc2.semantics.Resolver
+import hkmc2.semantics.FileImporter
 
 import semantics.Elaborator.Ctx
 
@@ -162,7 +163,7 @@ abstract class MLsDiffMaker extends DiffMaker:
     
     val block = os.read(file)
     val fph = new FastParseHelpers(block)
-    val origin = Origin(file, 0, fph)
+    val origin = Origin(file.toString, 0, fph)
     
     val lexer = new syntax.Lexer(origin, dbg = dbgParsing.isSet)
     val tokens = lexer.bracketedTokens
@@ -177,7 +178,7 @@ abstract class MLsDiffMaker extends DiffMaker:
     val imprtSymbol =
       semantics.TopLevelSymbol("import#"+file.baseName)
     given Elaborator.Ctx = curCtx.nestLocal
-    val elab = Elaborator(etl, wd, Ctx.empty)
+    val elab = Elaborator(etl, new FileImporter(wd, Ctx.empty))
     try
       val resBlk = new syntax.Tree.Block(res)
       val (e, newCtx) = elab.importFrom(resBlk)
@@ -235,7 +236,7 @@ abstract class MLsDiffMaker extends DiffMaker:
   private var blockNum = 0
   
   def processTrees(trees: Ls[syntax.Tree])(using Config, Raise): Unit =
-    val elab = Elaborator(etl, file / os.up, prelude)
+    val elab = Elaborator(etl, new FileImporter(file / os.up, prelude))
     // val blockSymbol =
     //   semantics.TopLevelSymbol("block#"+blockNum)
     blockNum += 1

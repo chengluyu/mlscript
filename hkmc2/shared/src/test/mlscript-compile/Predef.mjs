@@ -1,5 +1,4 @@
 import runtime from "./Runtime.mjs";
-import Term from "./Term.mjs";
 import Runtime from "./Runtime.mjs";
 import Rendering from "./Rendering.mjs";
 let Predef1;

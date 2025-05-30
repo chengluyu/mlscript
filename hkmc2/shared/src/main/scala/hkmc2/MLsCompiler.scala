@@ -7,7 +7,7 @@ import utils.*
 
 import hkmc2.semantics.MemberSymbol
 import hkmc2.semantics.Elaborator
-import hkmc2.semantics.Resolver
+import hkmc2.semantics.{Resolver, FileImporter}
 import semantics.Elaborator.Ctx
 import hkmc2.syntax.Keyword.`override`
 import semantics.Elaborator.State
@@ -17,7 +17,7 @@ class ParserSetup(file: os.Path, dbgParsing: Bool)(using Elaborator.State, Raise
   
   val block = os.read(file)
   val fph = new FastParseHelpers(block)
-  val origin = Origin(file, 0, fph)
+  val origin = Origin(file.toString, 0, fph)
   
   val lexer = new syntax.Lexer(origin, dbg = dbgParsing)
   val tokens = lexer.bracketedTokens
@@ -73,20 +73,21 @@ class MLsCompiler(preludeFile: os.Path, mkOutput: ((Str => Unit) => Unit) => Uni
     val preludeParse = ParserSetup(preludeFile, dbgParsing)
     val mainParse = ParserSetup(file, dbgParsing)
     
-    val elab = Elaborator(etl, wd, Ctx.empty)
+    val elab = Elaborator(etl, new FileImporter(wd, Ctx.empty)(using etl))
     
     val initState = State.init.nestLocal
     
     val (pblk, newCtx) = elab.importFrom(preludeParse.resultBlk)(using initState)
     
     newCtx.nestLocal.givenIn:
-      val elab = Elaborator(etl, wd, newCtx)
+      val elab = Elaborator(etl, new FileImporter(wd, newCtx)(using etl))
       val parsed = mainParse.resultBlk
       val (blk0, _) = elab.importFrom(parsed)
       val resolver = Resolver(rtl)
       resolver.traverseBlock(blk0)(using Resolver.ICtx.empty)
       val blk = new semantics.Term.Blk(
-        semantics.Import(State.runtimeSymbol, runtimeFile.toString) :: semantics.Import(State.termSymbol, termFile.toString) :: blk0.stats,
+        // semantics.Import(State.runtimeSymbol, runtimeFile.toString) :: semantics.Import(State.termSymbol, termFile.toString) :: blk0.stats,
+        semantics.Import(State.runtimeSymbol, runtimeFile.toString) :: blk0.stats,
         blk0.res
       )
       val low = ltl.givenIn:

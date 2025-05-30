@@ -1,0 +1,231 @@
+:js
+
+:silent
+import "fs"
+import "path"
+import "child_process"
+
+import "../../mlscript-compile/Iter.mls"
+import "../../mlscript-compile/Option.mls"
+
+open Option { Some, None }
+
+:silent
+let css_pattern = new RegExp("""<link[^>]*href=["']([^"']+)["'][^>]*rel=["']stylesheet["'][^>]*>""", "gi")
+let script_pattern = new RegExp("""<script[^>]*src=["']([^"']+)["'][^>]*>""", "gi")
+// let import_pattern = new RegExp("""import\s+([\s\S]+?\s+from\s+)?["']([^"']+)["']""", "g")
+let import_pattern = new RegExp("""import\s+([\s\S]+?\s+from\s+)?["']([^"'+]+)["']""", "g")
+let mls_import_pattern = new RegExp("""import\s+["']([^"']+)["']""", "g")
+let dynamic_import_pattern = new RegExp("""import\(["']([^"']+)["']\)""", "g")
+
+// `process.cwd()` is different in `hkmc2AllTests / test` and
+// `~hkmc2DiffTests / Test / run`. This is a workaround to make the path.
+fun projectRoot =
+  let cwd = process.cwd()
+  let suffix = "hkmc2" + path.sep + "shared"
+  if cwd.endsWith(suffix) then cwd else path.join(cwd, suffix)
+
+fun fileContent(filePath) = fs.readFileSync(filePath, "utf8")
+
+fun scripts(html) =
+  let matches = []
+  let match
+  while
+    let match = script_pattern.exec(html)
+    (match is null) is false do
+      matches.push(match.(1).trim())
+  matches
+
+fun stylesheets(html) =
+  let matches = []
+  let match
+  while
+    let match = css_pattern.exec(html)
+    (match is null) is false do
+      matches.push(match.(1).trim())
+  matches
+
+fun imports(js) =
+  let matches = []
+  while
+    let match = import_pattern.exec(js)
+    (match is null) is false do
+      matches.push(match.(2).trim())
+  while
+    let match = dynamic_import_pattern.exec(js)
+    (match is null) is false do
+      matches.push(match.(1).trim())
+  matches
+
+class File(val absPath: Str) with
+  
+  val content = fileContent of absPath
+  
+  fun debugName = path.relative of projectRoot, absPath
+  
+  fun flattenImports =
+    let pass1 = content.replaceAll of import_pattern, (...matches) => mkStr of
+      "import ", matches.(1), "\"./", (path.basename of matches.(2)), "\""
+    let pass2 = pass1.replaceAll of dynamic_import_pattern, (...matches) => mkStr of
+      "import(\"./", (path.basename of matches.(1)), "\")"
+    pass2
+    
+  fun companionMlsFile =
+    let mlsAbsPath = absPath.replaceAll of ".mjs", ".mls"
+    if fs.existsSync(mlsAbsPath) then
+      Some of tuple of
+        path.basename(mlsAbsPath)
+        fileContent(mlsAbsPath).replaceAll of
+          mls_import_pattern
+          (...matches) => mkStr of
+            "import ", "\"./", (path.basename of matches.(1)), "\""
+    else None
+
+fun build(htmlPath, outputPath, git) =
+  fun absolute(basePath)(relPath, ...whatever) =
+    path.resolve of path.dirname(basePath), relPath
+  
+  let html = fileContent of htmlPath
+  let fileQueue = (scripts of html)
+    Iter.mapping of absolute(htmlPath)
+    Iter.mapping of File
+    Iter.toArray()
+  let visitedPaths = new Map of fileQueue.map of
+    (file, _, _) => [file.absPath, file]
+  
+  while fileQueue.length > 0 do
+    let file = fileQueue.pop()
+    
+    print of "Processing " + file.debugName
+    
+    let files = (imports of file.content)
+      Iter.mapping of absolute(file.absPath)
+      Iter.filtering of path => visitedPaths.has(path) is false
+      Iter.mapping(File)
+      Iter.toArray()
+    
+    files Iter.each of file => visitedPaths.set(file.absPath, file)
+    fileQueue.push of ...files
+  
+  print of "Collected " + visitedPaths.size + " files"
+  
+  if outputPath is Some(outputPath) do ...
+  
+  // Clean the output directory.
+  // let options = Object.create of null
+  // set options.("recursive") = true
+  // set options.("force") = true
+  // fs.rmSync of outputPath, options
+  // fs.mkdirSync of outputPath, options
+  
+  // Delete .mls, .mjs, .css, .html files in the directory.
+  // Files are flattened, so no need to go recursively.
+  let existingFiles = fs.readdirSync(outputPath)
+  print of "There are " + existingFiles.length + " files in the output folder."
+  existingFiles
+    Iter.filtering of fileName =>
+      if (path.extname of fileName) ==
+        ".mls" then true
+        ".mjs" then true
+        ".css" then true
+        ".html" then true
+        else false
+    Iter.each of fileName =>
+      let filePath = path.join(outputPath, fileName)
+      print of "Removing " + fileName
+      fs.unlinkSync(filePath)
+  
+  // Write the html to the output directory.
+  fs.writeFileSync of
+    path.join of outputPath, path.basename of htmlPath
+    html
+  
+  // Write the CSS files to the output directory.
+  (stylesheets of html)
+    Iter.filtering of fileName => not of fileName.startsWith("http")
+    Iter.each of fileName =>
+      let content = fileContent of path.join of absolute(htmlPath) of fileName
+      fs.writeFileSync of
+        path.join of outputPath, fileName
+        content
+  
+  // Write files to the output directory and flatten the import paths.
+  visitedPaths.values() Iter.each of file =>
+    let jsFileName = path.basename of file.absPath
+    fs.writeFileSync of path.join(outputPath, jsFileName), file.flattenImports
+    // Write the .mls file if it exists.
+    // if file.companionMlsFile is Some([fileName, content]) do
+    //   fs.writeFileSync of path.join(outputPath, fileName), content
+  
+  // if git is Some([remoteUrl, username, email]) do
+    
+  //   let options' = Object.create of null
+  //   set options'.("cwd") = outputPath
+  //   set options'.("stdio") = "inherit"
+    
+  //   fun run(command) = child_process.execSync(command, options')
+    
+  //   // Create a git repo
+  //   run of "git init"
+    
+  //   // Add remote
+  //   run of "git remote add origin " + remoteUrl
+    
+  //   // Configure user
+  //   run of "git config user.name \"" + username + "\""
+  //   run of "git config user.email \"" + email + "\""
+    
+  //   // Stage, commit, push
+  //   run of "git add ."
+  //   run of "git commit -m \"Add files via upload\" --no-sign"
+  //   run of "git push --force -u origin main"
+  
+  //   // Clean up the directory after the push.
+  //   fs.rmSync of outputPath, options
+  
+  ()
+
+build of
+  path.join of projectRoot, "src", "test", "mlscript-compile", "apps", "bbml-web-demo", "index.html"
+  // - - - - -
+  // Be careful with the output path! Everything in it will be purged.
+  // The path here is just an example. Do not output to the test folder because
+  // it will trigger the test.
+  Some of path.resolve of projectRoot, "..", "..", "..", "..", "780"
+  // - - - - -
+  // Some of tuple of
+  //   "" // Remote URL
+  //   "" // Username
+  //   "" // Email
+  None
+//│ > Processing src/test/mlscript-compile/apps/bbml-web-demo/main.mjs
+//│ > Processing ../js/target/scala-3.6.1/hkmc2-fastopt/MLscript.mjs
+//│ > Processing src/test/mlscript-compile/apps/bbml-web-demo/Examples.mjs
+//│ > Processing src/test/mlscript-compile/MutMap.mjs
+//│ > Processing src/test/mlscript-compile/Predef.mjs
+//│ > Processing src/test/mlscript-compile/Rendering.mjs
+//│ > Processing src/test/mlscript-compile/Runtime.mjs
+//│ > Processing src/test/mlscript-compile/RuntimeJS.mjs
+//│ > Processing src/test/mlscript-compile/Option.mjs
+//│ > Processing src/test/mlscript-compile/XML.mjs
+//│ > Processing src/test/mlscript-compile/Iter.mjs
+//│ > Processing src/test/mlscript-compile/Stack.mjs
+//│ > Processing src/test/mlscript-compile/Str.mjs
+//│ > Processing src/test/mlscript-compile/Runtime.mjs
+//│ > Collected 13 files
+//│ > There are 17 files in the output folder.
+//│ > Removing Examples.mjs
+//│ > Removing Iter.mjs
+//│ > Removing MLscript.mjs
+//│ > Removing MutMap.mjs
+//│ > Removing Option.mjs
+//│ > Removing Predef.mjs
+//│ > Removing Rendering.mjs
+//│ > Removing Runtime.mjs
+//│ > Removing RuntimeJS.mjs
+//│ > Removing Stack.mjs
+//│ > Removing Str.mjs
+//│ > Removing XML.mjs
+//│ > Removing index.html
+//│ > Removing main.css
+//│ > Removing main.mjs

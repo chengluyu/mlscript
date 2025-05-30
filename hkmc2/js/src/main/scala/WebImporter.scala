@@ -1,3 +1,788 @@
+package hkmc2
+
+import mlscript.utils.*, shorthands.*
+import semantics.{Import, Importer}
+import collection.mutable.Map as MutMap
+import semantics.Elaborator.{Ctx, Mode, State}
+import hkmc2.Message.MessageContext
+import utils.TL
+
+class WebImporter(using tl: TL)(using State, Raise) extends Importer:
+  import WebImporter.*
+  
+  val prelude = Ctx.empty
+  
+  def importPath(path: Str): Import =
+    import syntax.*, semantics.*
+    
+    val file = path
+    val baseName =
+      val i = path.lastIndexOf('/')
+      if i >= 0 then path.drop(i + 1) else path
+    val ext =
+      val i = baseName.lastIndexOf('.')
+      if i >= 0 then baseName.drop(i + 1) else ""
+    val id = new syntax.Tree.Ident(baseName) // TODO loc
+    
+    lazy val sym = TermSymbol(LetBind, N, id)
+    
+    if path.startsWith(".") || path.startsWith("/") then // leave alone imports like "fs"
+      // log(s"importing $file")
+      
+      val nme = baseName
+      val id = new syntax.Tree.Ident(nme) // TODO loc
+      
+      ext match
+      
+      case "mjs" | "js" =>
+        Import(sym, file.toString) // TODO: fill in the js file
+        
+      case "mls" =>
+        
+        fileNameSourceMap.get(baseName) match
+          case Some(block -> optMjsFile) =>
+            val fph = new FastParseHelpers(block)
+            val origin = Origin(file.toString, 0, fph)
+            
+            val sym = tl.trace(s">>> Importing $file"):
+              
+              // TODO add parser option to omit internal impls
+              
+              val lexer = new syntax.Lexer(origin, dbg = tl.doTrace)
+              val tokens = lexer.bracketedTokens
+              val rules = syntax.ParseRules()
+              val p = new syntax.Parser(origin, tokens, rules, raise, dbg = tl.doTrace):
+                def doPrintDbg(msg: => Str): Unit =
+                  // if dbg then output(msg)
+                  if dbg then tl.log(msg)
+              val res = p.parseAll(p.block(allowNewlines = true))
+              val resBlk = new syntax.Tree.Block(res)
+              
+              given Elaborator.Ctx = prelude.copy(mode = Mode.Light).nestLocal
+              val elab = Elaborator(tl, this)
+              elab.importFrom(resBlk)
+              
+              resBlk.definedSymbols.find(_._1 === nme) match
+              case Some(nme -> sym) => sym
+              case None => lastWords(s"File $file does not define a symbol named $nme")
+            
+            Import(sym, "")
+          case None =>
+            raise(ErrorReport(msg"Source file $file not found" -> N :: Nil))
+            Import(sym, "")
+        
+      case _ =>
+        raise(ErrorReport(msg"Unsupported file extension: ${ext}" -> N :: Nil))
+        Import(sym, "")
+      
+    else
+      Import(sym, path)
+
+object WebImporter:
+  val fileNameSourceMap: MutMap[Str, (Str, Opt[Str])] = MutMap.empty
+  
+  fileNameSourceMap += "Rendering.mls" -> ("""
+module Rendering with ...
+
+
+fun pass1(f)(...xs) = f(xs.0)
+fun pass2(f)(...xs) = f(xs.0, xs.1)
+fun pass3(f)(...xs) = f(xs.0, xs.1, xs.2)
+
+fun passing(f, ...args) = f.bind(null, ...args)
+
+fun map(f)(...xs) = xs.map(pass1(f))
+
+fun fold(f)(init, ...rest) =
+  let
+    i = 0
+    len = rest.length
+  while i < len do
+    set
+      init = f(init, rest.at(i))
+      i += 1
+  init
+
+fun interleave(sep)(...args) =
+  if args.length === 0 then [] else...
+  let
+    res = Array of args.length * 2 - 1
+    len = args.length
+    i = 0
+  while i < len do
+    let idx = i * 2
+    set
+      res.[idx] = args.[i]
+      i += 1
+    if i < len do set res.[idx + 1] = sep
+  res
+
+fun render(arg) = if
+  arg is
+    undefined then "undefined"
+    null      then "null"
+    Array     then fold(+)("[", ...interleave(", ")(...map(render)(...arg)), "]")
+    Str       then JSON.stringify(arg)
+    Set       then fold(+)("Set{", ...interleave(", ")(...map(render)(...arg)), "}")
+    Map       then fold(+)("Map{", ...interleave(", ")(...map(render)(...arg)), "}")
+    Function  and
+      let p = Object.getOwnPropertyDescriptor(arg, "prototype")
+      (p is Object and p.("writable")) || (p is undefined) then
+        "[function" + (if arg.name is
+          ""  then ""
+          nme then " " + nme
+        ) + "]"
+    Object then
+      if arg.constructor.name is "Object"
+      then
+        let es = Object.entries(arg)
+        fold(+)("{", ...interleave(", ")(...map(case [k, v] then k + ": " + render(v))(...es)), "}")
+      else String(arg)
+  let ts = arg.("toString") // not accessing as `arg.toString` to avoid the sanity check
+  ts is undefined then "[" + typeof(arg) + "]"
+  else ts.call(arg)
+""" -> S("""
+import runtime from "./Runtime.mjs";
+let Rendering1;
+(class Rendering {
+  static {
+    Rendering1 = Rendering;
+  }
+  static pass1(f) {
+    return (...xs) => {
+      return runtime.safeCall(f(xs[0]))
+    }
+  } 
+  static pass2(f1) {
+    return (...xs) => {
+      return runtime.safeCall(f1(xs[0], xs[1]))
+    }
+  } 
+  static pass3(f2) {
+    return (...xs) => {
+      return runtime.safeCall(f2(xs[0], xs[1], xs[2]))
+    }
+  } 
+  static passing(f3, ...args) {
+    return f3.bind(null, ...args)
+  } 
+  static map(f4) {
+    return (...xs) => {
+      let tmp;
+      tmp = Rendering.pass1(f4);
+      return runtime.safeCall(xs.map(tmp))
+    }
+  } 
+  static fold(f5) {
+    return (init, ...rest) => {
+      let i, len, scrut, tmp, tmp1, tmp2, tmp3;
+      i = 0;
+      len = rest.length;
+      tmp4: while (true) {
+        scrut = i < len;
+        if (scrut === true) {
+          tmp = runtime.safeCall(rest.at(i));
+          tmp1 = runtime.safeCall(f5(init, tmp));
+          init = tmp1;
+          tmp2 = i + 1;
+          i = tmp2;
+          tmp3 = runtime.Unit;
+          continue tmp4;
+        } else {
+          tmp3 = runtime.Unit;
+        }
+        break;
+      }
+      return init
+    }
+  } 
+  static interleave(sep) {
+    return (...args1) => {
+      let res, len, i, scrut, idx, scrut1, scrut2, tmp, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+      scrut2 = args1.length === 0;
+      if (scrut2 === true) {
+        return []
+      } else {
+        tmp = args1.length * 2;
+        tmp1 = tmp - 1;
+        tmp2 = globalThis.Array(tmp1);
+        res = tmp2;
+        len = args1.length;
+        i = 0;
+        tmp8: while (true) {
+          scrut = i < len;
+          if (scrut === true) {
+            tmp3 = i * 2;
+            idx = tmp3;
+            res[idx] = args1[i];
+            tmp4 = i + 1;
+            i = tmp4;
+            scrut1 = i < len;
+            if (scrut1 === true) {
+              tmp5 = idx + 1;
+              res[tmp5] = sep;
+              tmp6 = runtime.Unit;
+            } else {
+              tmp6 = runtime.Unit;
+            }
+            tmp7 = tmp6;
+            continue tmp8;
+          } else {
+            tmp7 = runtime.Unit;
+          }
+          break;
+        }
+        return res
+      }
+    }
+  } 
+  static render(arg) {
+    let ts, scrut, es, p, scrut1, scrut2, scrut3, nme, tmp, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26, tmp27, tmp28, tmp29, tmp30, tmp31, tmp32, tmp33, tmp34, tmp35, tmp36, lambda, lambda1, lambda2, lambda3, lambda4, lambda5, lambda6;
+    if (arg === undefined) {
+      return "undefined"
+    } else if (arg === null) {
+      return "null"
+    } else if (arg instanceof globalThis.Array) {
+      lambda = (undefined, function (arg1, arg2) {
+        return arg1 + arg2
+      });
+      tmp = Rendering.fold(lambda);
+      tmp1 = Rendering.interleave(", ");
+      tmp2 = Rendering.map(Rendering.render);
+      tmp3 = runtime.safeCall(tmp2(...arg));
+      tmp4 = runtime.safeCall(tmp1(...tmp3));
+      return runtime.safeCall(tmp("[", ...tmp4, "]"))
+    } else if (typeof arg === 'string') {
+      return runtime.safeCall(globalThis.JSON.stringify(arg))
+    } else if (arg instanceof globalThis.Set) {
+      lambda1 = (undefined, function (arg1, arg2) {
+        return arg1 + arg2
+      });
+      tmp5 = Rendering.fold(lambda1);
+      tmp6 = Rendering.interleave(", ");
+      tmp7 = Rendering.map(Rendering.render);
+      tmp8 = runtime.safeCall(tmp7(...arg));
+      tmp9 = runtime.safeCall(tmp6(...tmp8));
+      return runtime.safeCall(tmp5("Set{", ...tmp9, "}"))
+    } else if (arg instanceof globalThis.Map) {
+      lambda2 = (undefined, function (arg1, arg2) {
+        return arg1 + arg2
+      });
+      tmp10 = Rendering.fold(lambda2);
+      tmp11 = Rendering.interleave(", ");
+      tmp12 = Rendering.map(Rendering.render);
+      tmp13 = runtime.safeCall(tmp12(...arg));
+      tmp14 = runtime.safeCall(tmp11(...tmp13));
+      return runtime.safeCall(tmp10("Map{", ...tmp14, "}"))
+    } else if (arg instanceof globalThis.Function) {
+      p = globalThis.Object.getOwnPropertyDescriptor(arg, "prototype");
+      if (p instanceof globalThis.Object) {
+        scrut1 = p["writable"];
+        if (scrut1 === true) {
+          tmp15 = true;
+        } else {
+          tmp15 = false;
+        }
+      } else {
+        tmp15 = false;
+      }
+      if (p === undefined) {
+        tmp16 = true;
+      } else {
+        tmp16 = false;
+      }
+      scrut2 = tmp15 || tmp16;
+      if (scrut2 === true) {
+        scrut3 = arg.name;
+        if (scrut3 === "") {
+          tmp17 = "";
+        } else {
+          nme = scrut3;
+          tmp17 = " " + nme;
+        }
+        tmp18 = "[function" + tmp17;
+        return tmp18 + "]"
+      } else {
+        if (arg instanceof globalThis.Object) {
+          scrut = arg.constructor.name;
+          if (scrut === "Object") {
+            tmp19 = runtime.safeCall(globalThis.Object.entries(arg));
+            es = tmp19;
+            lambda3 = (undefined, function (arg1, arg2) {
+              return arg1 + arg2
+            });
+            tmp20 = Rendering.fold(lambda3);
+            tmp21 = Rendering.interleave(", ");
+            lambda4 = (undefined, function (caseScrut) {
+              let first1, first0, k, v, tmp37, tmp38;
+              if (globalThis.Array.isArray(caseScrut) && caseScrut.length === 2) {
+                first0 = caseScrut[0];
+                first1 = caseScrut[1];
+                k = first0;
+                v = first1;
+                tmp37 = k + ": ";
+                tmp38 = Rendering.render(v);
+                return tmp37 + tmp38
+              } else {
+                throw new globalThis.Error("match error");
+              }
+            });
+            tmp22 = lambda4;
+            tmp23 = Rendering.map(tmp22);
+            tmp24 = runtime.safeCall(tmp23(...es));
+            tmp25 = runtime.safeCall(tmp21(...tmp24));
+            return runtime.safeCall(tmp20("{", ...tmp25, "}"))
+          } else {
+            return globalThis.String(arg)
+          }
+        } else {
+          ts = arg["toString"];
+          if (ts === undefined) {
+            tmp26 = typeof arg;
+            tmp27 = "[" + tmp26;
+            return tmp27 + "]"
+          } else {
+            return runtime.safeCall(ts.call(arg))
+          }
+        }
+      }
+    } else if (arg instanceof globalThis.Object) {
+      scrut = arg.constructor.name;
+      if (scrut === "Object") {
+        tmp28 = runtime.safeCall(globalThis.Object.entries(arg));
+        es = tmp28;
+        lambda5 = (undefined, function (arg1, arg2) {
+          return arg1 + arg2
+        });
+        tmp29 = Rendering.fold(lambda5);
+        tmp30 = Rendering.interleave(", ");
+        lambda6 = (undefined, function (caseScrut) {
+          let first1, first0, k, v, tmp37, tmp38;
+          if (globalThis.Array.isArray(caseScrut) && caseScrut.length === 2) {
+            first0 = caseScrut[0];
+            first1 = caseScrut[1];
+            k = first0;
+            v = first1;
+            tmp37 = k + ": ";
+            tmp38 = Rendering.render(v);
+            return tmp37 + tmp38
+          } else {
+            throw new globalThis.Error("match error");
+          }
+        });
+        tmp31 = lambda6;
+        tmp32 = Rendering.map(tmp31);
+        tmp33 = runtime.safeCall(tmp32(...es));
+        tmp34 = runtime.safeCall(tmp30(...tmp33));
+        return runtime.safeCall(tmp29("{", ...tmp34, "}"))
+      } else {
+        return globalThis.String(arg)
+      }
+    } else {
+      ts = arg["toString"];
+      if (ts === undefined) {
+        tmp35 = typeof arg;
+        tmp36 = "[" + tmp35;
+        return tmp36 + "]"
+      } else {
+        return runtime.safeCall(ts.call(arg))
+      }
+    }
+  }
+  static toString() { return "Rendering"; }
+});
+let Rendering = Rendering1; export default Rendering;
+"""))
+  
+  fileNameSourceMap += "Runtime.mls" -> ("""
+import "./RuntimeJS.mjs"
+import "./Rendering.mls"
+
+
+module Runtime with ...
+
+
+object Unit with
+  fun toString() = "()"
+
+
+fun unreachable = throw Error("unreachable")
+
+fun checkArgs(functionName, expected, isUB, got) =
+  if got < expected || isUB && got > expected do
+    let name = if functionName.length > 0 then " '" + functionName + "'" else ""
+    // throw globalThis.Error("Function" + name + " expected "
+    //   + (if isUB then "" else "at least ")
+    //   + expected
+    //   + " argument(s) but got " + got)
+    throw Error of "Function" + name + " expected "
+      + (if isUB then "" else "at least " )
+      + expected + " argument"
+      + (if expected === 1 then "" else "s")
+      + " but got " + got
+
+fun safeCall(x) =
+  if x is undefined then Unit else x
+
+fun checkCall(x) =
+  if x is undefined
+  then throw Error("MLscript call unexpectedly returned `undefined`, the forbidden value.")
+  else x
+
+fun deboundMethod(mtdName, clsName) =
+  throw Error of
+    "[debinding error] Method '" + mtdName + "' of class '" + clsName + "' was accessed without being called."
+
+
+val try_catch = RuntimeJS.try_catch
+
+class EffectHandle(_reified) with
+  val reified = _reified
+  fun resumeWith(value) =
+    Runtime.try(() => resume(reified.contTrace)(value))
+  fun raise() =
+    topLevelEffect(reified, false)
+
+fun try(f) =
+  let res = f()
+  if res is EffectSig then EffectHandle(res) else res
+
+
+// For `pattern` definitions
+data class MatchResult(captures)
+data class MatchFailure(errors)
+
+// For pattern matching on tuples
+module Tuple with
+  fun slice(xs, i, j) =
+    // * This is more robust than `xs.slice(i, xs.length - j)`
+    // * as it is not affected by users redefining `slice`
+    globalThis.Array.prototype.slice.call(xs, i, xs.length - j)
+
+  fun get(xs, i) =
+    // * Contrary to `xs.[i]`, this supports negative indices (Python-style)
+    if i >= xs.length then
+      throw RangeError("Tuple.get: index out of bounds")
+    else globalThis.Array.prototype.at.call(xs, i)
+
+module Str with
+  fun startsWith(string, prefix) = string.startsWith(prefix)
+
+  fun get(string, i) =
+    if i >= string.length then
+      throw RangeError("Str.get: index out of bounds")
+    else string.at(i)
+
+  fun drop(string, n) = string.slice(n)
+
+// Re-export rendering functions
+val render = Rendering.render
+
+fun printRaw(x) = console.log(render(x))
+
+// TraceLogger
+
+module TraceLogger with
+  mut val enabled = false
+  mut val indentLvl = 0
+  fun indent() =
+    if enabled then
+      let prev = indentLvl
+      set indentLvl = prev + 1
+      prev
+    else ()
+  fun resetIndent(n) =
+    if enabled then
+      set indentLvl = n
+    else ()
+  fun log(msg) =
+    if enabled then
+      console.log("| ".repeat(indentLvl) + msg.replaceAll("\n", "\n" + "  ".repeat(indentLvl)))
+    else ()
+
+// Private definitions for algebraic effects
+
+object FatalEffect
+object PrintStackEffect
+
+data abstract class FunctionContFrame(next) with
+  fun resume(value)
+data class HandlerContFrame(next, nextHandler, handler)
+
+data class ContTrace(next, last, nextHandler, lastHandler, resumed)
+data class EffectSig(contTrace, handler, handlerFun)
+
+class NonLocalReturn with
+  fun ret(value)
+
+data class FnLocalsInfo(fnName, locals)
+data class LocalVarInfo(localName, value)
+
+
+fun raisePrintStackEffect(showLocals) =
+  mkEffect(PrintStackEffect, showLocals)
+
+fun topLevelEffect(tr, debug) =
+  while tr.handler === PrintStackEffect do
+    console.log(showStackTrace("Stack Trace:", tr, debug, tr.handlerFun))
+    set tr = resume(tr.contTrace)(())
+  if tr is EffectSig then
+    throw showStackTrace("Error: Unhandled effect " + tr.handler.constructor.name, tr, debug, false)
+  else
+    tr
+
+fun showStackTrace(header, tr, debug, showLocals) =
+  let
+    msg = header
+    curHandler = tr.contTrace
+    atTail = true
+  if debug do
+    while curHandler !== null do
+      let cur = curHandler.next
+      while cur !== null do
+        let locals = cur.getLocals
+        let curLocals = locals.at(locals.length - 1)
+        let loc = cur.getLoc
+        let loc = if loc is null then "pc=" + cur.pc else loc
+        let localsMsg = if showLocals and curLocals.locals.length > 0 then
+          " with locals: " + curLocals.locals.map(l => l.localName + "=" + Rendering.render(l.value)).join(", ")
+        else
+          ""
+        set
+          msg += "\n\tat " + curLocals.fnName + " (" + loc + ")"
+          msg += localsMsg
+          cur = cur.next
+          atTail = false
+      set curHandler = curHandler.nextHandler
+      if curHandler !== null do
+        set
+          msg += "\n\twith handler " + curHandler.handler.constructor.name
+          atTail = false
+    if atTail do
+      set msg += "\n\tat tail position"
+  msg
+
+fun showFunctionContChain(cont, hl, vis, reps) =
+  if cont is FunctionContFrame then
+    let result = cont.constructor.name + "(pc=" + cont.pc
+    hl.forEach((m, marker) => if m.has(cont) do set result += ", " + marker)
+    if vis.has(cont) then
+      set reps = reps + 1
+      if reps > 10 do
+        throw Error("10 repeated continuation frame (loop?)")
+      set result += ", REPEAT"
+    else
+      vis.add(cont)
+    result + ") -> " + showFunctionContChain(cont.next, hl, vis, reps)
+  else if cont === null then
+    "(null)"
+  else
+    "(NOT CONT)"
+
+fun showHandlerContChain(cont, hl, vis, reps) =
+  if cont is HandlerContFrame then
+    let result = cont.handler.constructor.name
+    hl.forEach((m, marker) => if m.has(cont) do set result += ", " + marker)
+    if vis.has(cont) then
+      set reps = reps + 1
+      if reps > 10 do
+        throw Error("10 repeated continuation frame (loop?)")
+      set result += ", REPEAT"
+    else
+      vis.add(cont)
+    result + " -> " + showFunctionContChain(cont.next, hl, vis, reps)
+  else if cont === null then
+    "(null)"
+  else
+    "(NOT HANDLER CONT)"
+
+fun debugCont(cont) = console.log(showFunctionContChain(cont, new Map(), new Set(), 0))
+fun debugHandler(cont) = console.log(showHandlerContChain(cont, new Map(), new Set(), 0))
+
+fun debugContTrace(contTrace) =
+  if contTrace is ContTrace then
+    console.log("resumed: ", contTrace.resumed)
+    if contTrace.last === contTrace do
+      console.log("<last is self>")
+    if contTrace.lastHandler === contTrace do
+      console.log("<lastHandler is self>")
+    let vis = new Set()
+    let hl = new Map()
+    hl.set("last", new Set([contTrace.last]))
+    hl.set("last-handler", new Set([contTrace.lastHandler]))
+    console.log(showFunctionContChain(contTrace.next, hl, vis, 0))
+    let cur = contTrace.nextHandler
+    while cur !== null do
+      console.log(showHandlerContChain(cur, hl, vis, 0))
+      set cur = cur.nextHandler
+    console.log()
+  else
+    console.log("Not a cont trace:")
+    console.log(contTrace)
+
+fun debugEff(eff) =
+  if eff is EffectSig then
+    console.log("Debug EffectSig:")
+    console.log("handler: ", eff.handler.constructor.name)
+    console.log("handlerFun: ", eff.handlerFun)
+    debugContTrace(eff.contTrace)
+  else
+    console.log("Not an effect:")
+    console.log(eff)
+
+// runtime implementations
+fun mkEffect(handler, handlerFun) =
+  let res = new EffectSig(new ContTrace(null, null, null, null, false), handler, handlerFun)
+  set
+    res.contTrace.last = res.contTrace
+    res.contTrace.lastHandler = res.contTrace
+  res
+
+fun handleBlockImpl(cur, handler) =
+  let handlerFrame = new HandlerContFrame(null, null, handler)
+  set
+    cur.contTrace.lastHandler.nextHandler = handlerFrame
+    cur.contTrace.lastHandler = handlerFrame
+    cur.contTrace.last = handlerFrame
+  handleEffects(cur)
+
+fun enterHandleBlock(handler, body) =
+  let cur = body()
+  if cur is EffectSig then
+    handleBlockImpl(cur, handler)
+  else
+    cur
+
+fun handleEffects(cur) =
+  while cur is
+    EffectSig then
+      let nxt = handleEffect(cur)
+      if cur === nxt then
+        return cur
+      else
+        set cur = nxt
+    else
+      return cur
+
+// return either new effect, final result or the same continuation if there is no handler
+fun handleEffect(cur) =
+  // debugEff(cur)
+  // find the handle block corresponding to the current effect
+  let prevHandlerFrame = cur.contTrace
+  while prevHandlerFrame.nextHandler !== null and prevHandlerFrame.nextHandler.handler !== cur.handler do
+    set prevHandlerFrame = prevHandlerFrame.nextHandler
+
+  // no matching handle block
+  if prevHandlerFrame.nextHandler === null do
+    return cur
+
+  // the matching handle block
+  let handlerFrame = prevHandlerFrame.nextHandler
+
+  // unlink and save frames
+  let saved = new ContTrace(
+    handlerFrame.next,
+    cur.contTrace.last,
+    handlerFrame.nextHandler,
+    cur.contTrace.lastHandler,
+    false
+  )
+  set
+    cur.contTrace.last = handlerFrame
+    cur.contTrace.lastHandler = handlerFrame
+    handlerFrame.next = null
+    handlerFrame.nextHandler = null
+
+  // handle the effect
+  set cur = cur.handlerFun(resume(cur.contTrace))
+  if cur is EffectSig then
+    // relink the saved frames
+    if saved.next !== null do
+      set
+        cur.contTrace.last.next = saved.next
+        cur.contTrace.last = saved.last
+    if saved.nextHandler !== null do
+      set
+        cur.contTrace.lastHandler.nextHandler = saved.nextHandler
+        cur.contTrace.lastHandler = saved.lastHandler
+    cur
+  else
+    // resume the unlinked handle blocks
+    resumeContTrace(saved, cur)
+
+fun resume(contTrace)(value) =
+  if contTrace.resumed do
+    throw Error("Multiple resumption")
+  set contTrace.resumed = true
+  handleEffects(resumeContTrace(contTrace, value))
+
+fun resumeContTrace(contTrace, value) =
+  let cont = contTrace.next
+  let handlerCont = contTrace.nextHandler
+  while
+    cont is FunctionContFrame then
+      set value = cont.resume(value)
+      if value is EffectSig then
+        set
+          value.contTrace.last.next = cont.next
+          value.contTrace.lastHandler.nextHandler = handlerCont
+        if contTrace.last !== cont do
+          set value.contTrace.last = contTrace.last
+        if handlerCont !== null do
+          set value.contTrace.lastHandler = contTrace.lastHandler
+        return value
+      else
+        set cont = cont.next
+    handlerCont is HandlerContFrame then
+      set cont = handlerCont.next
+      set handlerCont = handlerCont.nextHandler
+    else
+      return value
+
+// stack safety
+mut val stackLimit = 0 // How deep the stack can go before heapifying the stack
+mut val stackDepth = 0 // Tracks the virtual + real stack depth
+mut val stackOffset = 0 // How much to offset stackDepth by to get the true stack depth (i.e. the virtual depth)
+mut val stackHandler = null
+mut val stackResume = null
+
+object StackDelayHandler with
+  fun delay() = mkEffect of this, k =>
+    set stackResume = k
+
+fun checkDepth() =
+  if stackDepth - stackOffset >= stackLimit && stackHandler !== null then
+    // this is a tail call to effectful function
+    stackHandler.delay()
+  else
+    ()
+
+fun resetDepth(tmp, curDepth) =
+  set stackDepth = curDepth
+  if curDepth < stackOffset do
+    set stackOffset = curDepth
+  tmp
+
+fun runStackSafe(limit, f) =
+  set
+    stackLimit = limit
+    stackDepth = 1
+    stackOffset = 0
+    stackHandler = StackDelayHandler
+  let result = enterHandleBlock(StackDelayHandler, f)
+  while stackResume !== null do
+    let saved = stackResume
+    set
+      stackResume = null
+      stackOffset = stackDepth
+      result = saved()
+  set
+    stackLimit = 0
+    stackDepth = 0
+    stackOffset = 0
+    stackHandler = null
+  result
+""" -> S("""
 import runtime from "./Runtime.mjs";
 import RuntimeJS from "./RuntimeJS.mjs";
 import Rendering from "./Rendering.mjs";
@@ -832,3 +1617,4 @@ let Runtime1;
   static toString() { return "Runtime"; }
 });
 let Runtime = Runtime1; export default Runtime;
+"""))

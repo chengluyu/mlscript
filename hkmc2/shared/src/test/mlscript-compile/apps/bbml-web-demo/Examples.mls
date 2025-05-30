@@ -1,0 +1,428 @@
+import "../../MutMap.mls"
+import "../../Predef.mls"
+
+open Predef
+module Examples with...
+
+val examples = MutMap.empty
+
+examples |> MutMap.insert of
+  "ExampleInResponse.mls"
+  name: "Example in Response"
+  source: """
+// * This file contains examples in the author response. A few typos therein are corrected.
+
+
+// Some utility functions:
+
+fun wield: [R] -> (Region[R]) ->{R} ()
+fun freeze: [R, E extends ~R, T] -> (Region[R], () ->{~R & E} T) ->{R | E} T
+// ^ Fixed a typo in the author response (`{~R | E}` should have been `{~R & E}`)
+
+fun (;) seq(_, res) = res
+fun rand: () -> Bool
+fun print: Any -> ()
+
+
+// ### Example 1
+
+
+// Passing the same region for both arguments fundamentally does not work approaches like Rust and Capability Calculus.
+fun foo1(r1, r2) =
+  freeze(r1, () => print("ok"))
+  wield(r2)
+
+// InvalML allows r1 and r2 to alias as long as ‹body› does not use r2; for instance:
+region r in
+  foo1(r, r)
+
+// Capability Calculus and related systems would require r2 to be distinct from r1.
+
+// Note – this also works:
+region r in
+  region s in
+    foo1(r, s)
+
+// Here is a slightly less trivial examples that still type checks seamlessly in InvalML:
+region r0 in
+  
+  fun foo1(r1, r2) =
+    freeze(r1, () => wield(r0))
+    wield(r2)
+  
+  region r in
+    foo1(r, r)
+  
+  region r in
+    region s in
+      foo1(r, s)
+
+
+// On the other hand, given
+fun foo2(r1, r2) =
+  freeze(r1, () => wield(r2))
+  wield(r2)
+
+// we rightfully reject
+// region r in
+//   foo2(r, r)
+
+// but still accept
+region r in
+  region s in
+    foo2(r, s)
+
+
+// ### Example 2
+
+
+fun foo3: [outer, R extends outer] -> Region[R] ->{outer} ()
+fun foo3(r1) =
+  region r2 in
+    freeze(r2, () =>
+      wield(r1)
+    )
+// ^ Fixed typos in the author response (it used the paper's syntax instead of the implementation's syntax)
+
+// In fact, this formally equivalent signature also works:
+fun foo3': [outer] -> Region[outer] ->{outer} ()
+fun foo3'(r1) = foo3(r1)
+
+
+// ### Example 3
+
+
+fun foo4(r1, r2, f) =
+  let exec = freeze(r1, () => freeze(r2, () => f(r1, r2)))
+  let r = exec()
+  !r + 1
+
+region r in
+  region s in
+    foo4(r, s, (x, y) =>
+      if rand() then print("Chose x"); () => x.ref 0
+                else print("Chose y"); () => y.ref 1)
+
+
+// ### Example 4
+
+
+fun foo5(f) =
+  region r in
+    freeze(r, () => f(32))
+
+
+fun freeze2: [R, E extends ~R, T] -> (Region[R], () ->{~R & E} T) ->{R | E} T
+
+fun foo6(f) =
+  region r in
+    freeze(r, () => f(32))
+
+foo6
+"""
+
+examples |> MutMap.insert of
+  "ExampleInThePaper.mls"
+  name: "Example in the Paper"
+  source: """
+// * This file contains examples in the paper
+
+class ArrayList[A, R]
+class List[A]
+class Iter[T, R]
+
+fun mkArrayList : [R, T] -> (Region[R]) ->{R} ArrayList[T, R]
+fun add : [R, T] -> (ArrayList[T, R], T) ->{R} ()
+fun clear : [R, T] -> ArrayList[T, R] ->{R} ()
+fun foreach : [E, R, T] -> (Iter[T, R], T ->{E} ()) -> {R | E} ()
+fun iter : [Res, R, E extends ~R, T] -> (ArrayList[T, R], [I] -> Iter[T, I] ->{I | E} Res) ->{E | R} Res
+fun map: [T, S, E] -> (List[out T], T ->{E} S) ->{E} List[out S]
+
+fun println: Any -> ()
+fun (;) seq(_, res) = res
+
+region r in // This is used to delimit the scope of mutation
+  let xs = mkArrayList(r) // Creates a new mutable list in r egion r
+  add(xs, "1"); add(xs, "2"); add(xs, "3");
+  iter(xs, it => foreach(it , e => println(e)))
+
+// region r in // This is used to delimit the scope of mutation
+//   let xs = mkArrayList(r) // Creates a new mutable list in r egion r
+//   add(xs, "1"); add(xs, "2"); add(xs, "3");
+//   iter(xs, it => foreach(it , e => println (e); clear (xs)))
+
+fun mapi: [A, B, E] -> (List[out A], (Int, A) ->{E} B) ->{E} List[out B]
+fun mapi(xs, f) =
+  region r in
+    let index = r.ref 0 in map(xs, x => let res = f(!index, x) in index := !index + 1; res)
+
+
+fun f: [R1, R2 extends ~R1] -> (Region[R1], Region[R2]) ->{R1 | R2} Int
+
+
+// region r1 in
+//   let g = (r => region r2 in f(r, r2)) in (region r3 in g(r3))
+
+
+region r1 in
+  fun g: [outer, R extends outer] -> Region[R] ->{R} Int
+  fun g(r) = region r2 in f(r, r2)
+  region r3 in g(r3)
+
+
+region r in
+  let a1 = mkArrayList(r) in add(a1, 12); add(a1, 34);
+  iter of a1, it1 =>
+    region s in
+      let a2 = mkArrayList(s)
+      foreach of it1, v1 => add(a2 , v1)
+      iter of a2, it2 => foreach of it2 , v2 => println(v2)
+      clear(a2)
+
+
+// region r in
+//   let a = mkArrayList(r) in add(a, 12); add(a, 34);
+//   iter of a, it =>
+//     foreach of it, v => println(v); clear(a)
+"""
+
+examples |> MutMap.insert of
+  "MergeSort.mls"
+  name: "Merge Sort"
+  source: """
+// *** infrastructures
+
+
+declare class Array[T, R]
+
+
+class Pair[T, S] with
+  constructor
+    Pr(fst: T, snd: S)
+
+
+fun mkArray: [T, R] -> Region[R] ->{R} Array[T, out R]
+fun mkArray(r) = @untyped globalThis.Array()
+
+
+fun push: [T, R] -> (Array[in T, out R], T) ->{R} ()
+fun push(xs, x) = @untyped xs.push(x); ()
+
+
+// push an element to front
+fun unshift: [T, R] -> (Array[in T, out R], T) ->{R} ()
+fun unshift(xs, x) = @untyped xs.unshift(x); ()
+
+
+fun map: [T, S, R, E extends ~R] -> (Array[out T, out R], T ->{E} S) ->{E | R} Array[S, out R]
+fun map(xs, f) = @untyped xs.map(f)
+
+
+fun foreach: [T, R, E extends ~R] -> (Array[out T, out R], T ->{E} ()) ->{E | R} ()
+fun foreach(xs, f) = @untyped xs.forEach(f)
+
+
+fun len: [R] -> Array[in Nothing out Any, out R] ->{R} Int
+fun len(xs) = @untyped xs.length
+
+
+fun at: [T, R] -> (Array[out T, out R], Int) ->{R} T
+fun at(xs, i) = @untyped xs.at(i)
+
+
+fun slice: [T, R] -> (Array[out T, out R], Int) ->{R} Array[out T, out R]
+fun slice(xs, i) = @untyped xs.slice(i)
+
+
+fun concat: [T, R1, R2, R3] -> (Region[R3], Array[in T, out R1], Array[out T, out R2]) ->{R1 | R2 | R3} Array[T, out R3]
+fun concat(r, xs, ys) = @untyped xs.concat(ys)
+
+
+fun freezeArr: [T, R, E extends ~R] -> (Array[in Nothing, out Any], () ->{E} T) ->{E} T
+fun freezeArr(xs, f) = f()
+
+
+// matching on js array is not supported yet.
+fun matchOne(xs, fn, fh) =
+  if len(xs) is 0 then fn(xs)
+  else fh(at(xs, 0), slice(xs, 1))
+
+// fun matchTwo: [T, R, E1, E2, E3, S] -> (Array[out T, out R], Array[out T, out R] ->{E1} S, T ->{E2} S, (T, T, Array[out T, out R]) ->{E3} S) ->{E1 | E2 | E3 | R} S
+fun matchTwo(xs, fn, f1, f2) =
+  if len(xs) is 0 then fn(xs)
+  else if len(xs) is 1 then f1(at(xs, 0))
+  else f2(at(xs, 0), at(xs, 1), slice(xs, 2))
+
+// it should have some primitive effects
+// but we don't support for now
+fun rand: () -> Int
+fun rand() = @untyped globalThis.Math.floor(globalThis.Math.random() * 1000)
+
+
+fun (;) seq(_, res) = res
+
+fun println: Any -> ()
+fun println(x) = @untyped globalThis.console.log(x)
+
+
+// it is not really executed in parallel
+// but it is enough to display the ability of our type system
+fun forkJoin: [T, S, P, E1, E2 extends ~E1, E3] ->
+  (() ->{E1} T, () ->{E2} S, (T, S) ->{E3} P) ->{E1 | E2 | E3} P
+fun forkJoin(f, g, h) =
+  let x = f()
+  let y = g()
+  h(x, y)
+
+
+// *** pmsort implementation
+
+
+fun split(xs, r1, r2) =
+  fun rs(xs, ys, zs) =
+    matchTwo of xs, _ => Pr(ys, zs), x => push(ys, x); Pr(ys, zs), (x1, x2, r) => push(ys, x1); push(zs, x2); rs(r, ys, zs)
+  rs(xs, mkArray(r1), mkArray(r2))
+
+
+// fun merge: [T, R1, R2, R] -> (Array[out T, out R1], Array[out T, out R2], Region[R]) ->{R1 | R2 | R} Array[T, out R]
+fun merge(arr1, arr2, r) =
+  fun recm(xs, ys, acc) =
+    matchOne of xs, _ => concat(r, acc, ys), (x, rx) =>
+      matchOne of ys, _ => concat(r, acc, xs), (y, ry) =>
+        if x < y then push(acc, x); recm(rx, ys, acc)
+        else push(acc, y); recm(xs, ry, acc)
+  recm(arr1, arr2, mkArray(r))
+
+
+fun smsort(xs, r) =
+  matchTwo of xs, _ => mkArray(r), x => let res = mkArray(r) in push(res, x); res, (_, _, _) =>
+    let p = split(xs, r, r) in
+      if p is Pr(fst, snd) then merge(smsort(fst, r), smsort(snd, r), r)
+
+
+// wrong version!
+// fun pmsort: [R1, R2] -> (Array[out Int, out R1], Region[R2]) ->{R1 | R2} Array[Int, out R2]
+// fun pmsort(xs, r) =
+//   matchTwo of xs, _ => mkArray(r), x => let res = mkArray(r) in push(res, x); res, (_, _, _) =>
+//     let p = split(xs, r, r) in
+//       if p is Pr(fst, snd) then
+//         forkJoin(_ => pmsort(fst, r), pmsort(snd, r), (r1, r2) => merge(r1, r2, r))
+
+
+fun pmsort: [R1, R2] -> (Array[out Int, out R1], Region[R2]) ->{R1 | R2} Array[Int, out R2]
+fun pmsort(xs, r) =
+  matchTwo of xs, _ => mkArray(r), x => let res = mkArray(r) in push(res, x); res, (_, _, _) =>
+    region r1 in
+      region r2 in
+        let p = split(xs, r1, r2) in
+          if p is Pr(fst, snd) then
+            forkJoin(() => pmsort(fst, r1), () => pmsort(snd, r2), (rx, ry) => merge(rx, ry, r))
+
+
+// *** simple tests
+
+
+fun randArr(r, n) =
+  if n is 0 then mkArray(r)
+  else
+    let x = rand()
+    let xs = randArr(r, n - 1)
+    push(xs, x)
+    xs
+
+
+region r in
+  let arr = mkArray(r) // you can try: let arr = randArr(r, 10)
+  push(arr, 10)
+  push(arr, 23)
+  push(arr, 13)
+  push(arr, 4)
+  pmsort(arr, r)
+"""
+
+examples |> MutMap.insert of
+  "SimpleConstraintSolver.mls"
+  name: "Simple Constraint Solver"
+  source: """
+// *** infrastructures
+
+class PairOf[A, B] with
+  constructor
+    Pair(fst: A, snd: B)
+
+class Stack[A] with
+  constructor
+    Nil
+    Cons(head: A, tail: Stack[out A])
+
+class ArrayList[A, R]
+class Iter[T, R]
+
+
+fun
+  empty:   [A, R] -> Region[R] ->{R} ArrayList[A, out R]
+  clear:   [A, R] -> (ArrayList[A, out R]) ->{R} ()
+  push:    [A, R] -> (ArrayList[A, out R], A) ->{R} ()
+  foreach: [E, R, T] -> (Iter[T, R], T ->{E} ()) ->{R | E} ()
+  iter: [Res, R, E extends ~R, T] ->
+    (ArrayList[T, out R], [S] -> Iter[T, S] ->{S | E} Res) ->{E | R} Res
+  fold: [Res, R, E extends ~R, T] ->
+    (ArrayList[T, out R], Res, [S] -> (Iter[T, S], Res) ->{S | E} Res) ->{E | R} Res
+  read: [T, S] -> Iter[T, S] ->{S} T
+
+fun error() = error()
+
+
+// *** simple constraint solver
+
+
+class Type[R] with
+  constructor
+    IntType
+    Unif(id: Int, lowerBounds: ArrayList[Type[R], out R], upperBounds: ArrayList[Type[R], out R])
+    Fun(lhs: Type[R], rhs: Type[R])
+
+
+fun solve(lst) = if lst is
+  Nil then ()
+  Cons(c, cs) then if c is
+    Pair(lhs, rhs) then
+      if lhs is
+        IntType then if rhs is
+          IntType then ()
+          Fun(_, _) then error()
+          Unif(id, lbs, ubs) then
+            push(lbs, lhs)
+            let ncs = fold(ubs, cs, (it, lst) => Cons(Pair(lhs, read(it)), lst))
+            solve(ncs)
+        Fun(l1, r1) then if rhs is
+          Fun(l2, r2) then
+            solve(Cons(Pair(l2, l1), Cons(Pair(r1, r2), cs)))
+          IntType then error()
+          Unif(id, lbs, ubs) then
+            push(lbs, lhs)
+            let ncs = fold(ubs, cs, (it, lst) => Cons(Pair(lhs, read(it)), lst))
+            solve(ncs)
+        Unif(id, lbs, ubs) then
+          push(ubs, rhs)
+          let ncs = fold(lbs, cs, (it, lst) => Cons(Pair(read(it), rhs), lst))
+          solve(ncs)
+
+
+
+// *** examples
+
+region r in
+  solve(Cons(Pair(IntType, IntType), Nil))
+
+
+
+region r in
+  solve(Cons(Pair(IntType, Fun(IntType, IntType)), Nil))
+
+
+region r in
+  let v1 = Unif(1, empty(r), empty(r))
+  let v2 = Unif(2, empty(r), empty(r))
+  solve(Cons(Pair(v1, Fun(IntType, v2)), Nil))
+"""
