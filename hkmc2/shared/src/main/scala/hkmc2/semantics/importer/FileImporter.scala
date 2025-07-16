@@ -11,7 +11,7 @@ import utils.TraceLogger
 import utils.path.*, conversion.*
 
 import Elaborator.*
-import hkmc2.syntax.LetBind
+import syntax.{Keyword, LetBind}, syntax.Tree.StrLit
 
 class FileImporter(val prelude: Ctx, val wd: os.Path)
     (using tl: TraceLogger)(using State, Raise) extends Importer:
@@ -80,3 +80,13 @@ class FileImporter(val prelude: Ctx, val wd: os.Path)
       
     else
       Import(sym, path)
+  
+  override def importContent(kw: Keyword, kwLoc: Opt[Loc], path: StrLit): Opt[Term] =
+    import java.nio.file.*
+    var projectRoot = os.Path(Paths.get(".").toAbsolutePath())
+    // The project root path is different in DiffTests and compilation tests.
+    if !os.exists(projectRoot / "build.sbt") then
+      projectRoot = projectRoot / os.up
+    val filePath = projectRoot / os.RelPath(path.value)
+    S(Term.Lit(StrLit(os.read(filePath))))
+    

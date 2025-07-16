@@ -1,0 +1,24 @@
+import "../../MutMap.mls"
+import "../../Predef.mls"
+
+open Predef
+module Examples with...
+
+val examples = MutMap.empty
+
+val diffTestPattern = new RegExp("^(?://\\u2502.*|(?://\\s*)?:.*)$\n", "gm")
+
+fun removeDiffTests(source) =
+  source.replaceAll(diffTestPattern, "").trim()
+
+examples |> MutMap.insert of
+  "Basics.mls"
+  name: "Basics"
+  source: removeDiffTests of
+    import "hkmc2/shared/src/test/mlscript/supremef/Basics.mls"
+
+examples |> MutMap.insert of
+  "Bindings.mls"
+  name: "Bindings"
+  source: removeDiffTests of
+    import "hkmc2/shared/src/test/mlscript/supremef/Bindings.mls"

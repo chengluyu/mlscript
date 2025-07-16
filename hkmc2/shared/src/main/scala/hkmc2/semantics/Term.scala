@@ -352,6 +352,74 @@ sealed trait Statement extends AutoLocated with ProductWithExtraInfo:
       s"type ${sym}${tparams.mkStringOr(", ", "[", "]")} = ${rhs.fold("")(x => x.showDbg)}"
     case Missing => "missing"
     case Summon(ty) => s"use[${ty.showDbg}]"
+  
+  /** Check if the term contains a quoted term, an unquoted term, or a reference
+   *  to `Term` module. The reason I didn't use `subTerms` and `subStatements`
+   *  for traversal is that they consume a considerable amount of time and
+   *  memory, and they fail to terminate on `Rule.mls`. */
+  def hasQuote(using State): Bool =
+    def go(stmt: Statement): Bool = stmt match
+      case ref: Ref => ref.sym === State.termSymbol
+      case Error | _: Lit | _: Builtin | _: UnitVal | Missing => false
+      case App(lhs, rhs) => go(lhs) || go(rhs)
+      case RcdField(lhs, rhs) => go(lhs) || go(rhs)
+      case RcdSpread(bod) => go(bod)
+      case FunTy(lhs, rhs, eff) => go(lhs) || go(rhs) || eff.exists(go)
+      case TyApp(pre, tarsg) => go(pre) || tarsg.exists(go)
+      case Sel(pre, _) => go(pre)
+      case SynthSel(pre, _) => go(pre)
+      case DynSel(o, f, _) => go(o) || go(f)
+      case Tup(fields) => fields.exists(_.subTerms.exists(go))
+      case IfLike(_, body) => body.subTerms.exists(go)
+      case Lam(params, body) => params.params.exists(_.subTerms.exists(go)) || go(body)
+      case Blk(stats, res) => stats.exists(go) || go(res)
+      case Rcd(stats) => stats.exists(go)
+      case Quoted(_) | Unquoted(_) => true
+      case New(cls, argss, rft) =>
+        go(cls) || argss.exists(_.exists(go)) ||
+        rft.exists(_._2.blk.subTerms.exists(go))
+      case SelProj(pre, cls, _) => go(pre) || go(cls)
+      case Asc(term, ty) => go(term) || go(ty)
+      case Ret(res) => go(res)
+      case Throw(res) => go(res)
+      case Forall(_, _, body) => go(body)
+      case WildcardTy(in, out) => in.exists(go) || out.exists(go)
+      case CompType(lhs, rhs, _) => go(lhs) || go(rhs)
+      case LetDecl(sym, annotations) => annotations.flatMap(_.subTerms).exists(go)
+      case DefineVar(sym, rhs) => go(rhs)
+      case Region(_, body) => go(body)
+      case RegRef(reg, value) => go(reg) || go(value)
+      case Assgn(lhs, rhs) => go(lhs) || go(rhs)
+      case SetRef(lhs, rhs) => go(lhs) || go(rhs)
+      case Deref(term) => go(term)
+      case TermDefinition(_, k, _, pss, tps, sign, body, res, _, _, annotations) =>
+        pss.toList.flatMap(_.subTerms).exists(go) ||
+        tps.getOrElse(Nil).flatMap(_.subTerms).exists(go) ||
+        sign.toList.exists(go) ||
+        body.exists(go) ||
+        annotations.flatMap(_.subTerms).exists(go)
+      case cls: ClassDef =>
+        cls.paramsOpt.toList.flatMap(_.subTerms).exists(go) ||
+        go(cls.body.blk) ||
+        cls.annotations.flatMap(_.subTerms).exists(go)
+      case mod: ModuleDef =>
+        mod.paramsOpt.toList.flatMap(_.subTerms).exists(go) ||
+        go(mod.body.blk) ||
+        mod.annotations.flatMap(_.subTerms).exists(go)
+      case td: TypeDef =>
+        td.rhs.toList.exists(go) || td.annotations.flatMap(_.subTerms).exists(go)
+      case pat: PatternDef =>
+        pat.paramsOpt.toList.flatMap(_.subTerms).exists(go) ||
+        go(pat.body.blk) ||
+        pat.annotations.flatMap(_.subTerms).exists(go)
+      case Import(sym, pth) => false
+      case Try(body, finallyDo) => go(body) && go(finallyDo)
+      case Handle(lhs, rhs, args, derivedClsSym, defs, bod) =>
+        go(rhs) || args.exists(go) || defs.flatMap(_.td.subTerms).exists(go) || go(bod)
+      case Neg(e) => go(e)
+      case Annotated(ann, target) => ann.subTerms.exists(go) || go(target)
+      case Summon(ty) => go(ty)
+    go(this)
 
 final case class LetDecl(sym: LocalSymbol, annotations: Ls[Annot]) extends Statement
 

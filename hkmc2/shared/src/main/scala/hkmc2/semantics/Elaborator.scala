@@ -680,6 +680,10 @@ class Elaborator(val tl: TraceLogger, val importer: Importer)
     case TypeDef(k, head, rhs) =>
       raise(ErrorReport(msg"Illegal type declaration in term position." -> tree.toLoc :: Nil))
       Term.Error
+    case Modified(kw @ Keyword.`import`, kwLoc, path: StrLit) =>
+      importer.importContent(kw, kwLoc, path).getOrElse:
+        raise(ErrorReport(msg"Failed to import file content." -> kwLoc :: Nil))
+        Term.Error
     case Modified(kw, kwLoc, body) =>
       raise(ErrorReport(msg"Illegal position for '${kw.name}' modifier." -> kwLoc :: Nil))
       subterm(body)

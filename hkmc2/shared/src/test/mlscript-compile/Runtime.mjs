@@ -1,5 +1,4 @@
 import runtime from "./Runtime.mjs";
-import Term from "./Term.mjs";
 import RuntimeJS from "./RuntimeJS.mjs";
 import Rendering from "./Rendering.mjs";
 let Runtime1;

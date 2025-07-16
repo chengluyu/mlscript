@@ -65,94 +65,91 @@ object Main:
   
   private val importer = new semantics.importer.DummyImporter
   
+  @JSExport
+  def clear(): Unit = traces.clear(); diagnostics.clear()
+  
   /** Access the compiler using `MLscript.compile` in JavaScript. */
   @JSExport
-  def compile(source: String, options: js.Dynamic): js.Dynamic = {
+  def compile(blocks: js.Array[js.Tuple2[Int, Str]], options: js.Dynamic): js.Dynamic =
     println(s"Options: ${js.JSON.stringify(options)}")
-    
     if js.typeOf(options) == "object" && options != null then
       debugParsing = options.debugParsing === true
       debugElaboration = options.debugElaboration === true
       debugResolving = options.debugResolving === true
       debugTyper = options.debugTyper === true
     
-    traces.clear()
-    diagnostics.clear()
+    val allTokens = Buffer.empty[Str]
+    val allParsedTrees = Buffer.empty[Str]
+    val allElaboratedTrees = Buffer.empty[Str]
+    val allResolvedTrees = Buffer.empty[Str]
+    val allTypeCheckOutputs = Buffer.empty[js.Dynamic]
     
-    // println(s"Input: $source")
+    val baseScope: utils.Scope = utils.Scope.empty
+      var curCtx = State.init
     
-    val origin = Origin(AbsolutePath("source.mls"), 1, new FastParseHelpers(source))
-    
-    // From `MLsDiffMaker`
-    
-    val baseScp: utils.Scope = utils.Scope.empty
-    
-    var curCtx = State.init
-    
-    given Config = Config.default // TODO: Support custom config?
-    
-    val lexer = new Lexer(origin, dbg = debugParsing)(using raise(Stage.Lexer))
-    val tokens = lexer.bracketedTokens
-    
-    // TODO: Maybe these debug outputs can be printed in some places.
-    // if showParse.isSet || dbgParsing.isSet then
-    //   output(syntax.Lexer.printTokens(tokens))
-    // println(s"Tokens: ${Lexer.printTokens(tokens)}")
-    
-    val rules = syntax.ParseRules()
-    val p = new syntax.Parser(origin, tokens, rules, raise(Stage.Parser), dbg = debugParsing):
-      def doPrintDbg(msg: => Str): Unit = if dbg then output(Stage.Parser, msg)
-    val parsedTrees = p.parseAll(p.block(allowNewlines = true))
-
-    var curICtx = Resolver.ICtx.empty
-    
-    val elab = raise(Stage.Elaborator).givenIn:
-      semantics.Elaborator(etl, importer)
-    
-    given Ctx = curCtx.nestLocal
-    
-    val blk = new syntax.Tree.Block(parsedTrees)
-    val (term, newCtx) = elab.topLevel(blk)
-    
-    
-    curCtx = newCtx
-    
-    val elaboratedTree = term.showAsTree
-    
-    val resolver = semantics.Resolver(rtl)(using raise(Stage.Resolver), State)
-    curICtx = resolver.traverseBlock(term)(using curICtx)
-    
-    val typerResult = typeCheck(term)
+    blocks.foreach: block =>
+      val origin = Origin(AbsolutePath("source.mls"), block._1, new FastParseHelpers(block._2))
+      given Config = Config.default // TODO: Support custom config?
+      val lexer = new Lexer(origin, dbg = debugParsing)(using raise(Stage.Lexer))
+      val tokens = lexer.bracketedTokens
+      val rules = syntax.ParseRules()
+      val p = new syntax.Parser(origin, tokens, rules, raise(Stage.Parser), dbg = debugParsing):
+        def doPrintDbg(msg: => Str): Unit = if dbg then output(Stage.Parser, msg)
+      val parsedTrees = p.parseAll(p.block(allowNewlines = true))
+      var curICtx = Resolver.ICtx.empty
+      val elab = raise(Stage.Elaborator).givenIn:
+        semantics.Elaborator(etl, importer)
+      given Ctx = curCtx.nestLocal
+      val blk = new syntax.Tree.Block(parsedTrees)
+      val (term, newCtx) = elab.topLevel(blk)
+      curCtx = newCtx
+      val elaboratedTree = term.showAsTree
+      val resolver = semantics.Resolver(rtl)(using raise(Stage.Resolver), State)
+      curICtx = resolver.traverseBlock(term)(using curICtx)
+      val typeCheckOutputs = typeCheck(term)
+      // Collect results
+      allTokens ++= lexer.tokens.iterator.map(_._1.describe)
+      allParsedTrees ++= parsedTrees.iterator.map(_.showAsTree)
+      allElaboratedTrees += elaboratedTree
+      allResolvedTrees += term.showAsTree
+      allTypeCheckOutputs += js.Dynamic.literal(
+        firstLineIndex = block._1,
+        source = block._2,
+        result = typeCheckOutputs
+      )
     
     js.Dynamic.literal(
       lexer = js.Dynamic.literal(
-        tokens = lexer.tokens.iterator.map(_._1.describe).toJSArray,
+        tokens = allTokens.toJSArray,
         diagnostics = getDiagnosticsHTML(Stage.Lexer),
       ),
       parser = js.Dynamic.literal(
-        trees = parsedTrees.iterator.map(_.showAsTree).toJSArray,
+        trees = allParsedTrees.toJSArray,
         diagnostics = getDiagnosticsHTML(Stage.Parser),
         traces = getOutput(Stage.Parser)
       ),
       elaborator = js.Dynamic.literal(
-        tree = elaboratedTree,
+        tree = allElaboratedTrees.toJSArray,
         traces = getOutput(Stage.Elaborator),
         diagnostics = getDiagnosticsHTML(Stage.Elaborator),
       ),
       resolver = js.Dynamic.literal(
-        tree = term.showAsTree,
+        tree = allResolvedTrees.toJSArray,
         traces = getOutput(Stage.Resolver),
         diagnostics = getDiagnosticsHTML(Stage.Resolver),
       ),
-      typer = typerResult
+      typer = js.Dynamic.literal(
+        results = allTypeCheckOutputs.toJSArray,
+        diagnostics = getDiagnosticsHTML(Stage.Typer),
+      )
     )
-  }
   
   private val showTypeLatex = false
   
-  def typeCheck(term: semantics.Term.Blk): js.Dynamic =
+  def typeCheck(term: semantics.Term.Blk): Str =
     given Raise = raise(Stage.Typer)
-    val output = this.output(Stage.Typer, _)
+    val outputLines = Buffer.empty[Str]
+    def output(s: Str): Unit = outputLines += s
     val typer = Typer()
     given NamingCtx = NamingCtx(true)
     given InferenceCtx = InferenceCtx(None, Map.empty)
@@ -246,10 +243,7 @@ object Main:
       output(s"${(if showTypeLatex then ty.showAsTypeLatex else ty.showAsType)}")
       printBounds
     
-    js.Dynamic.literal(
-      traces = getOutput(Stage.Typer),
-      diagnostics = getDiagnosticsHTML(Stage.Typer),
-    )
+    outputLines.mkString("\n")
   
   def underline(fragment: Str): Str =
     s"<u style=\"text-decoration: #E74C3C dashed underline\">$fragment</u>"

@@ -6,6 +6,7 @@ import mlscript.utils.*, shorthands.*
 import utils.*, path.*, conversion.*
 
 import semantics.MemberSymbol
+import semantics.{Statement, Term}
 import semantics.{Elaborator}, semantics.importer.FileImporter
 import semantics.Resolver
 import semantics.Elaborator.Ctx
@@ -87,10 +88,13 @@ class MLsCompiler(preludeFile: os.Path, mkOutput: ((Str => Unit) => Unit) => Uni
       val (blk0, _) = elab.importFrom(parsed)
       val resolver = Resolver(rtl)
       resolver.traverseBlock(blk0)(using Resolver.ICtx.empty)
-      val blk = new semantics.Term.Blk(
-        semantics.Import(State.runtimeSymbol, runtimeFile.toString) :: semantics.Import(State.termSymbol, termFile.toString) :: blk0.stats,
-        blk0.res
-      )
+      val stats = semantics.Import(State.runtimeSymbol, runtimeFile.toString) ::
+        (if blk0.hasQuote then
+          // Do not import `Term.mls` if it is not used because it imports
+          // modules that are not available in the web demo.
+          semantics.Import(State.termSymbol, termFile.toString) :: blk0.stats
+        else blk0.stats)
+      val blk = new semantics.Term.Blk(stats, blk0.res)
       val low = ltl.givenIn:
         new codegen.Lowering()
           with codegen.LoweringSelSanityChecks

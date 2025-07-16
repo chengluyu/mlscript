@@ -22,7 +22,11 @@ final case class AbsolutePath(root: AbsolutePath.Root, segments: Vector[String])
       case (Some(x), Some(y)) =>
         xs.mkString((".." + root.separator).repeat(ys.size + 1), root.separator, "")
       case (Some(x), None) =>
-        xs.mkString("." + root.separator + x, root.separator, "")
+        val prefix = "." + root.separator + x
+        if xs.hasNext then
+          xs.mkString(prefix + root.separator, root.separator, "")
+        else
+          prefix
       case (None, Some(y)) =>
         (".." + root.separator).repeat(ys.size + 1)
       case (None, None) => "."
