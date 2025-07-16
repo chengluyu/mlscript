@@ -17,24 +17,28 @@
     </nav>
     <div id="input">
       <header class="toolbar">
-        <button class="button" id="parse">Type Check</button>
+        <label for="example">Examples:</label>
         <select class="select" id="example"></select>
         <div class="compile-time-report"></div>
+        <button class="button" id="parse" style="margin-left: auto;">Type Check</button>
       </header>
       <textarea id="editor" spellcheck="false" autocapitalize="off" wrap="off"></textarea>
     </div>
     <div id="output" class="tabs">
-      <input type="radio" id="radio-parser" name="tabgroup" checked>
-      <label for="radio-parser">Parser</label>
-      <input type="radio" id="radio-elaborator" name="tabgroup">
-      <label for="radio-elaborator">Elaborator</label>
-
+      <span class="title">Stages:</span>
+      
+      <input type="radio" id="radio-typer" name="tabgroup" checked>
+      <label for="radio-typer">Typer</label>
+      
       <input type="radio" id="radio-resolver" name="tabgroup">
       <label for="radio-resolver">Resolver</label>
-
-      <input type="radio" id="radio-typer" name="tabgroup">
-      <label for="radio-typer">Typer</label>
-
+      
+      <input type="radio" id="radio-elaborator" name="tabgroup">
+      <label for="radio-elaborator">Elaborator</label>
+      
+      <input type="radio" id="radio-parser" name="tabgroup">
+      <label for="radio-parser">Parser</label>
+      
       <div class="tab-content" id="tab-parser">
         <h3>Diagnostics</h3>
         <div class="diagnostics">

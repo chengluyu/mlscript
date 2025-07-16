@@ -186,10 +186,26 @@ parseButton.addEventListener of "click", event =>
       // Typer
       set tabs.typer.results.innerHTML = res.typer.results
         Iter.mapping of result =>
+          let regex = new RegExp("""^={6} \((\d+)\) ={6}$""", "gm")
+          let chunks = []
+          let lastIndex = regex.lastIndex
+          while regex.exec(result.result) is [_, digits] as match do
+            chunks.push of tuple of
+              parseInt(digits, 10)
+              result.result.slice(lastIndex, match.index).trim()
+            lastIndex = regex.lastIndex
+          console.log of chunks
           "<div class=\"typer-result\">\n" +
             // "<div class=\"line-index\">" + lineIndex + "</div>\n" +
             "<div class=\"source\"><pre><code>" + result.source + "</code></pre></div>\n" +
-            "<div class=\"output\"><pre><code>" + result.result + "</code></pre></div>\n" +
+            "<div class=\"output\">" + (chunks
+              Iter.mapping of case [lineIndex, chunk] then
+                "<div class=\"chunk-container\">" +
+                  "<div class=\"line-index\">" + lineIndex + "</div>\n" +
+                  "<div class=\"chunk\"><pre><code>" + chunk + "</code></pre></div>\n" +
+                  "</div>"
+              Iter.joined("")
+            ) + "</div>\n" +
             "</div>"
         Iter.joined("")
       // set tabs.typer.tree.innerHTML = ""
