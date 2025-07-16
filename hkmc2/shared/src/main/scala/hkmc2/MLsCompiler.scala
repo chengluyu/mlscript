@@ -3,13 +3,13 @@ package hkmc2
 import scala.collection.mutable
 
 import mlscript.utils.*, shorthands.*
-import utils.*
+import utils.*, path.*, conversion.*
 
-import hkmc2.semantics.MemberSymbol
-import hkmc2.semantics.Elaborator
-import hkmc2.semantics.Resolver
+import semantics.MemberSymbol
+import semantics.{Elaborator}, semantics.importer.FileImporter
+import semantics.Resolver
 import semantics.Elaborator.Ctx
-import hkmc2.syntax.Keyword.`override`
+import syntax.Keyword.`override`
 import semantics.Elaborator.State
 
 
@@ -17,7 +17,7 @@ class ParserSetup(file: os.Path, dbgParsing: Bool)(using Elaborator.State, Raise
   
   val block = os.read(file)
   val fph = new FastParseHelpers(block)
-  val origin = Origin(file, 0, fph)
+  val origin = Origin(file.toAbsolutePath, 0, fph)
   
   val lexer = new syntax.Lexer(origin, dbg = dbgParsing)
   val tokens = lexer.bracketedTokens
@@ -73,14 +73,16 @@ class MLsCompiler(preludeFile: os.Path, mkOutput: ((Str => Unit) => Unit) => Uni
     val preludeParse = ParserSetup(preludeFile, dbgParsing)
     val mainParse = ParserSetup(file, dbgParsing)
     
-    val elab = Elaborator(etl, wd, Ctx.empty)
+    val importer = new FileImporter(Ctx.empty, wd)(using etl)
+    val elab = Elaborator(etl, importer)
     
     val initState = State.init.nestLocal
     
     val (pblk, newCtx) = elab.importFrom(preludeParse.resultBlk)(using initState)
     
     newCtx.nestLocal.givenIn:
-      val elab = Elaborator(etl, wd, newCtx)
+      val importer = new FileImporter(newCtx, wd)(using etl)
+      val elab = Elaborator(etl, importer)
       val parsed = mainParse.resultBlk
       val (blk0, _) = elab.importFrom(parsed)
       val resolver = Resolver(rtl)

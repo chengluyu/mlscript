@@ -5,7 +5,7 @@ import sourcecode.{Name, Line, FileName}
 
 import mlscript.utils._, shorthands._
 
-import Diagnostic._
+import Diagnostic._, utils.path.*
 
 sealed abstract class Diagnostic
       (val theMsg: String)
@@ -91,6 +91,6 @@ object Loc:
   def apply(xs: IterableOnce[Located]): Opt[Loc] =
     xs.iterator.foldLeft(none[Loc])((acc, l) => acc.fold(l.toLoc)(_ ++ l.toLoc |> some))
 
-final case class Origin(fileName: os.Path, startLineNum: Int, fph: FastParseHelpers):
+final case class Origin(fileName: AbsolutePath, startLineNum: Int, fph: FastParseHelpers):
   override def toString = s"${fileName.last}:+$startLineNum"
 

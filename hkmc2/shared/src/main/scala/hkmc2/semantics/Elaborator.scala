@@ -13,6 +13,7 @@ import syntax.*
 import Tree.*
 import Term.{ Blk, Rcd }
 import hkmc2.Message.MessageContext
+import importer.Importer
 
 import Keyword.{`let`, `set`}
 
@@ -255,9 +256,8 @@ end Elaborator
 import Elaborator.*
 
 
-class Elaborator(val tl: TraceLogger, val wd: os.Path, val prelude: Ctx)
-(using val raise: Raise, val state: State)
-extends Importer:
+class Elaborator(val tl: TraceLogger, val importer: Importer)
+(using val raise: Raise, val state: State):
   import tl.*
   
   def mkLetBinding(sym: LocalSymbol, rhs: Term, annotations: Ls[Annot]): Ls[Statement] =
@@ -877,7 +877,7 @@ extends Importer:
         reportUnusedAnnotations
         val (newCtx, newAcc) = arg match
           case Tree.StrLit(path) =>
-            val stmt = importPath(path)
+            val stmt = importer.importPath(path)
             (ctx + (stmt.sym.nme -> stmt.sym),
             stmt.withLocOf(m) :: acc)
           case _ =>

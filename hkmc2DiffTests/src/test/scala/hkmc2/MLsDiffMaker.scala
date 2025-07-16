@@ -5,10 +5,12 @@ import scala.collection.mutable
 import mlscript.utils.*, shorthands.*
 import utils.*
 
-import hkmc2.semantics.Elaborator
-import hkmc2.semantics.Resolver
+import semantics.Elaborator
+import semantics.Resolver
+import semantics.importer.FileImporter
 
 import semantics.Elaborator.Ctx
+import hkmc2.utils.path.conversion.toAbsolutePath
 
 abstract class MLsDiffMaker extends DiffMaker:
   
@@ -165,7 +167,7 @@ abstract class MLsDiffMaker extends DiffMaker:
     
     val block = os.read(file)
     val fph = new FastParseHelpers(block)
-    val origin = Origin(file, 0, fph)
+    val origin = Origin(file.toAbsolutePath, 0, fph)
     
     val lexer = new syntax.Lexer(origin, dbg = dbgParsing.isSet)
     val tokens = lexer.bracketedTokens
@@ -180,7 +182,8 @@ abstract class MLsDiffMaker extends DiffMaker:
     val imprtSymbol =
       semantics.TopLevelSymbol("import#"+file.baseName)
     given Elaborator.Ctx = curCtx.nestLocal
-    val elab = Elaborator(etl, wd, Ctx.empty)
+    val importer = new FileImporter(Ctx.empty, wd)
+    val elab = Elaborator(etl, importer)
     try
       val resBlk = new syntax.Tree.Block(res)
       val (e, newCtx) = elab.importFrom(resBlk)
@@ -238,7 +241,8 @@ abstract class MLsDiffMaker extends DiffMaker:
   private var blockNum = 0
   
   def processTrees(trees: Ls[syntax.Tree])(using Config, Raise): Unit =
-    val elab = Elaborator(etl, file / os.up, prelude)
+    val importer = new FileImporter(prelude, file / os.up)
+    val elab = Elaborator(etl, importer)
     // val blockSymbol =
     //   semantics.TopLevelSymbol("block#"+blockNum)
     blockNum += 1

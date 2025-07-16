@@ -2,6 +2,7 @@ package hkmc2
 
 import scala.collection.mutable
 import mlscript.utils.*, shorthands.*
+import hkmc2.utils.path.conversion.toAbsolutePath
 
 
 
@@ -311,7 +312,7 @@ abstract class DiffMaker:
       val processedBlockStr = processedBlock.mkString
       val fph = new FastParseHelpers(block)
       
-      val origin = Origin(file, blockLineNum, fph)
+      val origin = Origin(file.toAbsolutePath, blockLineNum, fph)
       
       try
         

@@ -1,4 +1,5 @@
 import Wart._
+import org.scalajs.linker.interface.OutputPatterns
 
 enablePlugins(ScalaJSPlugin)
 
@@ -56,7 +57,10 @@ lazy val hkmc2 = crossProject(JSPlatform, JVMPlatform).in(file("hkmc2"))
   .jvmSettings(
   )
   .jsSettings(
-    scalaJSUseMainModuleInitializer := true,
+    scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.ESModule)
+       .withOutputPatterns(OutputPatterns.fromJSFile("MLscript.mjs"))
+    },
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0",
   )
   .dependsOn(core)
