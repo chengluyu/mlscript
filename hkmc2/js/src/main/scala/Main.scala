@@ -157,7 +157,7 @@ object Main:
     output("Parsed Core: " + ctrm.show)
     typer.checkWellFormed(ctrm)
     val (ty, cons_) = typer.inferType(ctrm)
-    val cons = cons_ ++ (Constraint(QuantType.Base(ty), NegType.Force, Nil) :: Nil)
+    val cons = cons_ ++ (Constraint(QuantType.Base(ty), NegType.Force(true), Nil) :: Nil)
     output("Inferred: " + (if showTypeLatex then ty.showAsTypeLatex else ty.showAsType))
     output("As term: " + ty.showAsTerm)
 
