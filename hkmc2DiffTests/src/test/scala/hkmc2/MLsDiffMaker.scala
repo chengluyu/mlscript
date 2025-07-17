@@ -276,7 +276,7 @@ abstract class MLsDiffMaker extends DiffMaker:
       import typing.*
       import typing.supremef.*
       val typer = Typer()
-      given NamingCtx = NamingCtx(false)
+      given NamingCtx = NamingCtx(true)
       given InferenceCtx = InferenceCtx(None, Map.empty)
       val ctrm = typer.fromTerm(trm)
       output("Parsed Core Term: " + ctrm.show)
@@ -335,23 +335,33 @@ abstract class MLsDiffMaker extends DiffMaker:
           output(s"Constr:\n${solver.showFrontLatex}")
         else
           output(s"Constr: ${solver.showFront}")
-        val (rule, _, newCons) = solver.step
+        val (rule, _, newCons, premises) = solver.step
         output(s"Rule: ${rule}")
+        premises match
+          case (mrks, sigma) =>
+            output(s"Premise: ${mrks.map(m => s"m${m.uid}").mkString("[", ",", "]")} ↦ ${sigma.showAsType} ∈ B")
+          case Nil => ()
+          case x: List[_] => 
+            output(s"Premises:")
+            for con <- x do
+              output(s"  ${con.show} ∈ B")
+        if !newCons.isEmpty then
+          output(s"New Constraints:")
         for con <- newCons do
           if showTypeLatex.isSet then
-            output(s"|>\n${con.showLatex(0)}")
+            output(s"\n${con.showLatex(0)}")
           else
-            output(s"|> ${con.show}")
+            output(s" ${con.show}")
         if iter == fuel then
           output(s"==== Out of fuel ====")
         if rule == "C-Err" then
           iter = fuel
-        if rule.startsWith("C-Forall") then
-          for (key, value) <- solver.quantCache.iterator do
-            val mrks = key.iterator.map(m => s"m${m.uid}").mkString(",")
-            output(s"[${mrks}]")
-            output(s"  -> ${value.showAsType}")
-        output(s"Remaining: ${solver.unresolved.size}")
+        // if rule.startsWith("C-Forall") then
+        //   for (key, value) <- solver.quantCache.iterator do
+        //     val mrks = key.iterator.map(m => s"m${m.uid}").mkString(",")
+        //     output(s"[${mrks}]")
+        //     output(s"  -> ${value.showAsType}")
+        output(s"Remaining constraints: ${solver.unresolved.size}")
 
       val lBounds = solver.lowerBounds.toList.flatMap:
         case (v, lb) => lb.toList.map((k, l) => Constraint(l, NegType.Var(v), Nil))
