@@ -364,7 +364,7 @@ abstract class MLsDiffMaker extends DiffMaker:
           case c : Constraint => output(s"${if showTypeLatex.isSet then c.showLatex(0) else c.show}")
       else
         output(s"====== Final ======")
-        output(s"------ base type ------")
+        output(s"------ Resolved Weak Types ------")
         for ty <- solver.results do
           output(s"${(if showTypeLatex.isSet then ty.showAsTypeLatex else ty.showAsType)}")
         printBounds
