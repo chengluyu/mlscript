@@ -279,12 +279,12 @@ abstract class MLsDiffMaker extends DiffMaker:
       given NamingCtx = NamingCtx(false)
       given InferenceCtx = InferenceCtx(None, Map.empty)
       val ctrm = typer.fromTerm(trm)
-      output("Parsed Core: " + ctrm.show)
+      output("Parsed Core Term: " + ctrm.show)
       typer.checkWellFormed(ctrm)
       val (ty, cons_) = typer.inferType(ctrm)
       val cons = cons_ ++ (Constraint(QuantType.Base(ty), NegType.Force(true), Nil) :: Nil)
       output("Inferred: " + (if showTypeLatex.isSet then ty.showAsTypeLatex else ty.showAsType))
-      output("As term: " + ty.showAsTerm)
+      output("As term: " + typer.wrap((ty, cons_)).showAsTerm)
 
       if showTypeLatex.isSet then
         output("|>\n" + cons.map(s => s match
@@ -301,7 +301,6 @@ abstract class MLsDiffMaker extends DiffMaker:
       var fuel = 100
       var iter = 0
       def printBounds = 
-        // print bounds
         val ubs = solver.upperBounds.valuesIterator.map(_.size).sum
         val lbs = solver.lowerBounds.valuesIterator.map(_.size).sum
         val bounded = solver.upperBounds.keySet ++ solver.lowerBounds.keySet
@@ -328,12 +327,12 @@ abstract class MLsDiffMaker extends DiffMaker:
       while iter < fuel && !solver.unresolved.isEmpty do
         iter += 1
         output(s"====== (${iter}) ======")
-        printBounds
+        // printBounds
         if showTypeLatex.isSet then
-          output(s"Front:\n${solver.showFrontLatex}")
+          output(s"Constr:\n${solver.showFrontLatex}")
         else
-          output(s"Front: ${solver.showFront}")
-        val (rule, newResolved, newCons) = solver.step
+          output(s"Constr: ${solver.showFront}")
+        val (rule, _, newCons) = solver.step
         output(s"Rule: ${rule}")
         for con <- newCons do
           if showTypeLatex.isSet then
@@ -355,7 +354,6 @@ abstract class MLsDiffMaker extends DiffMaker:
         case (v, lb) => lb.toList.map((k, l) => Constraint(l, NegType.Var(v), Nil))
       val uBounds = solver.upperBounds.toList.flatMap:
         case (v, ub) => ub.toList.map((k, u) => Constraint(QuantType.fromVar(v), u, Nil))
-      val finalType = typer.wrap((ty, lBounds ++ uBounds))
 
       if iter == fuel then
         output(s"====== Remaining ======")
