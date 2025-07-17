@@ -154,12 +154,12 @@ object Main:
     given NamingCtx = NamingCtx(true)
     given InferenceCtx = InferenceCtx(None, Map.empty)
     val ctrm = typer.fromTerm(term)
-    output("Parsed Core: " + ctrm.show)
+    output("Parsed Core Term: " + ctrm.show)
     typer.checkWellFormed(ctrm)
     val (ty, cons_) = typer.inferType(ctrm)
     val cons = cons_ ++ (Constraint(QuantType.Base(ty), NegType.Force(true), Nil) :: Nil)
     output("Inferred: " + (if showTypeLatex then ty.showAsTypeLatex else ty.showAsType))
-    output("As term: " + ty.showAsTerm)
+    output("As term: " + typer.wrap((ty, cons_)).showAsTerm)
 
     if showTypeLatex then
       output("|>\n" + cons.map(s => s match
@@ -176,14 +176,16 @@ object Main:
     var fuel = 100
     var iter = 0
     def printBounds = 
-      // print bounds
       val ubs = solver.upperBounds.valuesIterator.map(_.size).sum
       val lbs = solver.lowerBounds.valuesIterator.map(_.size).sum
       val bounded = solver.upperBounds.keySet ++ solver.lowerBounds.keySet
+      // output("-------- CACHE --------")
+      // solver.quantCache.foreach: (k, v) =>
+      //   output(k.map(m => f"m${m.uid}").mkString("[", ",","]"))
       if ubs > 0 then
         output("-------- UBS --------")
       for al <- bounded do
-        for ((_, s), ty) <- solver.upperBounds.getOrElse(al, Map.empty[(NegType, Set[Mark]), NegType]) do
+        for ((_, s), ty) <- solver.upperBounds.getOrElse(al, Map.empty[(NegType, List[Mark]), NegType]) do
           val ss = (if !s.isEmpty then s.map(m => f"m${m.uid}").mkString("[", ",","]") else "")
           if showTypeLatex then
             output(s"${al.showLatex} $$\\leq$$ ${ty.showAsTypeLatex}")
@@ -192,7 +194,7 @@ object Main:
       if lbs > 0 then
         output("-------- LBS --------")
       for al <- bounded do
-        for ((_, s), ty) <- solver.lowerBounds.getOrElse(al, Map.empty[(QuantType, Set[Mark]), QuantType]) do
+        for ((_, s), ty) <- solver.lowerBounds.getOrElse(al, Map.empty[(QuantType, List[Mark]), QuantType]) do
           val ss = (if !s.isEmpty then s.map(m => f"m${m.uid}").mkString("[", ",","]") else "")
           if showTypeLatex then
             output(s"${al.showLatex} $$\\geq$$ ${ty.showAsTypeLatex}")
@@ -203,34 +205,43 @@ object Main:
     while iter < fuel && !solver.unresolved.isEmpty do
       iter += 1
       output(s"====== (${iter}) ======")
-      printBounds
+      // printBounds
       if showTypeLatex then
-        output(s"Front:\n${solver.showFrontLatex}")
+        output(s"Constr:\n${solver.showFrontLatex}")
       else
-        output(s"Front: ${solver.showFront}")
-      val (rule, newResolved, newCons) = solver.step
+        output(s"Constr: ${solver.showFront}")
+      val (rule, _, newCons, premises) = solver.step
       output(s"Rule: ${rule}")
+      premises match
+        case (mrks, sigma) =>
+          output(s"Premise: ${mrks.map(m => s"m${m.uid}").mkString("[", ",", "]")} ↦ ${sigma.showAsType} ∈ B")
+        case Nil => ()
+        case x: List[_] => 
+          output(s"Premises:")
+          for con <- x do
+            output(s"  ${con.show} ∈ B")
+      if !newCons.isEmpty then
+        output(s"New Constraints:")
       for con <- newCons do
         if showTypeLatex then
-          output(s"|>\n${con.showLatex(0)}")
+          output(s"\n${con.showLatex(0)}")
         else
-          output(s"|> ${con.show}")
+          output(s" ${con.show}")
       if iter == fuel then
         output(s"==== Out of fuel ====")
       if rule == "C-Err" then
         iter = fuel
-      if rule.startsWith("C-Forall") then
-        for (key, value) <- solver.quantCache.iterator do
-          val mrks = key.iterator.map(m => s"m${m.uid}").mkString(",")
-          output(s"[${mrks}]")
-          output(s"  -> ${value.showAsType}")
-      output(s"Remaining: ${solver.unresolved.size}")
+      // if rule.startsWith("C-Forall") then
+      //   for (key, value) <- solver.quantCache.iterator do
+      //     val mrks = key.iterator.map(m => s"m${m.uid}").mkString(",")
+      //     output(s"[${mrks}]")
+      //     output(s"  -> ${value.showAsType}")
+      output(s"Remaining constraints: ${solver.unresolved.size}")
 
     val lBounds = solver.lowerBounds.toList.flatMap:
       case (v, lb) => lb.toList.map((k, l) => Constraint(l, NegType.Var(v), Nil))
     val uBounds = solver.upperBounds.toList.flatMap:
       case (v, ub) => ub.toList.map((k, u) => Constraint(QuantType.fromVar(v), u, Nil))
-    val finalType = typer.wrap((ty, lBounds ++ uBounds))
 
     if iter == fuel then
       output(s"====== Remaining ======")
@@ -239,11 +250,16 @@ object Main:
         case c : Constraint => output(s"${if showTypeLatex then c.showLatex(0) else c.show}")
     else
       output(s"====== Final ======")
-      output(s"------ base type ------")
-      output(s"${(if showTypeLatex then ty.showAsTypeLatex else ty.showAsType)}")
+      output(s"------ Resolved Weak Types ------")
+      for ty <- solver.results do
+        output(s"${(if showTypeLatex then ty.showAsTypeLatex else ty.showAsType)}")
       printBounds
     
     outputLines.mkString("\n")
+    
+    
+  // ================================
+  end typeCheck
   
   def underline(fragment: Str): Str =
     s"<u style=\"text-decoration: #E74C3C dashed underline\">$fragment</u>"

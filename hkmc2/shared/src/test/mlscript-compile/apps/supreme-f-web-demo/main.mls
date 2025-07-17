@@ -104,9 +104,11 @@ selector.addEventListener of "change", event =>
 fun showDiagnostics(elems, diagnostics, problematicStages) =
   if diagnostics is [] and
     problematicStages is [] then
+      set elems.output.innerHTML = ""
       set elems.text.innerHTML =
         "<span>Everything went smoothly, without any problems.</span>"
     else
+      set elems.output.innerHTML = ""
       set elems.text.innerHTML =
         "<span>There is no issue with typing, " +
         "but there are problems in: " +
@@ -169,7 +171,7 @@ parseButton.addEventListener of "click", event =>
       // Typer
       set tabs.typer.results.innerHTML = res.typer.results
         Iter.mapping of result =>
-          let regex = new RegExp("""^={6} (?:\((\d+)\)|(Final)) ={6}$""", "gm")
+          let regex = new RegExp("""^={6} (?:\((\d+)\)|(Final|Remaining)) ={6}$""", "gm")
           let chunks = []
           let lastIndex = regex.lastIndex
           while regex.exec(result.result) is [_, digits, headline] as match do
