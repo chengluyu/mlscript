@@ -3,7 +3,6 @@ package typing.supremef
 
 import scala.language.strictEquality
 import scala.collection.mutable.{LinkedHashMap => MutMap, LinkedHashSet => MutSet}
-import scala.collection.immutable.ListSet
 
 import mlscript.utils.GenHelper
 import mlscript.utils.shorthands.*
@@ -27,6 +26,7 @@ private val FunPrec = 10
 
 enum CoreTerm derives CanEqual:
   case Unit
+  case Const(i: Int)
   case Cond
   case Var(x: String)
   case Lam(x: String, body: CoreTerm)
@@ -39,6 +39,7 @@ enum CoreTerm derives CanEqual:
       if p < prec then doc"(${d})" else d
     this match
       case Unit => "()"
+      case Const(i) => i.toString
       case Cond => "cond"
       case Var(x) => x
       case Lam(x, body) =>
@@ -74,6 +75,7 @@ sealed trait Type:
         doc"${cons} => ${ty.showAsTypeImpl(ForallPrec)}"
           |> parens(ForallPrec)
       case PosType.Unit() => "()"
+      case PosType.Const(i) => i.toString
       case PosType.Var(al) => al.show
       case PosType.Lam(al: TypeVar, sigma) => 
         doc"${al.show} -> ${sigma.showAsTypeImpl(ArrowRhsPrec)}"
@@ -87,7 +89,7 @@ sealed trait Type:
       case NegType.App(sigma, al) => 
         doc"${sigma.showAsTypeImpl(ArrowLhsPrec)} -> ${al.show}"
           |> parens(ArrowLhsPrec)
-      case _: NegType.Force => "•"
+      case _: NegType.Force => "⚫"
 
   def showAsTypeLatex(using NamingCtx): Document = showAsTypeLatexImpl(TopPrec, 0)
   // newline is Some(indent) if we need to have anewline with indent level of indentation
@@ -118,6 +120,7 @@ sealed trait Type:
         val rest = ty.showAsTypeLatexImpl(ForallPrec, indent)
         doc"${c.showLatex(indent)} $$\implies$$\n${"  "*indent}$rest"
       case PosType.Unit() => doc"$$\tyUnit$$"
+      case PosType.Const(i) => doc"$$${i}$$"
       case PosType.Var(al) => al.showLatex
       case PosType.Lam(al, sigma) =>
         val rhs = sigma match
@@ -157,6 +160,7 @@ sealed trait Type:
           |> parens(TopPrec)
 
       case PosType.Unit() => "()"
+      case PosType.Const(i) => i.toString
       case PosType.Var(al) => al.show
       case PosType.Lam(al: TypeVar, sigma) =>
         doc"λ${al.show} -> ${sigma.showAsTermImpl(LamPrec)}"
@@ -165,6 +169,7 @@ sealed trait Type:
         doc"λ${al.showAsTermImpl(LamPrec)} -> ${sigma.showAsTermImpl(LamPrec)}"
           |> parens(LamPrec)
       case PosType.Mrked(al, m) => al.show
+      case NegType.Force(_) => "⚫"
       case _ => "???"
 
 // m
@@ -172,8 +177,9 @@ class Mark(val uid: Int) extends Ordered[Mark] derives CanEqual:
   override def compare(that: Mark): Int = uid - that.uid
 
 // c
-class Constraint(val lb: QuantType, val ub: NegType, val mrks: List[Mark])
-  derives CanEqual:
+class Constraint(val lb: QuantType, val ub: NegType, val mrks: List[Mark]) derives CanEqual:
+  lazy val distinctMrks = mrks.distinct
+  
   def refresh(using InferenceCtx, Map[Int, TypeVar]) =
     Constraint(lb.refresh, ub.refresh, mrks)
 
@@ -184,12 +190,12 @@ class Constraint(val lb: QuantType, val ub: NegType, val mrks: List[Mark])
 
   def show(using ctx: NamingCtx) =
     val s = if ctx.showMarks && !mrks.isEmpty then
-      mrks.map(m => f"m${m.uid}").mkString("[", ",","]") else ""
+      distinctMrks.map(m => f"m${m.uid}").mkString("[", ",","]") else ""
     doc"${lb.showAsTypeImpl(TopPrec)} ≤${s} ${ub.showAsTypeImpl(TopPrec)}"
 
   def showLatex(using ctx: NamingCtx)(indent: Int) =
     val s = if ctx.showMarks && !mrks.isEmpty then
-      mrks.map(m => f"${m.uid}").mkString("", ",","") else ""
+      distinctMrks.map(m => f"${m.uid}").mkString("", ",","") else ""
     (lb, ub) match
       case (_, _: NegType.Var) =>
         val lhs = ub.showAsTypeLatexImpl(TopPrec, indent)
@@ -212,7 +218,7 @@ class Constraint(val lb: QuantType, val ub: NegType, val mrks: List[Mark])
       case NegType.App(sigma, al) => (al,
         doc"${lb.showAsTermImpl(FunPrec)} ${sigma.showAsTermImpl(ArgPrec)}"
           |> parens(BindingPrec))
-      case NegType.Force(_) => return doc"•"
+      case NegType.Force(_) => return doc"⚫"
     doc"${beta.show} = ${rhs}"
 
 // α, β
@@ -259,12 +265,14 @@ enum QuantType extends Type derives CanEqual:
 // τ^+
 enum PosType extends Type derives CanEqual:
   case Unit()
+  case Const(i: Int)
   case Var(al: TypeVar)
   case Lam(al: TypeVar | NegType.Force, sigma: QuantType)
   case Mrked(al: TypeVar, m: Mark)
 
   def canonicalize(using ctx: CanonicalizeCtx): PosType = this match
     case Unit() => Unit()
+    case x: Const => x
     case Var(al) => Var(al.canonicalize)
     case Lam(al: TypeVar, sigma) => Lam(al.canonicalize, sigma.canonicalize)
     case Lam(al: NegType.Force, sigma) => Lam(al, sigma.canonicalize)
@@ -272,6 +280,7 @@ enum PosType extends Type derives CanEqual:
 
   def refresh(using InferenceCtx, Map[Int, TypeVar]): PosType = this match
     case Unit() => Unit()
+    case x: Const => x
     case Var(al) => Var(al.refresh)
     case Lam(al: TypeVar, sigma) => Lam(al.refresh, sigma.refresh)
     case Lam(al: NegType.Force, sigma) => Lam(al, sigma.refresh)
@@ -322,6 +331,7 @@ class Typer(using Raise):
       case Term.IfLike(_: Keyword.`if`.type, Split.Let(s, cond, Split.Cons(Branch(_, _, Split.Else(t1)), Split.Else(t2)))) =>
         CoreTerm.App(CoreTerm.App(CoreTerm.App(CoreTerm.Cond, fromTerm(cond)), fromTerm(t1)), fromTerm(t2))
       case Term.Lit(Tree.UnitLit(_)) => CoreTerm.Unit
+      case Term.Lit(Tree.IntLit(i)) => CoreTerm.Const(i.toInt)
       case Term.UnitVal() => CoreTerm.Unit
       case Term.Lam(ParamList(flags, p :: ps, rest), body) =>
         val body1 = fromTerm(Term.Lam(ParamList(flags, ps, rest), body))
@@ -340,8 +350,7 @@ class Typer(using Raise):
 
   def checkWellFormedImpl(term: CoreTerm)(using ctx: Set[String])
     : Unit = term match
-    case CoreTerm.Unit => ()
-    case CoreTerm.Cond => ()
+    case CoreTerm.Unit | CoreTerm.Cond | CoreTerm.Const(_) => ()
     case CoreTerm.Var(x) => if !ctx.contains(x) then
       raise(ErrorReport( msg"invalid scope ${x}" -> None :: Nil))
     case CoreTerm.Lam(x, body) =>
@@ -371,6 +380,7 @@ class Typer(using Raise):
   def inferType(term: CoreTerm)
     (using ctx: InferenceCtx): (PosType, List[CtxElem]) = term match
     case CoreTerm.Unit => (PosType.Unit(), Nil)
+    case CoreTerm.Const(i) => (PosType.Const(i), Nil)
     case CoreTerm.Cond => 
       val al = ctx.getFreshTv("α")
       (PosType.Lam(NegType.Force(false), QuantType.Base(PosType.Lam(al, QuantType.Base(PosType.Lam(al, QuantType.fromVar(al)))))),
@@ -430,12 +440,12 @@ def unifyConstr(c1: Constraint, c2: Constraint)
   unify(c1.lb, c2.lb) ++ unify(c1.ub, c2.ub)
 
 class CtxSolver(var unresolved: List[CtxElem])(using rai: Raise, naming: NamingCtx, ctx: InferenceCtx):
-  var upperBounds = MutMap.empty[TypeVar, MutMap[(NegType, ListSet[Mark]), NegType]]
-  var lowerBounds = MutMap.empty[TypeVar, MutMap[(QuantType, ListSet[Mark]), QuantType]]
+  var upperBounds = MutMap.empty[TypeVar, MutMap[(NegType, List[Mark]), NegType]]
+  var lowerBounds = MutMap.empty[TypeVar, MutMap[(QuantType, List[Mark]), QuantType]]
   // note: resolved is stored in reversed order
   type ResolvedElem = CtxElem | (List[Mark], TypeVar, QuantType)
   var resolved = List.empty[ResolvedElem]
-  var quantCache = MutMap.empty[ListSet[Mark], QuantType.Forall]
+  var quantCache = MutMap.empty[List[Mark], QuantType.Forall]
   var results = MutSet.empty[PosType]
 
   def showFront(using NamingCtx) = unresolved match
@@ -452,48 +462,51 @@ class CtxSolver(var unresolved: List[CtxElem])(using rai: Raise, naming: NamingC
     case (al: TypeVar, m) :: cons =>
       resolved = (al, m) :: resolved
       unresolved = cons
-      ("C-Promote", Some(al), List.empty[Constraint])
+      ("C-Promote", Some(al), List.empty[Constraint], Nil)
     case (c: Constraint) :: cons =>
       val res = handleCon(c)
       if res._2.isDefined then resolved = res._2.get :: resolved
       unresolved = res._3 ++ cons
       res
-    case _ => ("", Option.empty[ResolvedElem], List.empty[Constraint])
+    case _ => ("", Option.empty[ResolvedElem], List.empty[Constraint], Nil)
 
   def handleCon(c: Constraint)
-    : (String, Option[ResolvedElem], List[Constraint]) = (c.lb, c.ub) match
+    : (String, Option[ResolvedElem], List[Constraint], (List[Constraint] | (List[Mark], QuantType))) = (c.lb, c.ub) match
     case (QuantType.Constr(c1, sigma), pi: (NegType.App | NegType.Force)) =>
-      ("C-Constr", None, List(c1.withMrks(c.mrks),
-                              Constraint(sigma, pi, c.mrks)))
+      ("C-Constr", None, c1.withMrks(c.mrks) :: Constraint(sigma, pi, c.mrks) :: Nil, Nil)
     case (QuantType.Base(PosType.Var(al)), ty) =>
       val canonical = ty.canonicalize(using CanonicalizeCtx(0, MutMap.empty))
       // check if we can skip
-      if upperBounds.getOrElseUpdate(al, MutMap.empty)
-          .contains((canonical, c.mrks.to(ListSet))) then
-        ("C-Skip", None, List.empty)
+      val ubs = upperBounds.getOrElseUpdate(al, MutMap.empty)
+      if ubs.contains((canonical, c.distinctMrks))
+      then
+        ("C-Skip", None, List.empty, c.withMrks(c.distinctMrks) :: Nil)
       else
         val lbs = lowerBounds.getOrElseUpdate(al, MutMap.empty)
         // if ty is a type var, install lower bounds
         ty.asVar.map(ub => lowerBounds.getOrElseUpdate(ub, MutMap.empty)
-          .addOne((QuantType.fromVar(al), c.mrks.to(ListSet)), QuantType.fromVar(al)))
-        upperBounds.getOrElseUpdate(al, MutMap.empty).addOne((ty, c.mrks.to(ListSet)), canonical)
+          .addOne((QuantType.fromVar(al), c.distinctMrks), QuantType.fromVar(al)))
+        ubs.addOne((canonical, c.distinctMrks), ty)
         given Map[Int, TypeVar] = Map.empty
         ("C-Var1", Some(c), lbs.iterator
-          .map((key, lb) => Constraint(lb.refresh, ty, key._2.toList ++ c.mrks)).toList)
+          .map((key, lb) => Constraint(lb.refresh, ty, key._2 ::: c.mrks)).toList,
+          lbs.iterator.map((key, lb) => Constraint(lb, NegType.Var(al), key._2)).toList)
     case (sigma, NegType.Var(al)) =>
       val canonical = sigma.canonicalize(using CanonicalizeCtx(0, MutMap.empty))
-      if lowerBounds.getOrElseUpdate(al, MutMap.empty).contains((canonical, c.mrks.to(ListSet))) then
-        ("C-Skip", None, List.empty)
+      if lowerBounds.getOrElseUpdate(al, MutMap.empty).contains((canonical, c.distinctMrks))
+      then
+        ("C-Skip", None, List.empty, c.withMrks(c.distinctMrks) :: Nil)
       else
         val ubs = upperBounds.getOrElseUpdate(al, MutMap.empty)
         // if sigma is a type var, install upper bounds
         sigma.asVar.map(lb => upperBounds.getOrElseUpdate(lb, MutMap.empty)
-          .addOne((NegType.Var(al), c.mrks.to(ListSet)), NegType.Var(al)))
-        lowerBounds.getOrElseUpdate(al, MutMap.empty).addOne((canonical, c.mrks.to(ListSet)), sigma)
+          .addOne((NegType.Var(al), c.distinctMrks), NegType.Var(al)))
+        lowerBounds.getOrElseUpdate(al, MutMap.empty).addOne((canonical, c.distinctMrks), sigma)
         given Map[Int, TypeVar] = Map.empty
         // note that we avoid cases where ub = al, which may happen?
         ("C-Var2", Some(c),  ubs.iterator
-          .map((key, ub) => Constraint(sigma, ub.refresh, c.mrks ++ key._2)).toList)
+          .map((key, ub) => Constraint(sigma, ub.refresh, c.mrks ::: key._2)).toList,
+          ubs.iterator.map((key, ub) => Constraint(QuantType.fromVar(al), ub, key._2)).toList)
 
     case (QuantType.Base(PosType.Lam(al, sigma)), NegType.App(sigma1, beta)) =>
       val a = al match
@@ -501,34 +514,40 @@ class CtxSolver(var unresolved: List[CtxElem])(using rai: Raise, naming: NamingC
         case bullet: NegType.Force => bullet
       val c1 = Constraint(sigma1, a, c.mrks)
       val c2 = Constraint(sigma, NegType.Var(beta), c.mrks)
-      ("C-Fun", None, List(c1, c2))
+      ("C-Fun", None, List(c1, c2), Nil)
 
     case (QuantType.Base(PosType.Mrked(al, m)), _: (NegType.App | NegType.Force)) =>
       ("C-Unwrap", None,
-        List(Constraint(QuantType.fromVar(al), c.ub, m :: c.mrks)))
+        List(Constraint(QuantType.fromVar(al), c.ub, m :: c.mrks)), Nil)
 
     case (QuantType.Forall(al, m, sigma), pi: (NegType.App | NegType.Force)) =>
-      val marks = ListSet.from(c.mrks.iterator.concat(Some(m)))
+      val oldMarks = c.distinctMrks
+      val marks = if oldMarks.contains(m) then oldMarks else oldMarks :+ m
       quantCache.get(marks) match
       case None =>
         quantCache += marks -> QuantType.Forall(al, m, sigma)
-        ("C-Forall1", Some((al, m)), List(Constraint(sigma, pi, c.mrks)))
+        ("C-Forall1", Some((al, m)), List(Constraint(sigma, pi, c.mrks)), Nil)
       case Some(old) =>
         val eqConstr = unify(c.lb, old)(using Set.empty[Int])
-        ("C-Forall2", None, eqConstr ++ List(Constraint(old.ty, pi, c.mrks)))
+        ("C-Forall2", None, eqConstr :+ Constraint(old.ty, pi, c.mrks), (marks, old.ty))
 
+    case (QuantType.Base(x: PosType.Const), NegType.Force(top)) => 
+      if top then results += x
+      ("C-ConstForce", None, Nil, Nil)
     case (QuantType.Base(x: PosType.Lam), NegType.Force(top)) => 
       if top then results += x
-      ("C-FunForce", None, Nil)
+      ("C-FunForce", None, Nil, Nil)
     case (QuantType.Base(x: PosType.Unit), NegType.Force(top)) =>
       if top then results += x
-      ("C-UnitForce", None, Nil)
+      ("C-UnitForce", None, Nil, Nil)
 
     // e.g. application where lhs is a unit
-    case _ => ("C-Err", None, Nil)
+    case _ => ("C-Err", None, Nil, Nil)
 
-class InferenceCtx(var root: Option[InferenceCtx],
-                   val mappings: Map[String, TypeVar]):
+class InferenceCtx(
+    var root: Option[InferenceCtx],
+    val mappings: Map[String, TypeVar]
+):
   var mrkUid = 0
   var tvUid = 0
 
