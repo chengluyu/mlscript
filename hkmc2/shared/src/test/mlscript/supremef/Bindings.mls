@@ -369,12 +369,6 @@ let c = b in c
 //│ d1 ≥^[m3,m5,m6] a
 //│ ---------------------
 
-// invalid term
-// let a = b
-// let b = let d = a in b
-// let c = b 
-// let d = () in c
-
 let a = ()
 let b =
   let d = (e => a(e))(a)

@@ -65,12 +65,12 @@ object Main:
   
   private val importer = new semantics.importer.DummyImporter
   
-  @JSExport
-  def clear(): Unit = traces.clear(); diagnostics.clear()
-  
   /** Access the compiler using `MLscript.compile` in JavaScript. */
   @JSExport
   def compile(blocks: js.Array[js.Tuple2[Int, Str]], options: js.Dynamic): js.Dynamic =
+    traces.clear()
+    diagnostics.clear()
+    
     println(s"Options: ${js.JSON.stringify(options)}")
     if js.typeOf(options) == "object" && options != null then
       debugParsing = options.debugParsing === true

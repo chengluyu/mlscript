@@ -50,6 +50,14 @@ h3 {
 #navigation-bar .brand {
   font-size: 1.25rem;
   font-weight: 600;
+  display: flex;
+  flex-direction: row;
+  gap: 0.25rem;
+  align-items: baseline;
+}
+
+#navigation-bar .brand .suffix {
+  font-size: 1.5rem;
 }
 
 #input,

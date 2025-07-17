@@ -6,14 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <base href="./supreme-f-web-demo/">
   <link href="https://cdn.jsdelivr.net/npm/modern-normalize@3.0.1/modern-normalize.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" rel="stylesheet">
   <link href="./main.css" rel="stylesheet">
-  <title>Supreme F Web Demo</title>
+  <title>FCCT&#7477;&#8314; Web Demo</title>
 </head>
 
 <body>
   <div id="app">
     <nav id="navigation-bar">
-      <div class="brand">Supreme F Web Demo</div>
+      <div class="brand">
+        <div class="name"></div>
+        <div class="suffix">Web Demo</div>
+      </div>
     </nav>
     <div id="input">
       <header class="toolbar">
@@ -25,20 +29,8 @@
       <textarea id="editor" spellcheck="false" autocapitalize="off" wrap="off"></textarea>
     </div>
     <div id="output" class="tabs">
-      <span class="title">Stages:</span>
-      
       <input type="radio" id="radio-typer" name="tabgroup" checked>
       <label for="radio-typer">Typer</label>
-      
-      <input type="radio" id="radio-resolver" name="tabgroup">
-      <label for="radio-resolver">Resolver</label>
-      
-      <input type="radio" id="radio-elaborator" name="tabgroup">
-      <label for="radio-elaborator">Elaborator</label>
-      
-      <input type="radio" id="radio-parser" name="tabgroup">
-      <label for="radio-parser">Parser</label>
-      
       <div class="tab-content" id="tab-parser">
         <h3>Diagnostics</h3>
         <div class="diagnostics">
@@ -149,6 +141,12 @@
     </div>
   </div>
   <script type="module" src="./main.mjs"></script>
+  <script type="module">
+    import katex from 'https://cdn.jsdelivr.net/npm/katex@0.16.22/+esm';
+    katex.render("FCCT^{\\mathcal{I}+}", document.querySelector(".brand .name"), {
+      throwOnError: false
+    });
+  </script>
 </body>
 
 </html>

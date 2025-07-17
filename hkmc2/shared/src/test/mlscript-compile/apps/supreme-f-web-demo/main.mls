@@ -104,13 +104,14 @@ selector.addEventListener of "change", event =>
 fun showDiagnostics(elems, diagnostics, problematicStages) =
   if diagnostics is [] and
     problematicStages is [] then
-      set elems.text.innerHTML = "<em>Everything went smoothly, without any problems.</em>"
+      set elems.text.innerHTML =
+        "<span>Everything went smoothly, without any problems.</span>"
     else
       set elems.text.innerHTML =
-        "<em>There is no issue with this stage, " +
-        "but there are problems in the following stage" +
+        "<span>There is no issue with typing, " +
+        "but there are problems in: " +
         (if problematicStages.length > 1 then "s" else "") + ": " +
-        problematicStages Iter.joined(", ") + ".</em>"
+        problematicStages Iter.joined(", ") + ".</span>"
   else
     set elems.output.innerHTML = diagnostics.join("\n")
     set elems.text.innerHTML = ""
@@ -147,7 +148,6 @@ parseButton.addEventListener of "click", event =>
     () =>
       let startTime = Date.now()
       // Clear the previous traces and diagnostics.
-      MLscript.clear()
       // Split the source code into multiple test blocks.
       let blocks = splitTestBlocks of editor.value
       console.log of blocks
@@ -156,42 +156,25 @@ parseButton.addEventListener of "click", event =>
           parser: tabs.parser.showTraces.checked
           elaborator: tabs.elaborator.showTraces.checked
           resolver: tabs.resolver.showTraces.checked
-          // typer: tabs.typer.showTraces.checked
         blocks
       let elapsedSeconds = ((Date.now() - startTime) / 1000).toPrecision(3)
-      // set compileTimeReport.innerHTML = "Compilation took " + elapsedSeconds + " seconds."
       console.log of "Compilation took " + elapsedSeconds + " seconds."
       console.log(res)
       let problematicStages = []
+      if res.lexer.diagnostics.length > 0 do problematicStages.push of "lexer"
       if res.parser.diagnostics.length > 0 do problematicStages.push of "parser"
       if res.elaborator.diagnostics.length > 0 do problematicStages.push of "elaborator"
       if res.resolver.diagnostics.length > 0 do problematicStages.push of "resolver"
       if res.typer.diagnostics.length > 0 do problematicStages.push of "typer"
-      // Parser
-      set tabs.parser.traces.innerHTML = res.parser.traces
-      showDiagnostics of tabs.parser.diagnostics, res.parser.diagnostics, problematicStages
-      set tabs.parser.trees.innerHTML = ""
-      res.parser.trees Iter.each of tree =>
-        tabs.parser.trees addCollapsibleTree of tree
-      // Elaborator
-      set tabs.elaborator.traces.innerHTML = res.elaborator.traces
-      set tabs.elaborator.tree.innerHTML = ""
-      tabs.elaborator.tree addCollapsibleTree of res.elaborator.tree
-      showDiagnostics of tabs.elaborator.diagnostics, res.elaborator.diagnostics, problematicStages
-      // Resolver
-      set tabs.resolver.traces.innerHTML = res.resolver.traces
-      set tabs.resolver.tree.innerHTML = ""
-      tabs.resolver.tree addCollapsibleTree of res.resolver.tree
-      showDiagnostics of tabs.resolver.diagnostics, res.resolver.diagnostics, problematicStages
       // Typer
       set tabs.typer.results.innerHTML = res.typer.results
         Iter.mapping of result =>
-          let regex = new RegExp("""^={6} \((\d+)\) ={6}$""", "gm")
+          let regex = new RegExp("""^={6} (?:\((\d+)\)|(Final)) ={6}$""", "gm")
           let chunks = []
           let lastIndex = regex.lastIndex
-          while regex.exec(result.result) is [_, digits] as match do
+          while regex.exec(result.result) is [_, digits, headline] as match do
             chunks.push of tuple of
-              parseInt(digits, 10)
+              if digits is undefined then headline else digits
               result.result.slice(lastIndex, match.index).trim()
             lastIndex = regex.lastIndex
           console.log of chunks
@@ -210,7 +193,13 @@ parseButton.addEventListener of "click", event =>
         Iter.joined("")
       // set tabs.typer.tree.innerHTML = ""
       // tabs.typer.tree addCollapsibleTree of res.typer.tree
-      showDiagnostics of tabs.typer.diagnostics, res.typer.diagnostics, problematicStages
+      let allDiagnostics = [
+        ...res.lexer.diagnostics,
+        ...res.parser.diagnostics,
+        ...res.elaborator.diagnostics,
+        ...res.resolver.diagnostics,
+        ...res.typer.diagnostics]
+      showDiagnostics of tabs.typer.diagnostics, allDiagnostics, problematicStages
       
     error =>
       console.log(error)

@@ -89,4 +89,3 @@ class FileImporter(val prelude: Ctx, val wd: os.Path)
       projectRoot = projectRoot / os.up
     val filePath = projectRoot / os.RelPath(path.value)
     S(Term.Lit(StrLit(os.read(filePath))))
-    
