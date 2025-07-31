@@ -1,0 +1,292 @@
+// Note: This file does not have a corresponding test file. It is recommended to
+// test it through the following steps.
+// 
+// 1. Install `serve` globally using `npm install -g serve`.
+// 2. Run `serve hkmc2/shared/src/test/mlscript-compile` in the project's root.
+// 3. Open the URL `http://localhost:3000/apps/parsing-web-demo` in your browser.
+//    If port 3000 is not available, use the URL suggested by the serve command.
+// 4. Try and test it in the browser.
+//
+// Note that after the file is updated, we need to manually refresh the browser.
+// Or we can use Live Server extension (or its alternatives) in VSCode to
+// automatically refresh the browser.
+
+
+import "../../Str.mls"
+import "../../Iter.mls"
+import "../../XML.mls"
+import "../../Option.mls"
+import "../../Runtime.mls"
+import "../../Predef.mls"
+import "../../MutMap.mls"
+import "./Examples.mls"
+import "../../../../../../js/target/scala-3.6.1/hkmc2-opt/MLscript.mjs"
+
+
+open XML { elem }
+open Predef
+open Option { Some, None }
+open Examples
+
+module Main with ...
+
+let query = document.querySelector.bind(document)
+let editor = query("#editor")
+let selector = query("select#example")
+let parseButton = query("button#parse")
+let outputPanel = query("#output")
+let compileTimeReport = query(".compile-time-report")
+
+// Elements of tab contents.
+module tabs with
+  module typer with
+    val el = query("#tab-typer")
+    val output = el.querySelector(".output")
+    object diagnostics with
+      val elem = el.querySelector(".diagnostics")
+      val output = elem.querySelector(".output")
+      val text = elem.querySelector(".text")
+  module parser with
+    val el = query("#tab-parser")
+    val traces = el.querySelector("code.traces")
+    val trees = el.querySelector("div.trees")
+    val showTraces = el.querySelector("#show-traces")
+    object diagnostics with
+      val elem = el.querySelector(".diagnostics")
+      val output = elem.querySelector(".output")
+      val text = elem.querySelector(".text")
+  module elaborator with
+    val el = query("#tab-elaborator")
+    val traces = el.querySelector("code.traces")
+    val tree = el.querySelector("div.tree")
+    val showTraces = el.querySelector("#show-traces")
+    object diagnostics with
+      val elem = el.querySelector(".diagnostics")
+      val output = elem.querySelector(".output")
+      val text = elem.querySelector(".text")
+  module resolver with
+    val el = query("#tab-resolver")
+    val traces = el.querySelector("code.traces")
+    val tree = el.querySelector("div.tree")
+    val showTraces = el.querySelector("#show-traces")
+    object diagnostics with
+      val elem = el.querySelector(".diagnostics")
+      val output = elem.querySelector(".output")
+      val text = elem.querySelector(".text")
+  module lowering with
+    val el = query("#tab-lowering")
+    val traces = el.querySelector("code.traces")
+    val tree = el.querySelector("div.tree")
+    val showTraces = el.querySelector("#show-traces")
+    object diagnostics with
+      val elem = el.querySelector(".diagnostics")
+      val output = elem.querySelector(".output")
+      val text = elem.querySelector(".text")
+  module codegen with
+    val el = query("#tab-code-generation")
+    val output = el.querySelector(".output")
+    val traces = el.querySelector("code.traces")
+    val showTraces = el.querySelector("#show-traces")
+    object diagnostics with
+      val elem = el.querySelector(".diagnostics")
+      val output = elem.querySelector(".output")
+      val text = elem.querySelector(".text")
+
+examples Iter.each of case [key, example] then
+  let option = document.createElement of "option"
+  set option.value = key
+  set option.textContent = example.name
+  selector.appendChild of option
+  // Load the first example.
+  if editor.value is "" do
+    set editor.value = example.source
+
+// Make pressing <kbd>Tab</kbd> add two spaces at the caret's position.
+editor.addEventListener of "keydown", event =>
+  if event.key is "Tab" do
+    // Prevent the default tab behavior (focusing the next element).
+    event.preventDefault()
+    let start = editor.selectionStart
+    let end = editor.selectionEnd
+    set editor.value = editor.value.substring(0, start) + "  " + editor.value.substring(end)
+    set editor.selectionEnd = start + 2
+    set editor.selectionStart = editor.selectionEnd
+
+selector.addEventListener of "change", event =>
+  if examples |> MutMap.get(selector.value) is
+    Some(example) do set editor.value = example.source
+    None do throw new Error of "Example \"" + selector.value + "\" not found"
+
+fun showDiagnostics(elems, diagnostics, problematicStages) =
+  if diagnostics is [] and
+    problematicStages is [] then
+      set elems.text.innerHTML = "<em>Everything went smoothly, without any problems.</em>"
+    else
+      set elems.text.innerHTML =
+        "<em>There is no issue with this stage, " +
+        "but there are problems in the following stage" +
+        (if problematicStages.length > 1 then "s" else "") + ": " +
+        problematicStages Iter.joined(", ") + ".</em>"
+  else
+    set elems.output.innerHTML = diagnostics.join("\n")
+    set elems.text.innerHTML = ""
+
+fun addCollapsibleTree(element, tree) =
+  let collapsibleTree = document.createElement("collapsible-tree")
+  set collapsibleTree.textContent = tree
+  element.appendChild of collapsibleTree
+
+parseButton.addEventListener of "click", event =>
+  Runtime.try_catch of
+    () =>
+      let startTime = Date.now()
+      let res = MLscript.compile of
+        traces:
+          parser: tabs.parser.showTraces.checked
+          elaborator: tabs.elaborator.showTraces.checked
+          resolver: tabs.resolver.showTraces.checked
+          lowering: tabs.lowering.showTraces.checked
+          codegen: tabs.codegen.showTraces.checked
+        editor.value
+      let elapsedSeconds = ((Date.now() - startTime) / 1000).toPrecision(3)
+      // set compileTimeReport.innerHTML = "Compilation took " + elapsedSeconds + " seconds."
+      console.log of "Compilation took " + elapsedSeconds + " seconds."
+      console.log(res)
+      let problematicStages = []
+      if res.typer.diagnostics.length > 0 do problematicStages.push of "typer"
+      if res.parser.diagnostics.length > 0 do problematicStages.push of "parser"
+      if res.elaborator.diagnostics.length > 0 do problematicStages.push of "elaborator"
+      if res.resolver.diagnostics.length > 0 do problematicStages.push of "resolver"
+      if res.lowering.diagnostics.length > 0 do problematicStages.push of "lowering"
+      if res.codegen.diagnostics.length > 0 do problematicStages.push of "code generation"
+      // Typer
+      set tabs.typer.output.innerHTML = res.typer.simplifiedType
+      showDiagnostics of tabs.typer.diagnostics, res.typer.diagnostics, problematicStages
+      // Parser
+      set tabs.parser.traces.innerHTML = res.parser.traces
+      showDiagnostics of tabs.parser.diagnostics, res.parser.diagnostics, problematicStages
+      set tabs.parser.trees.innerHTML = ""
+      res.parser.trees Iter.each of tree =>
+        tabs.parser.trees addCollapsibleTree of tree
+      // Elaborator
+      set tabs.elaborator.traces.innerHTML = res.elaborator.traces
+      set tabs.elaborator.tree.innerHTML = ""
+      tabs.elaborator.tree addCollapsibleTree of res.elaborator.tree
+      showDiagnostics of tabs.elaborator.diagnostics, res.elaborator.diagnostics, problematicStages
+      // Resolver
+      set tabs.resolver.traces.innerHTML = res.resolver.traces
+      set tabs.resolver.tree.innerHTML = ""
+      tabs.resolver.tree addCollapsibleTree of res.resolver.tree
+      showDiagnostics of tabs.resolver.diagnostics, res.resolver.diagnostics, problematicStages
+      // Lowering
+      set tabs.lowering.traces.innerHTML = res.lowering.traces
+      set tabs.lowering.tree.innerHTML = ""
+      tabs.lowering.tree addCollapsibleTree of res.lowering.tree
+      showDiagnostics of tabs.lowering.diagnostics, res.lowering.diagnostics, problematicStages
+      // Code Generation
+      set tabs.codegen.output.innerHTML = res.codegen.vars.trim() + "\n" + res.codegen.code.trim()
+      set tabs.codegen.traces.innerHTML = res.codegen.traces
+      showDiagnostics of tabs.codegen.diagnostics, res.codegen.diagnostics, problematicStages
+      
+    error =>
+      console.log(error)
+      let errorDisplay = document.createElement("error-display")
+      errorDisplay.setError of error
+      outputPanel.appendChild of errorDisplay
+
+let indentRegex = new RegExp("""^(\s*)""")
+
+fun parseIndentedText(text) =
+  let root = (text: "", children: [])
+  let stack = [(node: root, indent: -1)]
+  text.split("\n")
+    Iter.filtering(line => line.trim().length > 0)
+    Iter.each of line =>
+      let indent = line.match(indentRegex).[1].length
+      let text = line.substring(indent)
+      while indent <= stack.[stack.length - 1].indent do
+        stack.pop()
+      let newNode = (text: text, children: [])
+      stack.[stack.length - 1].node.children.push of newNode
+      stack.push of node: newNode, indent: indent
+  root.children
+
+// * CSS styles for the error display.
+// * The content in custom elements is placed inside the ShadowDOM, which is
+// * scoped. Therefore, styles placed directly in HTML won't be effective on
+// * elements inside custom elements. Placing CSS here is more convenient.
+let errorDisplayStyle = """
+.error-container {
+  background-color: #fdd;
+  padding: 0.375rem 0.75rem 0.5rem;
+  font-family: var(--monospace);
+  color: #991b1bff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.error-message {
+  margin: 0;
+  font-weight: bold;
+  font-size: 1.125rem;
+}
+.stack-trace {
+  font-size: 0.875rem;
+  margin: 0;
+  list-style-type: none;
+  padding-left: 0.5rem;
+}"""
+
+class CollapsibleTree extends HTMLElement with
+  fun connectedCallback() =
+    let rawText = this.textContent
+    set this.textContent = ""
+    let treeData = parseIndentedText(rawText)
+    let treeElement = createDetailsTree(treeData, 0)
+    this.appendChild(treeElement)
+  
+  fun createDetailsTree(nodes, depth) =
+    let fragment = document.createDocumentFragment()
+    nodes Iter.each of node =>
+      let details = document.createElement("details")
+      if depth < 4 do details.setAttribute("open", "")
+      let summary = document.createElement("summary")
+      set summary.textContent = node.text
+      details.appendChild of summary
+      if node.children.length > 0 then
+        details.appendChild of createDetailsTree(node.children, depth + 1)
+      else
+        details.setAttribute("leaf" ,"")
+      fragment.appendChild of details
+      let rule = document.createElement("rule")
+      rule.classList.add("rule")
+      fragment.appendChild of rule
+    fragment
+
+customElements.define of "collapsible-tree", CollapsibleTree
+
+class ErrorDisplay extends HTMLElement with
+  this.attachShadow(mode: "open")
+  
+  let _error = None
+  
+  fun connectedCallback() = this.render()
+  
+  fun setError(value) =
+    set _error = Some(value)
+    this.render()
+  
+  fun render() = if _error is Some(error) do
+    let stackLines = error.stack.split("\n")
+    if stackLines.[0].startsWith(error.name) do
+      stackLines.shift()
+    set this.shadowRoot.innerHTML = elem("div", "class": "error-container") of
+      elem("h3", "class": "error-message") of
+        error.name + ": " + error.message
+      elem("ul", "class": "stack-trace") of
+        stackLines
+          Iter.mapping of line => elem("li") of line.trim()
+          Iter.joined("")
+      elem("style") of errorDisplayStyle
+
+customElements.define of "error-display", ErrorDisplay

@@ -12,7 +12,7 @@ import scala.scalajs.js
 import scala.collection.immutable
 import semantics.{Elaborator, Resolver}
 import semantics.Elaborator.{Ctx, State}
-import bbml.{BBTyper, BbCtx}
+import invalml.{InvalTyper, InvalCtx}
 import hkmc2.utils.TraceLogger
 import syntax.Lexer
 import collection.mutable.{Buffer, Map as MutMap}
@@ -52,10 +52,10 @@ object Main {
     override protected def emitDbg(str: Str): Unit = output(Stage.Generation, str)
     override def doTrace: Bool = debugCodeGeneration
   
-  extension (ty: bbml.GeneralType)
-    def display(using utils.Scope, bbml.BbCtx): Str =
+  extension (ty: invalml.GeneralType)
+    def display(using utils.Scope, invalml.InvalCtx): Str =
       val builder = new StringBuilder
-      val printer = bbml.PrettyPrinter: line => 
+      val printer = invalml.PrettyPrinter: line => 
         builder ++= line; builder += '\n'
       printer.print(ty)
       builder.toString
@@ -149,15 +149,15 @@ object Main {
     
     var curICtx = Resolver.ICtx.empty
     
-    import bbml.*, utils.Scope
+    import invalml.*, utils.Scope
     given Scope = Scope.empty
     given btl: TraceLogger = new utils.TraceLogger:
       override protected def emitDbg(str: Str): Unit = output(Stage.Typing, str)
       override def doTrace: Bool = true
-    given bbml.BbCtx =
+    given invalml.InvalCtx =
       given Ctx = curCtx
-      bbml.BbCtx.init(raise(Stage.Typing))
-    val typer = BBTyper()
+      invalml.InvalCtx.init(raise(Stage.Typing))
+    val typer = InvalTyper()
     
     def importFile(filePath: Str, moduleName: Str, source: Str, verbose: Bool)(using Config): Unit =
       
@@ -198,7 +198,7 @@ object Main {
         case err: Throwable =>
           println(err)
     
-    importFile("Prelude.mls", "Prelude", bbPreludeSource, verbose = true)
+    importFile("Prelude.mls", "Prelude", invalPreludeSource, verbose = true)
     importFile("Runtime.mls", "Runtime", WebImporter.fileNameSourceMap("Runtime.mls")._1, verbose = true)
     
     
@@ -509,7 +509,7 @@ object Main {
   private val htmlLineBreak = "<br />"
   private val htmlWhiteSpace = "&nbsp;"
   
-  private val bbPreludeSource = """
+  private val invalPreludeSource = """
 declare class Any
 declare class Nothing
 declare class Object

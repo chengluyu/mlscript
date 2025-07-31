@@ -1,0 +1,896 @@
+import "../../MutMap.mls"
+import "../../Predef.mls"
+
+open Predef
+module Examples with...
+
+val examples = MutMap.empty
+
+examples |> MutMap.insert of
+  "ExampleInResponse.mls"
+  name: "Example in Response"
+  source: """
+// * This file contains examples in the author response. A few typos therein are corrected.
+
+
+// Some utility functions:
+
+fun wield: [R] -> (Region[R]) ->{R} ()
+fun freeze: [R, E extends ~R, T] -> (Region[R], () ->{~R & E} T) ->{R | E} T
+// ^ Fixed a typo in the author response (`{~R | E}` should have been `{~R & E}`)
+
+fun (;) seq(_, res) = res
+fun rand: () -> Bool
+fun print: Any -> ()
+
+
+// ### Example 1
+
+
+// Passing the same region for both arguments fundamentally does not work approaches like Rust and Capability Calculus.
+fun foo1(r1, r2) =
+  freeze(r1, () => print("ok"))
+  wield(r2)
+
+// InvalML allows r1 and r2 to alias as long as ‹body› does not use r2; for instance:
+region r in
+  foo1(r, r)
+
+// Capability Calculus and related systems would require r2 to be distinct from r1.
+
+// Note – this also works:
+region r in
+  region s in
+    foo1(r, s)
+
+// Here is a slightly less trivial examples that still type checks seamlessly in InvalML:
+region r0 in
+  
+  fun foo1(r1, r2) =
+    freeze(r1, () => wield(r0))
+    wield(r2)
+  
+  region r in
+    foo1(r, r)
+  
+  region r in
+    region s in
+      foo1(r, s)
+
+
+// On the other hand, given
+fun foo2(r1, r2) =
+  freeze(r1, () => wield(r2))
+  wield(r2)
+
+// we rightfully reject
+// region r in
+//   foo2(r, r)
+
+// but still accept
+region r in
+  region s in
+    foo2(r, s)
+
+
+// ### Example 2
+
+
+fun foo3: [outer, R extends outer] -> Region[R] ->{outer} ()
+fun foo3(r1) =
+  region r2 in
+    freeze(r2, () =>
+      wield(r1)
+    )
+// ^ Fixed typos in the author response (it used the paper's syntax instead of the implementation's syntax)
+
+// In fact, this formally equivalent signature also works:
+fun foo3': [outer] -> Region[outer] ->{outer} ()
+fun foo3'(r1) = foo3(r1)
+
+
+// ### Example 3
+
+
+fun foo4(r1, r2, f) =
+  let exec = freeze(r1, () => freeze(r2, () => f(r1, r2)))
+  let r = exec()
+  !r + 1
+
+region r in
+  region s in
+    foo4(r, s, (x, y) =>
+      if rand() then print("Chose x"); () => x.ref 0
+                else print("Chose y"); () => y.ref 1)
+
+
+// ### Example 4
+
+
+fun foo5(f) =
+  region r in
+    freeze(r, () => f(32))
+
+
+fun freeze2: [R, E extends ~R, T] -> (Region[R], () ->{~R & E} T) ->{R | E} T
+
+fun foo6(f) =
+  region r in
+    freeze(r, () => f(32))
+
+foo6
+"""
+
+examples |> MutMap.insert of
+  "ExampleInThePaper.mls"
+  name: "Example in the Paper"
+  source: """
+// * This file contains examples in the paper
+
+class ArrayList[A, R]
+class List[A]
+class Iter[T, R]
+
+fun mkArrayList : [R, T] -> (Region[R]) ->{R} ArrayList[T, R]
+fun add : [R, T] -> (ArrayList[T, R], T) ->{R} ()
+fun clear : [R, T] -> ArrayList[T, R] ->{R} ()
+fun foreach : [E, R, T] -> (Iter[T, R], T ->{E} ()) -> {R | E} ()
+fun iter : [Res, R, E extends ~R, T] -> (ArrayList[T, R], [I] -> Iter[T, I] ->{I | E} Res) ->{E | R} Res
+fun map: [T, S, E] -> (List[out T], T ->{E} S) ->{E} List[out S]
+
+fun println: Any -> ()
+fun (;) seq(_, res) = res
+
+region r in // This is used to delimit the scope of mutation
+  let xs = mkArrayList(r) // Creates a new mutable list in r egion r
+  add(xs, "1"); add(xs, "2"); add(xs, "3");
+  iter(xs, it => foreach(it , e => println(e)))
+
+// region r in // This is used to delimit the scope of mutation
+//   let xs = mkArrayList(r) // Creates a new mutable list in r egion r
+//   add(xs, "1"); add(xs, "2"); add(xs, "3");
+//   iter(xs, it => foreach(it , e => println (e); clear (xs)))
+
+fun mapi: [A, B, E] -> (List[out A], (Int, A) ->{E} B) ->{E} List[out B]
+fun mapi(xs, f) =
+  region r in
+    let index = r.ref 0 in map(xs, x => let res = f(!index, x) in index := !index + 1; res)
+
+
+fun f: [R1, R2 extends ~R1] -> (Region[R1], Region[R2]) ->{R1 | R2} Int
+
+
+// region r1 in
+//   let g = (r => region r2 in f(r, r2)) in (region r3 in g(r3))
+
+
+region r1 in
+  fun g: [outer, R extends outer] -> Region[R] ->{R} Int
+  fun g(r) = region r2 in f(r, r2)
+  region r3 in g(r3)
+
+
+region r in
+  let a1 = mkArrayList(r) in add(a1, 12); add(a1, 34);
+  iter of a1, it1 =>
+    region s in
+      let a2 = mkArrayList(s)
+      foreach of it1, v1 => add(a2 , v1)
+      iter of a2, it2 => foreach of it2 , v2 => println(v2)
+      clear(a2)
+
+
+// region r in
+//   let a = mkArrayList(r) in add(a, 12); add(a, 34);
+//   iter of a, it =>
+//     foreach of it, v => println(v); clear(a)
+"""
+
+examples |> MutMap.insert of
+  "MergeSort.mls"
+  name: "Merge Sort"
+  source: """
+// * This file includes the implementation for merge sorting,
+// * executed sequentially or in parallel.
+// * Adapted from https://doi.org/10.5281/zenodo.8425443
+
+
+// *** infrastructures
+
+
+declare class Array[T, R]
+
+
+class Pair[T, S] with
+  constructor
+    Pr(fst: T, snd: S)
+
+
+fun
+  mkArray: [T, R] -> Region[R] ->{R} Array[T, out R]
+  push: [T, R] -> (Array[in T, out R], T) ->{R} ()
+  unshift: [T, R] -> (Array[in T, out R], T) ->{R} ()
+  map: [T, S, R, E extends ~R] -> (Array[out T, out R], T ->{E} S) ->{E | R} Array[S, out R]
+  foreach: [T, R, E extends ~R] -> (Array[out T, out R], T ->{E} ()) ->{E | R} ()
+  len: [R] -> Array[in Nothing out Any, out R] ->{R} Int
+  at: [T, R] -> (Array[out T, out R], Int) ->{R} T
+  slice: [T, R] -> (Array[out T, out R], Int) ->{R} Array[out T, out R]
+  concat: [T, R1, R2, R3] -> (Region[R3], Array[in T, out R1], Array[out T, out R2]) ->{R1 | R2 | R3} Array[T, out R3]
+
+
+// Matching on js array is not supported yet.
+// This helper function is equivalent to `if xs is Cons(x, xs) then fh(x, xs) else fn(xs)`
+fun matchOne(xs, fn, fh) =
+  if len(xs) is 0 then fn(xs)
+  else fh(at(xs, 0), slice(xs, 1))
+
+// Matching on js array is not supported yet.
+// This helper function is equivalent to
+// `if xs is Cons(x, Cons(y, ys)) then f2(x, y, ys) else if xs is Cons(x, xs) then f1(x, xs) else fn(xs)`
+// fun matchTwo: [T, R, E1, E2, E3, S] -> (Array[out T, out R], Array[out T, out R] ->{E1} S, T ->{E2} S, (T, T, Array[out T, out R]) ->{E3} S) ->{E1 | E2 | E3 | R} S
+fun matchTwo(xs, fn, f1, f2) =
+  if len(xs) is 0 then fn(xs)
+  else if len(xs) is 1 then f1(at(xs, 0))
+  else f2(at(xs, 0), at(xs, 1), slice(xs, 2))
+
+fun (;) seq(_, res) = res
+
+fun println: Any -> ()
+fun forkJoin: [T, S, P, E1, E2 extends ~E1, E3] ->
+  (() ->{E1} T, () ->{E2} S, (T, S) ->{E3} P) ->{E1 | E2 | E3} P
+
+
+// *** pmsort implementation
+
+// Split the given array into two sub-arrays.
+// Region r1 and r2 indicate where the two sub-arrays should be stored.
+fun split(xs, r1, r2) =
+  fun rs(xs, ys, zs) =
+    matchTwo of xs, _ => Pr(ys, zs), x => push(ys, x); Pr(ys, zs), (x1, x2, r) => push(ys, x1); push(zs, x2); rs(r, ys, zs)
+  rs(xs, mkArray(r1), mkArray(r2))
+
+
+// Merge arr1 and arr2. The result is stored in region r.
+// fun merge: [T, R1, R2, R] -> (Array[out T, out R1], Array[out T, out R2], Region[R]) ->{R1 | R2 | R} Array[T, out R]
+fun merge(arr1, arr2, r) =
+  fun recm(xs, ys, acc) =
+    matchOne of xs, _ => concat(r, acc, ys), (x, rx) =>
+      matchOne of ys, _ => concat(r, acc, xs), (y, ry) =>
+        if x < y then push(acc, x); recm(rx, ys, acc)
+        else push(acc, y); recm(xs, ry, acc)
+  recm(arr1, arr2, mkArray(r))
+
+
+// Merge sort in single thread.
+fun smsort(xs, r) =
+  matchTwo of xs, _ => mkArray(r), x => let res = mkArray(r) in push(res, x); res, (_, _, _) =>
+    let p = split(xs, r, r) in
+      if p is Pr(fst, snd) then merge(smsort(fst, r), smsort(snd, r), r)
+
+
+// Wrong version! Sub-arrays cannot be stored in the same region!
+// fun pmsort: [R1, R2] -> (Array[out Int, out R1], Region[R2]) ->{R1 | R2} Array[Int, out R2]
+// fun pmsort(xs, r) =
+//   matchTwo of xs, _ => mkArray(r), x => let res = mkArray(r) in push(res, x); res, (_, _, _) =>
+//     let p = split(xs, r, r) in
+//       if p is Pr(fst, snd) then
+//         forkJoin(_ => pmsort(fst, r), pmsort(snd, r), (r1, r2) => merge(r1, r2, r))
+
+
+// Merge sort in parallel.
+fun pmsort: [R1, R2] -> (Array[out Int, out R1], Region[R2]) ->{R1 | R2} Array[Int, out R2]
+fun pmsort(xs, r) =
+  matchTwo of xs, _ => mkArray(r), x => let res = mkArray(r) in push(res, x); res, (_, _, _) =>
+    region r1 in
+      region r2 in
+        let p = split(xs, r1, r2) in
+          if p is Pr(fst, snd) then
+            forkJoin(() => pmsort(fst, r1), () => pmsort(snd, r2), (rx, ry) => merge(rx, ry, r))
+
+
+// *** simple tests
+
+region r in
+  let arr = mkArray(r)
+  push(arr, 10)
+  push(arr, 23)
+  push(arr, 13)
+  push(arr, 4)
+  smsort(arr, r)
+
+region r in
+  let arr = mkArray(r)
+  push(arr, 10)
+  push(arr, 23)
+  push(arr, 13)
+  push(arr, 4)
+  pmsort(arr, r)
+"""
+
+examples |> MutMap.insert of
+  "SimpleConstraintSolver.mls"
+  name: "Simple Constraint Solver"
+  source: """
+// * In this file, we implement a simple constraint solver, originally presented in https://doi.org/10.1145/3410225
+// * We only implement int type, function types, and type variables for simplicity
+
+// *** infrastructures
+
+class PairOf[A, B] with
+  constructor
+    Pair(fst: A, snd: B)
+
+class Stack[A] with
+  constructor
+    Nil
+    Cons(head: A, tail: Stack[out A])
+
+class ArrayList[A, R]
+class Iter[T, R]
+
+class Option[A] with
+  constructor
+    None
+    Some(value: A)
+
+
+fun
+  empty:   [A, R] -> Region[R] ->{R} ArrayList[A, out R]
+  clear:   [A, R] -> (ArrayList[A, out R]) ->{R} ()
+  push:    [A, R] -> (ArrayList[A, out R], A) ->{R} ()
+  foreach: [E, R, T] -> (Iter[T, R], T ->{E} ()) ->{R | E} ()
+  iter: [outer, Res, R, E extends ~R, T] ->
+    (ArrayList[T, out R], [S extends ~outer] -> Iter[T, S] ->{S | E} Res) ->{E | R} Res
+  next: [T, S] -> Iter[T, S] ->{S} Option[T]
+  whileDo: [R] -> (() ->{R} Bool) ->{R} ()
+
+fun error() = error()
+
+
+// *** simple constraint solver
+
+
+// Unif contains a type variable's id, lower bounds, and upper bounds.
+class Type[R] with
+  constructor
+    IntType
+    Unif(id: Int, lowerBounds: ArrayList[Type[R], out R], upperBounds: ArrayList[Type[R], out R])
+    Fun(lhs: Type[R], rhs: Type[R])
+
+
+fun solve(lst) = if lst is
+  Nil then ()
+  Cons(c, cs) then if c is
+    Pair(lhs, rhs) then
+      if lhs is
+        IntType then if rhs is
+          IntType then ()
+          Fun(_, _) then error()
+          Unif(id, lbs, ubs) then
+            push(lbs, lhs)
+            region r in
+              let ncs = r.ref cs
+              iter of ubs, it =>
+                whileDo of () =>
+                  if next(it) is
+                    Some(x) then
+                      ncs := Cons(Pair(lhs, x), !ncs)
+                      true
+                    None then false
+              solve(!ncs)
+        Fun(l1, r1) then if rhs is
+          Fun(l2, r2) then
+            solve(Cons(Pair(l2, l1), Cons(Pair(r1, r2), cs)))
+          IntType then error()
+          Unif(id, lbs, ubs) then
+            push(lbs, lhs)
+            region r in
+              let ncs = r.ref cs
+              iter of ubs, it =>
+                whileDo of () =>
+                  if next(it) is
+                    Some(x) then
+                      ncs := Cons(Pair(lhs, x), !ncs)
+                      true
+                    None then false
+              solve(!ncs)
+        Unif(id, lbs, ubs) then
+          push(ubs, rhs)
+          region r in
+            let ncs = r.ref cs
+            iter of lbs, it =>
+              whileDo of () =>
+                if next(it) is
+                  Some(x) then
+                    ncs := Cons(Pair(x, rhs), !ncs)
+                    true
+                  None then false
+            solve(!ncs)
+
+// *** error example
+
+// if we call the `solve` function during the iteration, the `solve` function
+// can only handle the cases where no allocation is required (i.e., no type variables)
+// fun solve(lst) = if lst is
+//   Nil then ()
+//   Cons(c, cs) then if c is
+//     Pair(lhs, rhs) then
+//       if lhs is
+//         IntType then if rhs is
+//           IntType then ()
+//           Fun(_, _) then error()
+//           Unif(id, lbs, ubs) then
+//             push(lbs, lhs)
+//             iter of lbs, it =>
+//               whileDo of () =>
+//                 if next(it) is
+//                   Some(x) then
+//                     solve(Cons(Pair(lhs, x), Nil))
+//                     true
+//                   None then false
+//             solve(cs)
+//         Fun(l1, r1) then  if rhs is
+//           Fun(l2, r2) then
+//             solve(Cons(Pair(l2, l1), Cons(Pair(r1, r2), cs)))
+//           IntType then error()
+//           Unif(id, lbs, ubs) then
+//             push(lbs, lhs)
+//             iter of lbs, it =>
+//               whileDo of () =>
+//                 if next(it) is
+//                   Some(x) then
+//                     solve(Cons(Pair(lhs, x), Nil))
+//                     true
+//                   None then false
+//             solve(cs)
+//         Unif(id, lbs, ubs) then
+//           push(ubs, rhs)
+//           iter of lbs, it =>
+//             whileDo of () =>
+//               if next(it) is
+//                 Some(x) then
+//                   solve(Cons(Pair(x, rhs), Nil))
+//                   true
+//                 None then false
+//           solve(cs)
+
+
+// The error' version of `solve` function can only be used for constraints without type variables
+// solve(Cons(Pair(IntType, IntType), Nil))
+
+// Calling the `solve` function to solve constraints involving type variables will lead to type errors
+// region r in
+//   let v1 = Unif(1, empty(r), empty(r))
+//   let v2 = Unif(2, empty(r), empty(r))
+//   solve(Cons(Pair(v1, Fun(IntType, v2)), Nil))
+
+// *** examples
+
+region r in
+  solve(Cons(Pair(IntType, IntType), Nil))
+
+region r in
+  solve(Cons(Pair(IntType, Fun(IntType, IntType)), Nil))
+
+region r in
+  let v1 = Unif(1, empty(r), empty(r))
+  let v2 = Unif(2, empty(r), empty(r))
+  solve(Cons(Pair(v1, Fun(IntType, v2)), Nil))
+"""
+
+
+examples |> MutMap.insert of
+  "GUI.mls"
+  name: "GUI"
+  source: """
+// * This file includes the type checking implementation for the GUI example
+// * adapted from https://doi.org/10.5281/zenodo.7990289
+
+class Block
+class IO
+class Label
+class Button
+
+// * So far, our system does not support impure programs.
+// * We explicitly insert this handle function at **the top level** to allow primitive effects like IO and Block
+fun doPrimitiveEffects: [Res, E] -> (() ->{E | IO | Block} Res) ->{E} Res
+
+fun sleep: (Int) ->{Block} ()
+
+fun mkLabel: (Str) ->{IO} Label
+fun mkButton: (Str) ->{IO} Button
+
+fun setText: (Str, Label) ->{IO} ()
+
+// The callback function should not block the execution
+// so `E` has an upper bound `~Block`
+fun addActionListener: [T, E extends ~Block] -> (() ->{E} (), Button) ->{E | T} ()
+
+
+
+// examples
+
+doPrimitiveEffects of () =>
+  sleep(42)
+
+doPrimitiveEffects of () =>
+  mkLabel("Hello, World!")
+
+doPrimitiveEffects of () =>
+  let label = mkLabel("Hello, World!")
+  sleep(42)
+  setText("Goodbye, World!", label)
+
+// ok! `setText` will not block the execution
+doPrimitiveEffects of () =>
+  let label = mkLabel("label")
+  let button = mkButton("button")
+  addActionListener(() => setText("clicked!", label), button)
+
+
+
+// error! `sleep` will block the execution and the compiler reject the following program
+// doPrimitiveEffects of () =>
+//   let label = mkLabel("label")
+//   let button = mkButton("button")
+//   addActionListener(() => sleep(1), button)
+"""
+
+
+examples |> MutMap.insert of
+  "Interpreter.mls"
+  name: "Interpreter"
+  source: """
+// * This file includes the implementation for an interpreter and a compiler for a small toy programming language.
+// * Adapted from https://doi.org/10.5281/zenodo.7990289
+
+
+class List[T] with
+  constructor
+    Nil
+    Cons(x: T, xs: List[out T])
+
+
+fun concat: [T] -> (List[out T], List[out T]) -> List[out T]
+fun (;) seq(_, res) = res
+fun error: Nothing
+
+
+// * Arithmetical Expression
+class AExp with
+  constructor
+    Cst(v: Int)
+    Plus(lhs: AExp, rhs: AExp)
+    Minus(lhs: AExp, rhs: AExp)
+    Times(lhs: AExp, rhs: AExp)
+    IfThenElse(cond: BExp, cons: AExp, alts: AExp)
+
+
+// * Boolean Expression
+class BExp with
+  constructor
+    True
+    False
+    Not(v: BExp)
+    Conj(lhs: BExp, rhs: BExp)
+    Disj(lhs: BExp, rhs: BExp)
+    Eq(lhs: AExp, rhs: AExp)
+    Neq(lhs: AExp, rhs: AExp)
+
+
+// * Evaliation functions
+
+fun evalBExp: BExp -> Bool
+
+fun evalAExp(e) = if e is
+  Cst(v) then v
+  Plus(e1, e2) then evalAExp(e1) + evalAExp(e2)
+  Minus(e1, e2) then evalAExp(e1) - evalAExp(e2)
+  Times(e1, e2) then evalAExp(e1) * evalAExp(e2)
+  IfThenElse(cond, e1, e2) then
+    if evalBExp(cond) then evalAExp(e1) else evalAExp(e2)
+
+
+fun evalBExp(e) = if e is
+  True then true
+  False then false
+  Not(e) then evalBExp(e) is false
+  Conj(e1, e2) then evalBExp(e1) && evalBExp(e2)
+  Disj(e1, e2) then evalBExp(e1) || evalBExp(e2)
+  Eq(e1, e2) then evalAExp(e1) == evalAExp(e2)
+  Neq(e1, e2) then evalAExp(e1) != evalAExp(e2)
+
+
+// * Examples
+
+evalAExp(Cst(42))
+evalAExp(Plus(Cst(42), Cst(21)))
+evalAExp(Minus(Cst(42), Cst(21)))
+evalAExp(IfThenElse(True, Cst(1), Cst(2)))
+evalAExp(IfThenElse(Neq(Cst(1), Cst(2)), Cst(42), Cst(21)))
+
+evalBExp(True)
+evalBExp(Not(True))
+evalBExp(Conj(True, False))
+evalBExp(Disj(True, False))
+evalBExp(Neq(Cst(1), Cst(2)))
+
+
+// * Instruction
+class Inst with
+  constructor
+    Push(v: Int)
+    Add
+    Sub
+    Mul
+    Neg
+    And
+    Or
+    Cmp
+    Branch(cons: List[out Inst], alts: List[out Inst])
+
+
+// * Compilation functions
+
+fun compileBExp: BExp -> List[out Inst]
+
+fun compileAExp(e) = if e is
+  Cst(v) then Cons(Push(v), Nil)
+  Plus(e1, e2) then
+    let is1 = compileAExp(e1) in
+      let is2 = compileAExp(e2) in
+        concat(concat(is2, is1), Cons(Add, Nil))
+  Minus(e1, e2) then
+    let is1 = compileAExp(e1) in
+      let is2 = compileAExp(e2) in
+        concat(concat(is2, is1), Cons(Sub, Nil))
+  Times(e1, e2) then
+    let is1 = compileAExp(e1) in
+      let is2 = compileAExp(e2) in
+        concat(concat(is2, is1), Cons(Mul, Nil))
+  IfThenElse(e1, e2, e3) then
+    let is1 = compileBExp(e1) in
+      let is2 = compileAExp(e2) in
+        let is3 = compileAExp(e3) in
+          concat(is1, Cons(Branch(is2, is3), Nil))
+  
+
+fun compileBExp(e) = if e is
+  True then Cons(Push(1), Nil)
+  False then Cons(Push(0), Nil)
+  Not(e) then concat(compileBExp(e), Cons(Neg, Nil))
+  Conj(e1, e2) then
+    let is1 = compileBExp(e1) in
+      let is2 = compileBExp(e2) in
+        concat(concat(is2, is1), Cons(And, Nil))
+  Disj(e1, e2) then
+    let is1 = compileBExp(e1) in
+      let is2 = compileBExp(e2) in
+        concat(concat(is2, is1), Cons(Or, Nil))
+  Eq(e1, e2) then
+    let is1 = compileAExp(e1) in
+      let is2 = compileAExp(e2) in
+        concat(concat(is2, is1), Cons(Cmp, Nil))
+  Neq(e1, e2) then
+    let is1 = compileAExp(e1) in
+      let is2 = compileAExp(e2) in
+        concat(concat(is2, is1), Cons(Neg, Cons(Cmp, Nil)))
+
+
+// * Examples
+
+compileAExp(Cst(42))
+compileAExp(Plus(Cst(42), Cst(21)))
+compileAExp(Minus(Cst(42), Cst(21)))
+compileAExp(IfThenElse(True, Cst(1), Cst(2)))
+compileAExp(IfThenElse(Neq(Cst(1), Cst(2)), Cst(42), Cst(21)))
+compileBExp(True)
+compileBExp(Not(True))
+compileBExp(Conj(True, False))
+compileBExp(Disj(True, False))
+compileBExp(Neq(Cst(1), Cst(2)))
+
+
+// So far, we have not supported nested patterns.
+// This helper function is for the following pattern matching:
+// `if lst is Cons(x, Cons(y, ys)) then f(x, y, ys) else g()`
+fun matchTwo(lst, f, g) = if lst is
+  Nil then g()
+  Cons(x, xs) then
+    if xs is
+      Nil then g()
+      Cons(y, ys) then f(x, y, ys)
+
+
+// * Instruction evaluation
+
+fun evalInst(insts, stack) = if insts is
+  Nil then
+    if stack is
+      Cons(x, xs) then
+        if xs is
+          Nil then x
+          Cons(_, _) then error
+      Nil then error
+  Cons(inst, rest) then if inst is
+    Push(i) then evalInst(rest, Cons(i, stack))
+    Add then matchTwo(stack, (x, y, r) => evalInst(rest, Cons(x + y, r)), () => error)
+    Sub then matchTwo(stack, (x, y, r) => evalInst(rest, Cons(x - y, r)), () => error)
+    Mul then matchTwo(stack, (x, y, r) => evalInst(rest, Cons(x * y, r)), () => error)
+    Neg then if stack is
+      Nil then error
+      Cons(x, xs) then evalInst(rest, Cons(if x == 0 then 1 else 0, xs))
+    And then
+      matchTwo(stack, (x, y, r) => evalInst(rest, Cons(if x != 0 && y != 0 then 1 else 0, r)), () => error)
+    Or then
+      matchTwo(stack, (x, y, r) => evalInst(rest, Cons(if x != 0 || y != 0 then 1 else 0, r)), () => error)
+    Cmp then
+      matchTwo(stack, (x, y, r) => evalInst(rest, Cons(if x == y then 1 else 0, r)), () => error)
+    Branch(is1, is2) then if stack is
+      Nil then error
+      Cons(x, xs) then
+        if x != 0 then evalInst(is1, xs)
+        else evalInst(is2, xs)
+
+
+// * Examples
+
+evalInst(compileAExp(Cst(42)), Nil)
+evalInst(compileAExp(Plus(Cst(42), Cst(21))), Nil)
+evalInst(compileAExp(Minus(Cst(42), Cst(21))), Nil)
+evalInst(compileAExp(IfThenElse(True, Cst(1), Cst(2))), Nil)
+evalInst(compileAExp(IfThenElse(Neq(Cst(1), Cst(2)), Cst(42), Cst(21))), Nil)
+evalInst(compileAExp(IfThenElse(Eq(Cst(1), Cst(2)), Cst(42), Times(Cst(21), Cst(82)))), Nil)
+"""
+
+examples |> MutMap.insert of
+  "Exception.mls"
+  name: "Exception"
+  source: """
+// * This files includes the exception handling extension of InvalML.
+
+class Exc[T, R]
+
+fun (;) seq(_, res) = res
+
+fun raise: [T, P] -> (Exc[T, P], T) ->{P} Nothing
+fun hdle: [Res, E, T] -> ([P] -> (Exc[T, P]) ->{E | P} Res, T ->{E} Res) ->{E} Res
+fun print: Str -> Unit
+
+
+hdle(e => raise(e, "oops!"), msg => print(msg))
+
+// Error! The payload type is incorrect.
+// hdle(e => raise(e, 42), msg => print(msg))
+
+
+fun div(x, y) =
+  hdle(e => if y is 0 then raise(e, "div-by-zero!") else x / y, msg => print(msg); 0)
+
+
+hdle(e1 => hdle(e2 => raise(e1, "oops!"), msg => print(msg)), msg => print(msg))
+hdle(e1 => hdle(e2 => raise(e2, "oops!"), msg => print(msg)), msg => print(msg))
+hdle(e1 => hdle(e2 => raise(e1, "oops!"), msg => raise(e1, msg)), msg => print(msg))
+
+
+// Error! The exception handler cannot be leaked.
+// let h = hdle(e => e, msg => print(msg))
+// raise(h, "leaked!")
+"""
+
+examples |> MutMap.insert of
+  "StackMM.mls"
+  name: "Stack-Based Memory Management"
+  source: """
+// * This files includes the stack-based memory management extension of InvalML.
+
+class Stack[R]
+class StackRef[T, R]
+
+fun (;) seq(_, res) = res
+
+fun allocStack: [R] -> Region[R] ->{R} Stack[R]
+fun alloc: [T, R] -> (Stack[R], T) ->{R} StackRef[T, R]
+fun read: [T, R] -> StackRef[T, R] ->{R} T
+fun write: [T, R] -> (StackRef[T, R], T) ->{R} ()
+fun push: [Res, R, E extends ~R] -> (Stack[R], [R'] -> Stack[R'] -> {R' | E} Res) ->{E | R} Res
+
+
+region r in
+  let s1 = allocStack(r)
+  let r1 = alloc(s1, 42)
+  let r2 = alloc(s1, 0)
+  write(r1, 1)
+  read(r2)
+
+
+region r in
+  let s1 = allocStack(r)
+  let r1 = alloc(s1, 42)
+  let r2 = alloc(s1, 0)
+  write(r1, 1)
+  read(r2)
+  push(s1, s2 => let r3 = alloc(s2, 0) in read(r3))
+
+
+// Error! After pusing `s1`, one can not access `s1`.
+// region r in
+//   let s1 = allocStack(r)
+//   let r1 = alloc(s1, 42)
+//   let r2 = alloc(s1, 0)
+//   write(r1, 1)
+//   read(r2)
+//   push(s1, s2 => let r3 = alloc(s2, 0) in read(r3) + read(r2))
+"""
+
+examples |> MutMap.insert of
+  "Staging.mls"
+  name: "Scope-Safe Metaprogramming"
+  source: """
+// * This files includes the metaprogramming extension of InvalML.
+
+// Type `CodeBase[T, R, S]`:
+//   T: type of quoted expression
+//   R: union of free variables' skolems
+//   S: can be either top or bot. `CodeBase[T, R, bot]` is equivalent to `Var[T, R]`; `CodeBase[T, R, top]` is equivalent to `Code[T, R]`.
+
+fun power: [C] -> CodeBase[out Num, out C, out Any] -> Int -> CodeBase[out Num, out C, out Any]
+fun power(x) = case
+  0 then `1.0
+  n then x `*. power(x)(n - 1)
+power
+
+fun id: [A] -> A -> A
+fun id(x) = x
+
+
+run(x `=> id(x) `* x)
+
+
+fun assertNotZero: [C] -> CodeBase[out Num, out C, out Any] -> CodeBase[out Num, out C, out Any]
+fun assertNotZero(x) =
+  `if (x `== `0.0) then `error else x
+let checkedDiv = x `=> y `=> x `/. (assertNotZero(y))
+run(checkedDiv)
+
+
+
+fun show: [T] -> CodeBase[out T, out Any, out Any] -> Str = s => "debug"
+
+fun inc(dbg) =
+  x `=> let c = x `+ `1 in let t = dbg(c) in c
+
+inc(c => log(show(c)))
+
+fun body_naive: [T, C] -> (CodeBase[out Int, out T, out Any], CodeBase[out Int, out C, out Any]) -> Int -> CodeBase[out Int, out T | C, out Any]
+fun body_naive(x, y) = case
+  0 then x
+  1 then y
+  n then body_naive(y, x `+ y)(n - 1)
+fun gib_naive(n) =
+  (x, y) `=> body_naive(x, y)(n)
+let gn5 = run(gib_naive(5))
+
+
+// Wrong version! There is an unexpected extrusion in `bind`, making `bind` unusable.
+// fun bind(rhs, k) = `let x = rhs `in k(x)
+// fun body: [G] -> (CodeBase[out Int, out G, out Any], CodeBase[out Int, out G, out Any]) -> Int -> CodeBase[out Int, out G, out Any]
+// fun body(x, y) = case
+//   0 then x
+//   1 then y
+//   n then bind of x `+ y, (z => body(y, z)(n - 1))
+
+
+fun bind: [G] -> (CodeBase[out Int, out G, out Any], [C] -> CodeBase[out Int, out C, out Any] -> CodeBase[out Int, out C | G, out Any]) -> CodeBase[out Int, out G, out Any]
+fun bind(rhs, k) = `let x = rhs `in k(x)
+
+fun body: [G] -> (CodeBase[out Int, out G, out Any], CodeBase[out Int, out G, out Any]) -> Int -> CodeBase[out Int, out G, out Any]
+fun body(x, y) = case
+  0 then x
+  1 then y
+  n then bind of x `+ y, (z => body(y, z)(n - 1))
+
+fun gib(n) = (x, y) `=> body(x, y)(n)
+let g5 = run(gib(5))
+g5
+"""

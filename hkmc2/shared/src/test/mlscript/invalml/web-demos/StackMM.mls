@@ -1,0 +1,47 @@
+:invalml
+
+:...
+//│ ————————————————————————————————————————————————————————————————————————————————
+
+// * This files includes the stack-based memory management extension of InvalML.
+
+class Stack[R]
+class StackRef[T, R]
+
+fun (;) seq(_, res) = res
+
+fun allocStack: [R] -> Region[out R] ->{R} Stack[R]
+fun alloc: [T, R] -> (Stack[R], T) ->{R} StackRef[T, R]
+fun read: [T, R] -> StackRef[T, R] ->{R} T
+fun write: [T, R] -> (StackRef[T, R], T) ->{R} ()
+fun push: [Res, R, E extends ~R] -> (Stack[R], [R'] -> Stack[R'] -> {R' | E} Res) ->{E | R} Res
+
+
+region r in
+  let s1 = allocStack(r)
+  let r1 = alloc(s1, 42)
+  let r2 = alloc(s1, 0)
+  write(r1, 1)
+  read(r2)
+
+
+region r in
+  let s1 = allocStack(r)
+  let r1 = alloc(s1, 42)
+  let r2 = alloc(s1, 0)
+  write(r1, 1)
+  read(r2)
+  push(s1, s2 => let r3 = alloc(s2, 0) in read(r3))
+
+
+// Error! After pusing `s1`, one can not access `s1`.
+// region r in
+//   let s1 = allocStack(r)
+//   let r1 = alloc(s1, 42)
+//   let r2 = alloc(s1, 0)
+//   write(r1, 1)
+//   read(r2)
+//   push(s1, s2 => let r3 = alloc(s2, 0) in read(r3) + read(r2))
+
+//│ Type: Int
+//│ ————————————————————————————————————————————————————————————————————————————————

@@ -185,22 +185,31 @@ fun build(htmlPath, outputPath, git) =
   
   ()
 
+
+// * Before running this code, first create a folder named `web-demo` in the parent directory of this git project.
+// * Also, build the JS artifact with `hkmc2JS/fullLinkJS`.
+// * You can try the web demo by opening the `web-demo` folder in VSCode and using extension `tht13.html-preview-vscode`
+// * Pro-tip: use incantation `~; hkmc2JS/fullLinkJS; hkmc2JVM/test; hkmc2DiffTests/testOnly -- -z BuildWebDemo`
+// * to automatically rebuild and update everything.
+
 build of
-  path.join of projectRoot, "src", "test", "mlscript-compile", "apps", "bbml-web-demo", "index.html"
+  path.join of projectRoot, "src", "test", "mlscript-compile", "apps", "invalml-web-demo", "index.html"
   // - - - - -
-  // Be careful with the output path! Everything in it will be purged.
+  // Be careful with the output path! Every file in it will be deleted.
   // The path here is just an example. Do not output to the test folder because
   // it will trigger the test.
-  Some of path.resolve of projectRoot, "..", "..", "..", "..", "780"
+  // Some of path.resolve of projectRoot, "..", "..", "..", "..", "780" // Luyu's path
+  // Some of path.resolve of projectRoot, "..", "..", "..", "web-demo" // Cunyuan's path
+  None // Do keep this line uncommented when you make commits.
   // - - - - -
   // Some of tuple of
   //   "" // Remote URL
   //   "" // Username
   //   "" // Email
   None
-//│ > Processing src/test/mlscript-compile/apps/bbml-web-demo/main.mjs
-//│ > Processing ../js/target/scala-3.6.1/hkmc2-fastopt/MLscript.mjs
-//│ > Processing src/test/mlscript-compile/apps/bbml-web-demo/Examples.mjs
+//│ > Processing src/test/mlscript-compile/apps/invalml-web-demo/main.mjs
+//│ > Processing ../js/target/scala-3.6.1/hkmc2-opt/MLscript.mjs
+//│ > Processing src/test/mlscript-compile/apps/invalml-web-demo/Examples.mjs
 //│ > Processing src/test/mlscript-compile/MutMap.mjs
 //│ > Processing src/test/mlscript-compile/Predef.mjs
 //│ > Processing src/test/mlscript-compile/Rendering.mjs
@@ -213,19 +222,4 @@ build of
 //│ > Processing src/test/mlscript-compile/Str.mjs
 //│ > Processing src/test/mlscript-compile/Runtime.mjs
 //│ > Collected 13 files
-//│ > There are 17 files in the output folder.
-//│ > Removing Examples.mjs
-//│ > Removing Iter.mjs
-//│ > Removing MLscript.mjs
-//│ > Removing MutMap.mjs
-//│ > Removing Option.mjs
-//│ > Removing Predef.mjs
-//│ > Removing Rendering.mjs
-//│ > Removing Runtime.mjs
-//│ > Removing RuntimeJS.mjs
-//│ > Removing Stack.mjs
-//│ > Removing Str.mjs
-//│ > Removing XML.mjs
-//│ > Removing index.html
-//│ > Removing main.css
-//│ > Removing main.mjs
+

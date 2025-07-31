@@ -89,6 +89,7 @@ enum Term extends Statement:
   case SynthSel(prefix: Term, nme: Tree.Ident)(var sym: Opt[FieldSymbol]) extends Term with ResolvableImpl
   case DynSel(prefix: Term, fld: Term, arrayIdx: Bool)
   case Tup(fields: Ls[Elem])(val tree: Tree.Tup)
+  case CtxTup(fields: Ls[Elem])(val tree: Tree.Tup)
   case IfLike(kw: Keyword.`if`.type | Keyword.`while`.type, desugared: Split)
   case Lam(params: ParamList, body: Term)
   case FunTy(lhs: Term, rhs: Term, eff: Opt[Term])
@@ -98,7 +99,7 @@ enum Term extends Statement:
   case Rcd(stats: Ls[Statement])
   case Quoted(body: Term)
   case Unquoted(body: Term)
-  case New(cls: Term, args: Ls[Term], rft: Opt[ClassSymbol -> ObjBody])
+  case New(cls: Term, argss: Ls[Ls[Term]], rft: Opt[ClassSymbol -> ObjBody])
   case SelProj(prefix: Term, cls: Term, proj: Tree.Ident)(val sym: Opt[FieldSymbol])
   case Asc(term: Term, ty: Term)
   case CompType(lhs: Term, rhs: Term, pol: Bool)
@@ -161,6 +162,7 @@ enum Term extends Statement:
     case Sel(pre, nme) => "selection"
     case SynthSel(pre, nme) => "selection"
     case Tup(fields) => "tuple literal"
+    case CtxTup(fields) => "contextual tuple literal"
     case IfLike(Keyword.`if`, body) => "`if` expression"
     case IfLike(Keyword.`while`, body) => "`while` expression"
     case Lam(params, body) => "function literal"
@@ -215,13 +217,14 @@ sealed trait Statement extends AutoLocated with ProductWithExtraInfo:
     case SynthSel(pre, _) => pre :: Nil
     case DynSel(o, f, _) => o :: f :: Nil
     case Tup(fields) => fields.flatMap(_.subTerms)
+    case CtxTup(fields) => fields.flatMap(_.subTerms)
     case IfLike(_, body) => body.subTerms
     case Lam(params, body) => body :: Nil
     case Blk(stats, res) => stats.flatMap(_.subTerms) ::: res :: Nil
     case Rcd(stats) => stats.flatMap(_.subTerms)
     case Quoted(term) => term :: Nil
     case Unquoted(term) => term :: Nil
-    case New(cls, args, rft) => cls :: args ::: rft.toList.flatMap(_._2.blk.subTerms)
+    case New(cls, argss, rft) => cls :: argss.flatten ::: rft.toList.flatMap(_._2.blk.subTerms)
     case SelProj(pre, cls, _) => pre :: cls :: Nil
     case Asc(term, ty) => term :: ty :: Nil
     case Ret(res) => res :: Nil
@@ -326,6 +329,7 @@ sealed trait Statement extends AutoLocated with ProductWithExtraInfo:
     case CompType(lhs, rhs, pol) => s"${lhs.showDbg} ${if pol then "|" else "&"} ${rhs.showDbg}"
     case Error => "<error>"
     case Tup(fields) => fields.map(_.showDbg).mkString("[", ", ", "]")
+    case CtxTup(fields) => fields.map(_.showDbg).mkString("‹using›[", ", ", "]")
     case TermDefinition(_, k, sym, pss, tps, sign, body, res, flags, _, _) => s"${flags} ${k.str} ${sym}${
       tps.map(_.map(_.showDbg)).mkStringOr(", ", "[", "]")
     }${
@@ -467,6 +471,7 @@ sealed abstract class ClassLikeDef extends TypeLikeDef:
   val bsym: BlockMemberSymbol
   val tparams: Ls[TyParam]
   val paramsOpt: Opt[ParamList]
+  val auxParams: Ls[ParamList]
   val ext: Opt[New]
   val body: ObjBody
   val annotations: Ls[Annot]
@@ -481,6 +486,7 @@ case class ModuleDef(
   bsym: BlockMemberSymbol,
   tparams: Ls[TyParam], 
   paramsOpt: Opt[ParamList], 
+  auxParams: Ls[ParamList], 
   ext: Opt[New],
   kind: ClsLikeKind,
   body: ObjBody,
@@ -493,6 +499,7 @@ case class PatternDef(
     bsym: BlockMemberSymbol,
     tparams: Ls[TyParam],
     paramsOpt: Opt[ParamList],
+    auxParams: Ls[ParamList],
     body: ObjBody,
     annotations: Ls[Annot],
 ) extends ClassLikeDef:
@@ -506,6 +513,7 @@ sealed abstract class ClassDef extends ClassLikeDef:
   val sym: ClassSymbol
   val tparams: Ls[TyParam]
   val paramsOpt: Opt[ParamList]
+  val auxParams: Ls[ParamList]
   val body: ObjBody
   val companion: Opt[CompanionValue]
   val annotations: Ls[Annot]
@@ -522,16 +530,16 @@ object ClassDef:
       sym: InnerSymbol,
       bsym: BlockMemberSymbol,
       tparams: Ls[TyParam],
-      paramsOpt: Opt[ParamList],
+      params: Ls[ParamList],
       ext: Opt[New],
       body: ObjBody,
       annotations: Ls[Annot],
   ): ClassDef =
-    paramsOpt match
-      case S(params) => Parameterized(owner, kind, sym.asInstanceOf// TODO: improve
+    params match
+      case ps :: pss => Parameterized(owner, kind, sym.asInstanceOf// TODO: improve
         , bsym
-        , tparams, params, ext, body, N, annotations)
-      case N => Plain(owner, kind, sym.asInstanceOf// TODO: improve
+        , tparams, ps, pss, ext, body, N, annotations)
+      case Nil => Plain(owner, kind, sym.asInstanceOf// TODO: improve
         , bsym
         , tparams, ext, body, N, annotations)
   
@@ -545,6 +553,7 @@ object ClassDef:
       bsym: BlockMemberSymbol,
       tparams: Ls[TyParam],
       params: ParamList,
+      auxParams: Ls[ParamList],
       ext: Opt[New],
       body: ObjBody,
       companion: Opt[ModuleDef],
@@ -562,6 +571,7 @@ object ClassDef:
       annotations: Ls[Annot]
   ) extends ClassDef:
     val paramsOpt: Opt[ParamList] = N
+    val auxParams: List[ParamList] = Nil
   
 end ClassDef
 
@@ -626,6 +636,7 @@ final case class TyParam(flags: FldFlags, vce: Opt[Bool], sym: VarSymbol) extend
 
 final case class Param(flags: FldFlags, sym: VarSymbol, sign: Opt[Term], modulefulness: Modulefulness) 
 extends Declaration with AutoLocated:
+  var fldSym: Opt[FieldSymbol] = N
   def subTerms: Ls[Term] = sign.toList
   override protected def children: List[Located] = sym :: sign.toList
   def showDbg: Str = flags.toString + sym + sign.fold("")(": " + _.showDbg)

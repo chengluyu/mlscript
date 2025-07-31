@@ -1,0 +1,86 @@
+:js
+
+
+:global
+:invalml
+
+
+fun test1() =
+  fun sayHi() = print("Hi")
+  sayHi(), sayHi(), sayHi()
+
+test1()
+//│ > Hi
+//│ > Hi
+//│ > Hi
+//│ Type: ⊥
+
+
+fun test2() =
+  fun funny = case
+    0 then 0
+    n then funny(n - 1) + 1
+  funny(_)
+
+test2
+//│ = [function test2]
+//│ Type: () -> (Int -> Int)
+
+:sjs
+test2()
+//│ JS (unsanitized):
+//│ test2()
+//│ = [function]
+//│ Type: Int -> Int
+
+:ssjs
+test2()(5)
+//│ JS:
+//│ tmp = test2(); block$res7 = runtime.safeCall(tmp(5)); undefined
+//│ = 5
+//│ Type: Int
+
+
+// * Notice the mistake here; we warn that the first case in statement position is useless!
+:w
+:e
+:sjs
+fun test2() =
+  fun funny = 
+    case 0 then 0
+    case n then funny(n - 1) + 1
+  funny
+//│ ╔══[WARNING] Pure expression in statement position
+//│ ║  l.50: 	    case 0 then 0
+//│ ╙──      	         ^^^^^^^^
+//│ JS (unsanitized):
+//│ let test21;
+//│ test21 = function test2() {
+//│   let funny, tmp1;
+//│   funny = function funny() {
+//│     let lambda;
+//│     lambda = (undefined, function (caseScrut) {
+//│       let n, tmp2, tmp3, tmp4;
+//│       n = caseScrut;
+//│       tmp2 = funny();
+//│       tmp3 = n - 1;
+//│       tmp4 = tmp2(tmp3);
+//│       return tmp4 + 1
+//│     });
+//│     return lambda
+//│   };
+//│   tmp1 = funny();
+//│   return tmp1
+//│ };
+//│ ╔══[WARNING] Pure expression in statement position
+//│ ║  l.50: 	    case 0 then 0
+//│ ╙──      	         ^^^^^^^^
+//│ ╔══[ERROR] Function definition shape not yet supported for funny
+//│ ║  l.50: 	    case 0 then 0
+//│ ║        	         ^^^^^^^^
+//│ ║  l.51: 	    case n then funny(n - 1) + 1
+//│ ╙──      	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Variable not found: funny
+//│ ║  l.52: 	  funny
+//│ ╙──      	  ^^^^^
+

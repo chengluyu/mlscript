@@ -1,0 +1,29 @@
+:invalml
+
+
+fun f(x) = f
+f
+//│ Type: ['f] -> ⊤ -> (⊤ -> 'f)
+//│ Where:
+//│   ⊤ -> 'f <: 'f
+
+fun f(x) = f(x)
+f
+//│ Type: ⊤ -> ⊥
+
+
+data class Foo[A](a: A)
+
+
+new Foo(123)
+//│ Type: Foo['A]
+//│ Where:
+//│   Int <: 'A
+
+fun f(x) = f(x.Foo#a)
+f
+//│ Type: ['x] -> Foo[out 'x] -> ⊥
+//│ Where:
+//│   'x <: Foo[out 'x]
+
+
