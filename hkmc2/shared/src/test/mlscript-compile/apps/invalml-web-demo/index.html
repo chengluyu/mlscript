@@ -5,6 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/modern-normalize@3.0.1/modern-normalize.min.css" rel="stylesheet">
   <link href="main.css" rel="stylesheet">
 </head>
@@ -155,8 +160,65 @@
         </header>
         <pre><code class="traces"></code></pre>
       </div>
+      <dialog id="error-display" aria-roledescription="dialog">
+        <details>
+          <summary>
+            Something in your input program is not yet handled by the compiler. Please report it if that's unexpected.
+          </summary>
+          <header class="caption">
+            <span class="error-type">ErrorType</span>
+            <span class="error-message">This is an error message.</span>
+          </header>
+          <stack-trace data-stack-trace=""></stack-trace>
+        </details>
+        <footer>
+          <button class="button" id="close-error-display">Close</button>
+        </footer>
+      </dialog>
     </div>
   </div>
+  <template id="stack-trace">
+    <style>
+      ul.stack-trace {
+        padding-left: 1.5rem;
+        margin: 0.5rem 0 1rem;
+      }
+
+      ul.stack-trace li {
+        line-height: 1.25;
+      }
+
+      ul.stack-trace li:not(:last-child) {
+        margin-bottom: 0.25rem;
+      }
+
+      ul.stack-trace li code.name {
+        margin: 0;
+        font-size: 0.875rem;
+        font-family: var(--monospace);
+        word-break: break-all;
+        overflow-wrap: break-all;
+        white-space: pre-wrap;
+        background-color: #f0f0f0;
+        padding: 0 0.125rem;
+        color: #2c2c2c;
+      }
+
+      ul.stack-trace li a.file {
+        margin: 0;
+        color: #000000;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.125rem;
+      }
+    </style>
+    <ul class="stack-trace"></ul>
+  </template>
+  <template id="stack-trace-name-and-file">
+    <li>at <code class="name"></code> in <a class="file"></a></li>
+  </template>
+  <template id="stack-trace-file-only">
+    <li>at <a class="file"></a></li>
+  </template>
   <script type="module" src="./main.mjs"></script>
 </body>
 

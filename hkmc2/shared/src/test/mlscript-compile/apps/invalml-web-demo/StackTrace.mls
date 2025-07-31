@@ -1,0 +1,81 @@
+import "../../Predef.mls"
+
+open Predef { mkStr, print }
+
+module StackTrace with ...
+
+let stackTraceHead = new RegExp of """^[$_\p{ID_Start}][$_\.\u200C\u200D\p{ID_Continue}]*(?:: .+)?$""", "u"
+let stackTraceLine = new RegExp of """^\s*at(?:(?:\s+(?<name>[$_\p{ID_Start}][$_\.\u200C\u200D\p{ID_Continue}]*))?(?:\s+\((?<file>[^\)]+)\))?|\s*(?<file>[^\)]+))$""", "u"
+
+let parseStackTrace(stackTrace) =
+  let stackTraceLines = stackTrace.split of "\n"
+  if stackTraceLines.length > 0 and stackTraceHead.test(stackTraceLines.0) do
+    stackTraceLines.shift()
+  stackTraceLines.map of (line, _, _) =>
+    if line.match(stackTraceLine) is
+      null then (line: line)
+      result then
+        console.log(result)
+        (name: result.groups.name, file: result.groups.file)
+
+
+let nameAndFileTraceTemplate = document.getElementById("stack-trace-name-and-file")
+let nameAndFileTraceContent = nameAndFileTraceTemplate.content
+let fileOnlyTraceTemplate = document.getElementById("stack-trace-file-only")
+let fileOnlyTraceContent = fileOnlyTraceTemplate.content
+
+class StackTrace extends HTMLElement with
+  let template = document.getElementById("stack-trace")
+  let templateContent = template.content
+  let shadowRoot = this.attachShadow of mode: "open"
+  shadowRoot.appendChild of templateContent.cloneNode(true)
+
+  let list = shadowRoot.querySelector("ul")
+  
+  fun attributeChangedCallback(name, oldValue, newValue) =
+    if name is "data-stack-trace" do update of newValue
+  
+  fun createTextTrace(content) =
+    let li = document.createElement("li")
+    let pre = document.createElement("pre")
+    let code = document.createElement("code")
+    set code.textContent = content
+    pre.appendChild of code
+    li.appendChild of pre
+    li
+  
+  fun createFileOnlyTrace(file) =
+    let element = fileOnlyTraceContent.cloneNode(true)
+    let anchor = element.querySelector("a")
+    set anchor.href = file
+    let segments = file.split of "/"
+    set anchor.textContent = segments.at(-1)
+    element
+  
+  fun createNameAndFileTrace(name, file) =
+    let element = nameAndFileTraceContent.cloneNode(true)
+    let code = element.querySelector("code")
+    set code.textContent = name
+    let anchor = element.querySelector("a")
+    set anchor.href = file
+    let segments = file.split of "/"
+    set anchor.textContent = segments.at(-1)
+    element
+  
+  fun update(stackTrace) =
+    set list.innerHTML = ""
+    if stackTrace is null | "" then ()
+    else...
+    parseStackTrace(stackTrace).forEach of case
+      (:line) then list.appendChild of createTextTrace of line
+      (:name, :file) and
+        name === Unit then list.appendChild of createFileOnlyTrace of file
+        else list.appendChild of createNameAndFileTrace of name, file
+      otherwise then
+        list.appendChild of createTextTrace of String(otherwise)
+
+  fun connectedCallback() = update of this.dataset.stackTrace
+
+set StackTrace.observedAttributes = ["data-stack-trace"]
+
+customElements.define of "stack-trace", StackTrace

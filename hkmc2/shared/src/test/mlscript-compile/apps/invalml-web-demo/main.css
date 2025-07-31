@@ -4,7 +4,7 @@
   font-display: swap;
   font-weight: 100 700;
   src: url(https://cdn.jsdelivr.net/fontsource/fonts/roboto-mono:vf@latest/latin-wght-normal.woff2) format('woff2-variations');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
@@ -13,7 +13,7 @@
   font-display: swap;
   font-weight: 100 700;
   src: url(https://cdn.jsdelivr.net/fontsource/fonts/roboto-mono:vf@latest/latin-wght-italic.woff2) format('woff2-variations');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
@@ -22,7 +22,7 @@
 
 body {
   font-size: 16px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 h2 {
@@ -60,7 +60,8 @@ h3 {
   border: 1px solid #000;
 }
 
-#input, #output {
+#input,
+#output {
   flex: 1;
   flex-shrink: 0;
 }
@@ -161,7 +162,7 @@ collapsible-tree>details {
 }
 
 /* Basic styling for tab labels (can be made more "style-less" by removing borders, padding) */
-.tabs > label {
+.tabs>label {
   display: inline-flex;
   align-items: center;
   height: 1.75rem;
@@ -194,7 +195,7 @@ collapsible-tree>details {
   /* Makes it look like the content is part of the tab */
 }
 
-.tabs input[type="radio"] + label {
+.tabs input[type="radio"]+label {
   margin-right: 0.25rem;
 }
 
@@ -203,12 +204,12 @@ collapsible-tree>details {
 When radio button with id="tab1" is checked, the element with id="content1" that
 is a sibling of it (~) will be displayed.
 */
-#radio-typer:checked ~ #tab-typer,
-#radio-parser:checked ~ #tab-parser,
-#radio-elaborator:checked ~ #tab-elaborator,
-#radio-resolver:checked ~ #tab-resolver,
-#radio-lowering:checked ~ #tab-lowering,
-#radio-code-generation:checked ~ #tab-code-generation {
+#radio-typer:checked~#tab-typer,
+#radio-parser:checked~#tab-parser,
+#radio-elaborator:checked~#tab-elaborator,
+#radio-resolver:checked~#tab-resolver,
+#radio-lowering:checked~#tab-lowering,
+#radio-code-generation:checked~#tab-code-generation {
   display: block;
 }
 
@@ -226,21 +227,22 @@ is a sibling of it (~) will be displayed.
   margin-bottom: 0.5rem;
 }
 
-pre > code {
+pre>code {
   font-family: var(--monospace);
 }
 
-pre > code.traces {
+pre>code.traces {
   font-size: 0.875rem;
 }
 
-header.tree-display, header.traces {
+header.tree-display,
+header.traces {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-header.tree-display > div.hint {
+header.tree-display>div.hint {
   font-size: 0.75rem;
   opacity: 0.5;
   font-weight: bold;
@@ -254,4 +256,94 @@ label[for="show-traces"] {
   font-size: 0.875rem;
   margin-left: auto;
   align-self: center;
+}
+
+dialog#error-display {
+  position: absolute;
+  box-sizing: border-box;
+  left: 50%;
+  transform: translate(-50%, 0);
+  max-width: 60%;
+  background: #ffffff;
+  border: 1px solid var(--error-border-color);
+  padding: 1rem;
+  z-index: 101;
+}
+
+dialog#error-display::backdrop {
+  background-color: #dadada50;
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23595959' fill-opacity='0.5' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+dialog#error-display details {
+  margin: 0;
+  border: 1px solid #aaa;
+  padding: 0.5em 0.5em 0;
+}
+
+dialog#error-display summary {
+  font-weight: bold;
+  margin: -0.5em -0.5em 0;
+  padding: 0.5em;
+}
+
+dialog#error-display details[open] {
+  padding: 0.5em;
+}
+
+dialog#error-display details[open] summary {
+  border-bottom: 1px dashed #aaa;
+  margin-bottom: 0.5em;
+}
+
+#error-display .caption {
+  font-size: 1.25rem;
+}
+
+#error-display .caption .error-type {
+  font-weight: 700;
+  color: var(--error-type-color);
+}
+
+#error-display .caption .error-message {
+  font-weight: 500;
+  color: var(--error-message-color);
+}
+
+#error-display ul.stack-trace {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0 1rem;
+}
+
+#error-display ul.stack-trace li {
+  line-height: 1.25;
+}
+
+#error-display ul.stack-trace li:not(:last-child) {
+  margin-bottom: 0.25rem;
+}
+
+#error-display .stack-trace li code.name {
+  margin: 0;
+  font-size: 0.875rem;
+  font-family: var(--monospace);
+  word-break: break-all;
+  overflow-wrap: break-all;
+  white-space: pre-wrap;
+  background-color: #f0f0f0;
+  padding: 0 0.125rem;
+  color: #2c2c2c;
+}
+
+#error-display .stack-trace li a.file {
+  margin: 0;
+  color: #000000;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.125rem;
+}
+
+#error-display footer {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
 }

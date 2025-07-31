@@ -21,6 +21,7 @@ import "../../Predef.mls"
 import "../../MutMap.mls"
 import "./Examples.mls"
 import "../../../../../../js/target/scala-3.6.1/hkmc2-opt/MLscript.mjs"
+import "./StackTrace.mls"
 
 
 open XML { elem }
@@ -91,6 +92,20 @@ module tabs with
       val elem = el.querySelector(".diagnostics")
       val output = elem.querySelector(".output")
       val text = elem.querySelector(".text")
+  module errorDisplay with
+    val dialog = document.querySelector("dialog#error-display")
+    val errorType = dialog.querySelector(".error-type")
+    val errorMessage = dialog.querySelector(".error-message")
+    val stackTrace = dialog.querySelector("stack-trace")
+    let closeButton = dialog.querySelector("#close-error-display")
+    
+    closeButton.addEventListener of "click", (_, _) => dialog.close()
+    
+    fun show(error) =
+      set errorType.textContent = error.name
+      set errorMessage.textContent = error.message
+      set stackTrace.dataset.stackTrace = error.stack
+      dialog.showModal()
 
 examples Iter.each of case [key, example] then
   let option = document.createElement of "option"
@@ -118,6 +133,8 @@ selector.addEventListener of "change", event =>
     None do throw new Error of "Example \"" + selector.value + "\" not found"
 
 fun showDiagnostics(elems, diagnostics, problematicStages) =
+  set elems.output.innerHTML = ""
+  set elems.text.innerHTML = ""
   if diagnostics is [] and
     problematicStages is [] then
       set elems.text.innerHTML = "<em>Everything went smoothly, without any problems.</em>"
@@ -190,9 +207,7 @@ parseButton.addEventListener of "click", event =>
       
     error =>
       console.log(error)
-      let errorDisplay = document.createElement("error-display")
-      errorDisplay.setError of error
-      outputPanel.appendChild of errorDisplay
+      tabs.errorDisplay.show(error)
 
 let indentRegex = new RegExp("""^(\s*)""")
 

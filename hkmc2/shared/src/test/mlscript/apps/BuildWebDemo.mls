@@ -208,6 +208,7 @@ build of
   //   "" // Email
   None
 //│ > Processing src/test/mlscript-compile/apps/invalml-web-demo/main.mjs
+//│ > Processing src/test/mlscript-compile/apps/invalml-web-demo/StackTrace.mjs
 //│ > Processing ../js/target/scala-3.6.1/hkmc2-opt/MLscript.mjs
 //│ > Processing src/test/mlscript-compile/apps/invalml-web-demo/Examples.mjs
 //│ > Processing src/test/mlscript-compile/MutMap.mjs
@@ -221,5 +222,5 @@ build of
 //│ > Processing src/test/mlscript-compile/Stack.mjs
 //│ > Processing src/test/mlscript-compile/Str.mjs
 //│ > Processing src/test/mlscript-compile/Runtime.mjs
-//│ > Collected 13 files
+//│ > Collected 14 files
 
