@@ -1,0 +1,57 @@
+:js
+
+import "../../../mlscript-compile/Iter.mls"
+import "../../../mlscript-compile/apps/simple-calculator/Lexer.mls"
+
+fun example(text) = print of
+  Lexer.tokenize(text)
+  \Iter.fromStack()
+  \Iter.mapping of token =>
+    token.toString() + " (" + token.start + ":" + token.end + ")"
+  \Iter.joined("\n")
+
+example of "(123)"
+//│ > Open(Round) (0:1)
+//│ > Number(123n) (1:4)
+//│ > Close(Round) (4:5)
+
+example of "123+456"
+//│ > Number(123n) (0:3)
+//│ > Symbol("+") (3:4)
+//│ > Number(456n) (4:7)
+
+example of "00000005 + 0000000008"
+//│ > Number(5n) (0:8)
+//│ > Symbol("+") (9:10)
+//│ > Number(8n) (11:21)
+
+example of "a+b"
+//│ > Identifier("a") (0:1)
+//│ > Symbol("+") (1:2)
+//│ > Identifier("b") (2:3)
+
+example of "( a + b ) * c"
+//│ > Open(Round) (0:1)
+//│ > Identifier("a") (2:3)
+//│ > Symbol("+") (4:5)
+//│ > Identifier("b") (6:7)
+//│ > Close(Round) (8:9)
+//│ > Symbol("*") (10:11)
+//│ > Identifier("c") (12:13)
+
+example of "( x_1 + x_2 ) * x_3"
+//│ > Open(Round) (0:1)
+//│ > Identifier("x_1") (2:5)
+//│ > Symbol("+") (6:7)
+//│ > Identifier("x_2") (8:11)
+//│ > Close(Round) (12:13)
+//│ > Symbol("*") (14:15)
+//│ > Identifier("x_3") (16:19)
+
+example of "0 1 2 3 4 5"
+//│ > Number(0n) (0:1)
+//│ > Number(1n) (2:3)
+//│ > Number(2n) (4:5)
+//│ > Number(3n) (6:7)
+//│ > Number(4n) (8:9)
+//│ > Number(5n) (10:11)

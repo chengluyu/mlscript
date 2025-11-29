@@ -1,0 +1,10 @@
+import "../../../mlscript-compile/Option.mls"
+
+abstract class Tree
+
+module Tree with ...
+
+data class Literal(value: BigInt) extends Tree
+data class Reference(name: Str) extends Tree
+data class Binary(operator: Str, left: Tree, right: Tree) extends Tree
+data class Error(tree: Option[Tree], message: Str) extends Tree

@@ -35,3 +35,19 @@ trimStart of ""
 :expect "hello"
 trimStart of "\thello"
 //│ = "hello"
+
+import "../../../mlscript-compile/Char.mls"
+
+let zero = "0".codePointAt(0)
+//│ zero = 48
+
+fun parseDecimal(text) =
+  let value = BigInt(0)
+  let rest = text
+  while rest is (Char.Digit as head) ~ tail do
+    set value = value * BigInt(10) + BigInt(head.codePointAt(0) - zero)
+    set rest = tail
+  [value, rest]
+
+parseDecimal of "31415926535897932384626433832795028841971"
+//│ = [31415926535897932384626433832795028841971n, ""]

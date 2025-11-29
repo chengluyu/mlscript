@@ -1,0 +1,18 @@
+abstract class Token
+
+module Token with ...
+
+data class Number(value: Num)(start: Int, end: Int) extends Token
+data class Identifier(name: Str)(start: Int, end: Int) extends Token
+data class Symbol(value: Str)(start: Int, end: Int) extends Token
+data class Open(kind: Token.BracketKind)(start: Int, end: Int) extends Token
+data class Close(kind: Token.BracketKind)(start: Int, end: Int) extends Token
+
+type BracketKind = BracketKind.{ Angle | Round | Square | Curly | BeginEnd }
+
+module BracketKind with
+  object Angle
+  object Round
+  object Square
+  object Curly
+  object BeginEnd

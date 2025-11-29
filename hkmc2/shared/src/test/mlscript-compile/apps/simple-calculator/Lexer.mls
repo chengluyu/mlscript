@@ -1,0 +1,55 @@
+import "../../../mlscript-compile/Char.mls"
+import "../../../mlscript-compile/Stack.mls"
+import "./Token.mls"
+
+open Token
+
+module Lexer with...
+
+pattern Bracket =
+  ("(" => Open(BracketKind.Round)) |
+  ("[" => Open(BracketKind.Square)) |
+  ("{" => Open(BracketKind.Curly)) |
+  (")" => Close(BracketKind.Round)) |
+  ("]" => Close(BracketKind.Square)) |
+  ("}" => Close(BracketKind.Curly))
+
+pattern Symbolic = "+" | "-" | "**" | "*" | "/"
+
+pattern IdentifierStart = Char.Letter | "_"
+
+pattern IdentifierPart = Char.Letter | Char.Digit | "_"
+
+let zero = "0".codePointAt(0)
+let ten = BigInt(10)
+
+pattern Digit = (Char.Digit as char) =>
+  BigInt(char.codePointAt(0) - zero)
+
+fun tokenize(text: Str): Stack[Token] =
+  let { tokens = mut [], rest = text, pos = 0 }
+  while rest is
+    (Bracket as makeToken) ~ rest' do
+      tokens.push of makeToken(pos, pos + 1)
+      set { rest = rest', pos += 1 }
+    (Symbolic as symbol) ~ rest' do
+      let pos' = pos + symbol.length
+      tokens.push of Symbol(symbol)(pos, pos')
+      set { rest = rest', pos = pos' }
+    (Digit as initial) ~ rest' do
+      let { start = pos, value = initial }
+      set { rest = rest', pos += 1 }
+      while rest is (Digit as index) ~ rest' do
+        set value = value * BigInt(10) + index
+        set { rest = rest', pos += 1 }
+      tokens.push of Number(value)(start, pos)
+    (IdentifierStart as initial) ~ rest' do
+      let { start = pos, text = initial }
+      set { rest = rest', pos += 1 }
+      while rest is (IdentifierPart as part) ~ rest' do
+        set text = text + part
+        set { rest = rest', pos += 1 }
+      tokens.push of Identifier(text)(start, pos)
+    Char.Whitespace ~ rest' do
+      set { rest = rest', pos += 1 }
+  Stack.fromArray of tokens.reverse()

@@ -1,0 +1,34 @@
+:js
+
+import "../../../mlscript-compile/apps/simple-calculator/Lexer.mls"
+import "../../../mlscript-compile/apps/simple-calculator/Parser.mls"
+
+fun example(text) = print of
+  Lexer.tokenize(text) |> Parser.parse
+
+example of "123"
+//│ > Literal(123n)
+
+example of "123 + 456"
+//│ > Binary("+", Literal(123n), Literal(456n))
+
+example of "1 + 2 * 3"
+//│ > Binary("+", Literal(1n), Binary("*", Literal(2n), Literal(3n)))
+
+example of "1 + 2 + 3"
+//│ > Binary("+", Binary("+", Literal(1n), Literal(2n)), Literal(3n))
+
+example of "1 * 2 * 3"
+//│ > Binary("*", Binary("*", Literal(1n), Literal(2n)), Literal(3n))
+
+example of "1 * 2 + 3"
+//│ > Binary("+", Binary("*", Literal(1n), Literal(2n)), Literal(3n))
+
+example of "1 ** 3 ** 5"
+//│ > Binary("**", Literal(1n), Binary("**", Literal(3n), Literal(5n)))
+
+example of "A + B + C"
+//│ > Binary("+", Binary("+", Reference("A"), Reference("B")), Reference("C"))
+
+example of "A + B * C"
+//│ > Binary("+", Reference("A"), Binary("*", Reference("B"), Reference("C")))

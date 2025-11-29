@@ -1,0 +1,64 @@
+import "../../../mlscript-compile/Stack.mls"
+import "../../../mlscript-compile/Option.mls"
+import "../../../mlscript-compile/MutMap.mls"
+import "../../../mlscript-compile/Predef.mls"
+import "./Token.mls"
+import "./Tree.mls"
+import "./Lexer.mls"
+
+open Stack
+open Option
+open Predef
+open Token
+
+module Parser with...
+
+data class Operator(name: Str, lbp: Int, rbp: Int, unary: Bool)
+
+let operatorTable = MutMap.empty
+operatorTable |> MutMap.insert("+", Operator("+" , 30, 30, true))
+operatorTable |> MutMap.insert("-", Operator("-" , 30, 30, true))
+operatorTable |> MutMap.insert("*", Operator("*" , 50, 50, false))
+operatorTable |> MutMap.insert("/", Operator("/" , 50, 50, false))
+operatorTable |> MutMap.insert("**", Operator("**", 70, 69, false))
+
+fun op(name: Str): Option[Operator] =
+  operatorTable |> MutMap.get(name)
+
+fun parse(tokens: Stack[Token]): Tree =
+  let currentTokens = tokens
+  
+  fun peek = if currentTokens is head :: _ then Some(head) else None
+  
+  fun consume = if currentTokens is _ :: rest then set currentTokens = rest
+  
+  fun expr(bp: Int): Tree = if peek is
+    Some of
+      Token.Number(value) then
+        consume
+        exprCont(Tree.Literal(value), bp)
+      Token.Identifier(name) then
+        consume
+        exprCont(Tree.Reference(name), bp)
+      Token.Open(BracketKind.Round) then
+        consume
+        let tree = exprCont(expr(0), bp)
+        if peek is Some(Token.Close(BracketKind.Round)) then
+          consume
+          tree
+        else Tree.Error of Some(tree), "Unmatched closing parenthesis"
+      token then Tree.Error of None, "Unexpected token " + render(token)
+    None then Tree.Error of None, "Unexpected end of input"
+  
+  fun exprCont(acc: Tree, bp: Int): Tree =
+    if peek is Some(Token.Symbol(name)) and
+      op(name) is Some((:lbp, :rbp)) and lbp > bp then
+        consume
+        exprCont(Tree.Binary(name, acc, expr(rbp)), bp)
+    else acc
+  
+  let result = expr(0)
+  if peek is
+    Some(token) then
+      Tree.Error of Some(result), "Unexpected token " + render(token)
+    None then result
