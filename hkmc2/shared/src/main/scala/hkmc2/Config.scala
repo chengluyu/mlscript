@@ -39,7 +39,7 @@ object Config:
     effectHandlers = N,
     liftDefns = N,
     target = CompilationTarget.JS,
-    rewriteWhileLoops = true,
+    rewriteWhileLoops = false,
     stageCode = false,
     tailRecOpt = true,
   )

@@ -29,7 +29,7 @@ object NodePath extends js.Object:
 /**
  * JavaScript implementation of Path using Node.js path module
  */
-private[io] class NodePath(val pathString: String) extends Path:
+private[io] case class NodePath(val pathString: String) extends Path:
   private lazy val parsed = NodePath.parse(pathString)
   
   override def toString: String = pathString
@@ -79,3 +79,4 @@ private[io] object PathFactory:
   def separator: String = NodePath.sep
   def relPathFromString(str: String) = new NodeRelPath(str)
   def relPathUp = new NodeRelPath("..")
+
