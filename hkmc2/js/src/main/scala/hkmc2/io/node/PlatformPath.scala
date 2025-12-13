@@ -18,7 +18,7 @@ trait ParsedPath extends js.Object:
  */
 @js.native
 @JSImport("path", JSImport.Namespace)
-object NodePath extends js.Object:
+object NodePathModule extends js.Object:
   def sep: String = js.native
   def parse(path: String): ParsedPath = js.native
   def relative(from: String, to: String): String = js.native
@@ -30,7 +30,7 @@ object NodePath extends js.Object:
  * JavaScript implementation of Path using Node.js path module
  */
 private[io] case class NodePath(val pathString: String) extends Path:
-  private lazy val parsed = NodePath.parse(pathString)
+  private lazy val parsed = NodePathModule.parse(pathString)
   
   override def toString: String = pathString
   
@@ -42,22 +42,22 @@ private[io] case class NodePath(val pathString: String) extends Path:
     if parsed.ext.startsWith(".") then parsed.ext.substring(1)
     else parsed.ext
   
-  def up: Path = new NodePath(NodePath.dirname(pathString))
+  def up: Path = new NodePath(NodePathModule.dirname(pathString))
   
   def /(relPath: RelPath): Path =
-    new NodePath(NodePath.join(pathString, relPath.toString))
+    new NodePath(NodePathModule.join(pathString, relPath.toString))
   
   def /(fragment: String): Path =
-    new NodePath(pathString + NodePath.sep + fragment)
+    new NodePath(pathString + NodePathModule.sep + fragment)
   
   def relativeTo(base: Path): Opt[RelPath] =
-    try S(new NodeRelPath(NodePath.relative(base.toString, pathString)))
+    try S(new NodeRelPath(NodePathModule.relative(base.toString, pathString)))
     catch case _: Exception => N
   
   def segments: Ls[String] =
-    pathString.split(NodePath.sep).toList.filter(_.nonEmpty)
+    pathString.split(NodePathModule.sep).toList.filter(_.nonEmpty)
   
-  def isAbsolute: Bool = NodePath.isAbsolute(pathString)
+  def isAbsolute: Bool = NodePathModule.isAbsolute(pathString)
 
 /**
  * JavaScript implementation of RelPath using Node.js path module
@@ -66,17 +66,17 @@ private[io] class NodeRelPath(val pathString: String) extends RelPath:
   override def toString: String = pathString
   
   def segments: Ls[String] =
-    pathString.split(NodePath.sep).toList.filter(_.nonEmpty)
+    pathString.split(NodePathModule.sep).toList.filter(_.nonEmpty)
   
   def /(other: RelPath): RelPath =
-    new NodeRelPath(NodePath.join(pathString, other.toString))
+    new NodeRelPath(NodePathModule.join(pathString, other.toString))
 
 /**
  * Platform-specific factory for creating Path instances
  */
 private[io] object PathFactory:
   def fromString(str: String) = new NodePath(str)
-  def separator: String = NodePath.sep
+  def separator: String = NodePathModule.sep
   def relPathFromString(str: String) = new NodeRelPath(str)
   def relPathUp = new NodeRelPath("..")
 
