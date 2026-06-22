@@ -1,0 +1,197 @@
+:patMatConsequentSharingThreshold 1
+
+// === POC: positive-specialized fallback sharing ===
+
+// This is a small, reviewable version of the shape that makes
+// SpecialRegExpEmail explode after UCS normalization.
+//
+// The first branch has a non-full nested constructor consequent:
+//   Node(Leaf("a"), Node(Leaf("b"), Leaf("c"))) and y is 0
+//
+// When `x is Node(...)` succeeds but a nested field test fails, the matcher has
+// to continue with the remaining alternatives. Today `normalizeImpl` appends a
+// positive-specialized copy of those alternatives into the branch consequent.
+// That is semantically correct, but it physically duplicates the remaining
+// pattern matrix. In the regex-generated case, the duplicated matrix is large
+// and this becomes thousands of repeated `instanceof` checks in JS.
+//
+// The POC target is to bind the positive-specialized fallback as a split join
+// point inside the positive branch, then append `$sigma` instead of the whole
+// fallback body. This should preserve first-match semantics and branch-local
+// bindings while keeping the lowered matcher closer to a decision DAG.
+
+data class Leaf(tag)
+data class Node(left, right)
+data class Alt(left, right)
+data class Empty()
+
+:ucs normalized
+fun positiveFallbackDuplicationPoc(x, y) = if x is
+  Node(Leaf("a"), Node(Leaf("b"), Leaf("c"))) and y is 0 then "abc0"
+  Node(Leaf("a"), Node(Leaf("b"), Leaf("d"))) then "abd"
+  Node(Leaf("a"), Alt(Leaf("b"), Leaf("c"))) then "alt"
+  Empty() then "empty"
+  else "fallback"
+//│ Normalized:
+//│ >  ‹if|while›
+//│ >    x is Node(arg$Node$0$, arg$Node$1$) and
+//│ >      tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >        tmp:arg$Leaf$0$ is "a" and
+//│ >          tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >            tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >              tmp:arg$Leaf$0$ is "b" and
+//│ >                tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
+//│ >                  tmp:arg$Leaf$0$ is "c" and
+//│ >                    y is 0 then "abc0"
+//│ >                    else "fallback"
+//│ >                  tmp:arg$Leaf$0$ is "d" then "abd"
+//│ >                  else "fallback"
+//│ >                else "fallback"
+//│ >              else "fallback"
+//│ >            else "fallback"
+//│ >          let-split σ = else "fallback"
+//│ >          tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
+//│ >            tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
+//│ >              tmp:arg$Leaf$0$ is "b" and
+//│ >                tmp:arg$Alt$1$ is Leaf(arg$Leaf$0$) and
+//│ >                  tmp:arg$Leaf$0$ is "c" then "alt"
+//│ >                  $σ
+//│ >                $σ
+//│ >              $σ
+//│ >            $σ
+//│ >          $σ
+//│ >        else "fallback"
+//│ >      else "fallback"
+//│ >    x is Empty() then "empty"
+//│ >    else "fallback"
+
+
+// The same structure with a branch-local binding in the fallback. A future
+// sharing implementation must not hoist the shared split above the branch that
+// initializes `arg$Node$...`; the join point has to stay in the positive branch
+// continuation.
+
+:ucs normalized
+fun branchLocalFallbackBindingPoc(x, y) = if x is
+  Node(Leaf("a"), Node(Leaf("b"), Leaf("c"))) and y is 0 then "abc0"
+  Node(prefix, Node(Leaf("b"), suffix)) then suffix.tag
+  Node(prefix, Alt(Leaf("b"), suffix)) then suffix.tag
+  else "fallback"
+//│ Normalized:
+//│ >  ‹if|while›
+//│ >    x is Node(arg$Node$0$, arg$Node$1$) and
+//│ >      let-split σ =
+//│ >        tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >          let-split σ = else "fallback"
+//│ >          tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >            tmp:arg$Leaf$0$ is "b" and
+//│ >              let suffix = tmp:arg$Node$1$⁰
+//│ >              let prefix = tmp:arg$Node$0$⁰
+//│ >              else suffix⁰.tag
+//│ >            $σ
+//│ >          $σ
+//│ >        let-split σ = else "fallback"
+//│ >        tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
+//│ >          tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
+//│ >            tmp:arg$Leaf$0$ is "b" and
+//│ >              let suffix = tmp:arg$Alt$1$⁰
+//│ >              let prefix = tmp:arg$Node$0$⁰
+//│ >              else suffix¹.tag
+//│ >            $σ
+//│ >          $σ
+//│ >        $σ
+//│ >      tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >        tmp:arg$Leaf$0$ is "a" and
+//│ >          tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >            tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >              tmp:arg$Leaf$0$ is "b" and
+//│ >                tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
+//│ >                  tmp:arg$Leaf$0$ is "c" and
+//│ >                    y is 0 then "abc0"
+//│ >                    $σ
+//│ >                  $σ
+//│ >                $σ
+//│ >              $σ
+//│ >            $σ
+//│ >          $σ
+//│ >        $σ
+//│ >      $σ
+//│ >    else "fallback"
+
+
+// A deeper right-spine variant of the same problem. This makes the generated
+// normalized expression nest through several constructor fields before it can
+// reach the later alternatives. The intent is to keep a compact regression
+// example for the expression-depth side of the SpecialRegExpEmail failure.
+
+:ucs normalized
+fun deepNestedFallbackExpressionPoc(x, y, z) = if x is
+  Node(Leaf("a"), Node(Leaf("b"), Node(Leaf("c"), Node(Leaf("d"), Leaf("e"))))) and y is 0 and z is 0 then "abcde"
+  Node(Leaf("a"), Node(Leaf("b"), Node(Leaf("c"), Node(Leaf("d"), Leaf("f"))))) then "abcdf"
+  Node(Leaf("a"), Node(Leaf("b"), Node(Leaf("c"), Alt(Leaf("d"), Leaf("e"))))) then "abc-alt"
+  Node(Leaf("a"), Node(Leaf("b"), Alt(Leaf("c"), Node(Leaf("d"), Leaf("e"))))) then "ab-alt"
+  Empty() then "empty"
+  else "fallback"
+//│ Normalized:
+//│ >  ‹if|while›
+//│ >    x is Node(arg$Node$0$, arg$Node$1$) and
+//│ >      tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >        tmp:arg$Leaf$0$ is "a" and
+//│ >          tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >            tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >              tmp:arg$Leaf$0$ is "b" and
+//│ >                tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                  tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                    tmp:arg$Leaf$0$ is "c" and
+//│ >                      tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                        tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                          tmp:arg$Leaf$0$ is "d" and
+//│ >                            tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
+//│ >                              tmp:arg$Leaf$0$ is "e" and
+//│ >                                let-split σ = else "fallback"
+//│ >                                y is 0 and
+//│ >                                  z is 0 then "abcde"
+//│ >                                  $σ
+//│ >                                $σ
+//│ >                              tmp:arg$Leaf$0$ is "f" then "abcdf"
+//│ >                              else "fallback"
+//│ >                            else "fallback"
+//│ >                          else "fallback"
+//│ >                        else "fallback"
+//│ >                      let-split σ = else "fallback"
+//│ >                      tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
+//│ >                        tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
+//│ >                          tmp:arg$Leaf$0$ is "d" and
+//│ >                            tmp:arg$Alt$1$ is Leaf(arg$Leaf$0$) and
+//│ >                              tmp:arg$Leaf$0$ is "e" then "abc-alt"
+//│ >                              $σ
+//│ >                            $σ
+//│ >                          $σ
+//│ >                        $σ
+//│ >                      $σ
+//│ >                    else "fallback"
+//│ >                  else "fallback"
+//│ >                let-split σ = else "fallback"
+//│ >                tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
+//│ >                  tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
+//│ >                    tmp:arg$Leaf$0$ is "c" and
+//│ >                      tmp:arg$Alt$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                        tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                          tmp:arg$Leaf$0$ is "d" and
+//│ >                            tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
+//│ >                              tmp:arg$Leaf$0$ is "e" then "ab-alt"
+//│ >                              $σ
+//│ >                            $σ
+//│ >                          $σ
+//│ >                        $σ
+//│ >                      $σ
+//│ >                    $σ
+//│ >                  $σ
+//│ >                $σ
+//│ >              else "fallback"
+//│ >            else "fallback"
+//│ >          else "fallback"
+//│ >        else "fallback"
+//│ >      else "fallback"
+//│ >    x is Empty() then "empty"
+//│ >    else "fallback"
