@@ -131,16 +131,20 @@ class Block with
     Assign(val lhs: Symbol, val rhs: Result, val rest: Block)
     Define(val defn: Defn, val rest: Block)
     Scoped(val symbols: Array[Symbol], val rest: Block)
+    Label(val label: Symbol, val loop: Bool, val body: Block, val rest: Block)
+    Break(val label: Symbol)
+    Continue(val label: Symbol)
     End()
   
 fun concat(b1: Block, b2: Block) = if b1 is
-  Return then b1
+  Return | Break | Continue then b1
   End then b2
   Match(scrut, arms, dflt, rest) then Match(scrut, arms, dflt, concat(rest, b2))
   UCS(scrut, arms) then UCS(scrut, arms.map(a => [a.0, concat(a.1, b2)]))
   Assign(lhs, rhs, rest) then Assign(lhs, rhs, concat(rest, b2))
   Define(defn, rest) then Define(defn, concat(rest, b2))
   Scoped(symbols, rest) then Scoped(symbols, concat(rest, b2))
+  Label(label, loop, body, rest) then Label(label, loop, body, concat(rest, b2))
 
 fun indent(s: Str) = s.replaceAll("\n", "\n  ")
 
@@ -392,6 +396,10 @@ class Printer(val owner: Opt[Symbol]) with
       Scoped(symbols, rest) then
         // but this one must use the function argument instead of a lambda...
         "let {" + symbols.map(showSymbol).join(", ") + "}" + showRestBlock(rest)
+      Label(label, _, body, rest) then
+        "do " + showSymbol(label) + ":" + indent("\n" + showBlock(body)) + showRestBlock(rest)
+      Break(label) then showSymbol(label) + ".break"
+      Continue(label) then showSymbol(label) + ".continue"
       End() then "()"
       _ then "<unknown block>"
 

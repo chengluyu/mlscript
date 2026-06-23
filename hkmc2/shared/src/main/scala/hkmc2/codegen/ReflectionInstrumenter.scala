@@ -437,6 +437,17 @@ class ReflectionInstrumenter(using State, Raise, Ctx) extends BlockTransformer(S
       transformBlock(sub): (sub, ctx) =>
         transformBlock(rest)(using ctx): (rest, ctx) =>
           fnConcat(sub, rest)(k(_, ctx))
+    case Label(label, loop, body, rest) =>
+      transformSymbol(label): (labelStaged, labelCtx) =>
+        transformBlock(body)(using labelCtx): (bodyStaged, _) =>
+          transformBlock(rest)(using labelCtx): (restStaged, restCtx) =>
+            blockCtor("Label", Ls(labelStaged, toValue(loop), bodyStaged, restStaged))(k(_, restCtx))
+    case Break(label) =>
+      transformSymbol(label): (labelStaged, ctx) =>
+        blockCtor("Break", Ls(labelStaged))(k(_, ctx))
+    case Continue(label) =>
+      transformSymbol(label): (labelStaged, ctx) =>
+        blockCtor("Continue", Ls(labelStaged))(k(_, ctx))
     case Scoped(syms, body) =>
       syms.toList.sortBy(_.uid).map(s => ctx => transformSymbol(s)(using ctx)).chainContext(using ctx): (symsStaged, ctx) =>
         tuple(symsStaged): tup =>
@@ -444,9 +455,6 @@ class ReflectionInstrumenter(using State, Raise, Ctx) extends BlockTransformer(S
             blockCtor("Scoped", Ls(tup, body))(b => Scoped(syms, k(b, ctx)))
     case Define(_: FunDefn, _) =>
       raise(ErrorReport(msg"Nested function definitions are not supported in staged modules. Try enabling :ftc." -> N :: Nil))
-      End()
-    case _: Label | _: Break =>
-      raise(ErrorReport(msg"Other Blocks not supported in staged module: ${b.getClass.toString()}." -> N :: Nil))
       End()
     case _ =>
       raise(ErrorReport(msg"Other Blocks not supported in staged module: ${b.getClass.toString()}" -> N :: Nil))

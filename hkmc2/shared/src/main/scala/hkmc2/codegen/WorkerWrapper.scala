@@ -21,7 +21,9 @@ class WorkerWrapper
     (using DebugPrinter, State, Config, Raise)
   extends BlockTransformer(SymbolSubst.Id):
   import tl.*
-  
+
+  override protected def useStackSafeAssignLikeChain: Bool = true
+
   private def withInline(annotations: Ls[Annot]): Ls[Annot] =
     if annotations.contains(Annot.Inline) then annotations else Annot.Inline :: annotations
   

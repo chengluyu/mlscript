@@ -253,13 +253,20 @@ module SpecialRegExpIPv4 with
     fun lsEq(xs, ys) =
       let {scrut11, x3, y1, xs4, ys2, scrut12, scrut13, element1_, element0_, arg_Cons_0_2, arg_Cons_1_2, arg_Cons_0_3, arg_Cons_1_3}
       scrut11 = [xs, ys]
+      do σ:
+        element0_ = scrut11.0
+        element1_ = scrut11.1
+        if element0_ is
+          Nil then
+            if element1_ is
+              Nil then true
+              else
+                σ.break
+          else
+            σ.break
       element0_ = scrut11.0
       element1_ = scrut11.1
       if element0_ is
-        Nil then
-          if element1_ is
-            Nil then true
-            else false
         Cons then
           arg_Cons_0_2 = element0_.x
           arg_Cons_1_2 = element0_.xs
@@ -373,15 +380,17 @@ module SpecialRegExpIPv4 with
         Cons then
           arg_Cons_0_4 = ls.x
           arg_Cons_1_4 = ls.xs
-          if arg_Cons_1_4 is
-            Nil then
-              x4 = arg_Cons_0_4
-              x4
-            else
-              xs5 = arg_Cons_1_4
-              x5 = arg_Cons_0_4
-              tmp26 = mkUnion(xs5)
-              new Altern(x5, tmp26)
+          do σ:
+            if arg_Cons_1_4 is
+              Nil then
+                x4 = arg_Cons_0_4
+                x4
+              else
+                σ.break
+          xs5 = arg_Cons_1_4
+          x5 = arg_Cons_0_4
+          tmp26 = mkUnion(xs5)
+          new Altern(x5, tmp26)
         else new Nothing()
     fun nTimes(r, i) =
       let {scrut14, tmp31, tmp32}
@@ -502,30 +511,30 @@ fun concatUnique_SpecialRegExpIPv4_sp_16(xs, ys) =
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_17(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  if ys is
-    Cons then
-      arg_Cons_0_1 = ys.x
-      arg_Cons_1_1 = ys.xs
-      ys__ = arg_Cons_1_1
-      y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_9(xs, y)
-      concatUnique(tmp22, ys__)
-    else xs
+  arg_Cons_0_1 = ys.x
+  arg_Cons_1_1 = ys.xs
+  ys__ = arg_Cons_1_1
+  y = arg_Cons_0_1
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_9(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_18(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_18(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  xs
+fun concatUnique_SpecialRegExpIPv4_sp_19(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
   tmp22 = pushUnique_SpecialRegExpIPv4_sp_10(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_19(tmp22, ys__)
-fun concatUnique_SpecialRegExpIPv4_sp_19(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
+  concatUnique_SpecialRegExpIPv4_sp_20(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_2(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_20(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  xs
+fun concatUnique_SpecialRegExpIPv4_sp_21(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   if ys is
     Cons then
@@ -536,28 +545,28 @@ fun concatUnique_SpecialRegExpIPv4_sp_20(xs, ys) =
       tmp22 = pushUnique_SpecialRegExpIPv4_sp_11(xs, y)
       concatUnique(tmp22, ys__)
     else xs
-fun concatUnique_SpecialRegExpIPv4_sp_21(xs, ys) =
+fun concatUnique_SpecialRegExpIPv4_sp_22(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
   tmp22 = pushUnique_SpecialRegExpIPv4_sp_12(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_22(tmp22, ys__)
-fun concatUnique_SpecialRegExpIPv4_sp_22(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
+  concatUnique_SpecialRegExpIPv4_sp_23(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_23(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_13(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_24(tmp22, ys__)
+  xs
 fun concatUnique_SpecialRegExpIPv4_sp_24(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
+  if ys is
+    Cons then
+      arg_Cons_0_1 = ys.x
+      arg_Cons_1_1 = ys.xs
+      ys__ = arg_Cons_1_1
+      y = arg_Cons_0_1
+      tmp22 = pushUnique_SpecialRegExpIPv4_sp_13(xs, y)
+      concatUnique(tmp22, ys__)
+    else xs
 fun concatUnique_SpecialRegExpIPv4_sp_25(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
@@ -571,23 +580,26 @@ fun concatUnique_SpecialRegExpIPv4_sp_26(xs, ys) =
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_27(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_15(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_28(tmp22, ys__)
+  if ys is
+    Cons then
+      arg_Cons_0_1 = ys.x
+      arg_Cons_1_1 = ys.xs
+      ys__ = arg_Cons_1_1
+      y = arg_Cons_0_1
+      tmp22 = pushUnique_SpecialRegExpIPv4_sp_15(xs, y)
+      concatUnique(tmp22, ys__)
+    else xs
 fun concatUnique_SpecialRegExpIPv4_sp_28(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
-fun concatUnique_SpecialRegExpIPv4_sp_29(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
   tmp22 = pushUnique_SpecialRegExpIPv4_sp_16(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_30(tmp22, ys__)
+  concatUnique_SpecialRegExpIPv4_sp_29(tmp22, ys__)
+fun concatUnique_SpecialRegExpIPv4_sp_29(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  xs
 fun concatUnique_SpecialRegExpIPv4_sp_3(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   if ys is
@@ -601,18 +613,15 @@ fun concatUnique_SpecialRegExpIPv4_sp_3(xs, ys) =
     else xs
 fun concatUnique_SpecialRegExpIPv4_sp_30(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
+  arg_Cons_0_1 = ys.x
+  arg_Cons_1_1 = ys.xs
+  ys__ = arg_Cons_1_1
+  y = arg_Cons_0_1
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_17(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_31(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_31(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  if ys is
-    Cons then
-      arg_Cons_0_1 = ys.x
-      arg_Cons_1_1 = ys.xs
-      ys__ = arg_Cons_1_1
-      y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_17(xs, y)
-      concatUnique(tmp22, ys__)
-    else xs
+  xs
 fun concatUnique_SpecialRegExpIPv4_sp_32(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
@@ -626,45 +635,37 @@ fun concatUnique_SpecialRegExpIPv4_sp_33(xs, ys) =
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_34(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  if ys is
-    Cons then
-      arg_Cons_0_1 = ys.x
-      arg_Cons_1_1 = ys.xs
-      ys__ = arg_Cons_1_1
-      y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_19(xs, y)
-      concatUnique(tmp22, ys__)
-    else xs
+  arg_Cons_0_1 = ys.x
+  arg_Cons_1_1 = ys.xs
+  ys__ = arg_Cons_1_1
+  y = arg_Cons_0_1
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_19(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_35(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_35(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  xs
+fun concatUnique_SpecialRegExpIPv4_sp_36(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
   tmp22 = pushUnique_SpecialRegExpIPv4_sp_20(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_36(tmp22, ys__)
-fun concatUnique_SpecialRegExpIPv4_sp_36(xs, ys) =
+  concatUnique_SpecialRegExpIPv4_sp_37(tmp22, ys__)
+fun concatUnique_SpecialRegExpIPv4_sp_37(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   xs
-fun concatUnique_SpecialRegExpIPv4_sp_37(xs, ys) =
+fun concatUnique_SpecialRegExpIPv4_sp_38(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
   tmp22 = pushUnique_SpecialRegExpIPv4_sp_21(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_38(tmp22, ys__)
-fun concatUnique_SpecialRegExpIPv4_sp_38(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
+  concatUnique_SpecialRegExpIPv4_sp_39(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_39(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_23(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_40(tmp22, ys__)
+  xs
 fun concatUnique_SpecialRegExpIPv4_sp_4(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
@@ -675,22 +676,22 @@ fun concatUnique_SpecialRegExpIPv4_sp_4(xs, ys) =
   concatUnique_SpecialRegExpIPv4_sp_5(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_40(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
-fun concatUnique_SpecialRegExpIPv4_sp_41(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_24(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_42(tmp22, ys__)
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_22(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_41(tmp22, ys__)
+fun concatUnique_SpecialRegExpIPv4_sp_41(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  xs
 fun concatUnique_SpecialRegExpIPv4_sp_42(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_25(xs, y)
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_23(xs, y)
   concatUnique_SpecialRegExpIPv4_sp_43(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_43(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
@@ -701,7 +702,7 @@ fun concatUnique_SpecialRegExpIPv4_sp_44(xs, ys) =
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_26(xs, y)
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_24(xs, y)
   concatUnique_SpecialRegExpIPv4_sp_45(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_45(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
@@ -712,26 +713,29 @@ fun concatUnique_SpecialRegExpIPv4_sp_46(xs, ys) =
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_27(xs, y)
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_25(xs, y)
   concatUnique_SpecialRegExpIPv4_sp_47(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_47(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_48(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_26(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_46(tmp22, ys__)
+  if ys is
+    Cons then
+      arg_Cons_0_1 = ys.x
+      arg_Cons_1_1 = ys.xs
+      ys__ = arg_Cons_1_1
+      y = arg_Cons_0_1
+      tmp22 = pushUnique_SpecialRegExpIPv4_sp_26(xs, y)
+      concatUnique(tmp22, ys__)
+    else xs
 fun concatUnique_SpecialRegExpIPv4_sp_49(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_28(xs, y)
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_27(xs, y)
   concatUnique_SpecialRegExpIPv4_sp_50(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_5(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
@@ -741,107 +745,93 @@ fun concatUnique_SpecialRegExpIPv4_sp_50(xs, ys) =
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_51(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_29(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_52(tmp22, ys__)
-fun concatUnique_SpecialRegExpIPv4_sp_52(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
-fun concatUnique_SpecialRegExpIPv4_sp_53(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   if ys is
     Cons then
       arg_Cons_0_1 = ys.x
       arg_Cons_1_1 = ys.xs
       ys__ = arg_Cons_1_1
       y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_30(xs, y)
+      tmp22 = pushUnique_SpecialRegExpIPv4_sp_28(xs, y)
       concatUnique(tmp22, ys__)
     else xs
+fun concatUnique_SpecialRegExpIPv4_sp_52(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  arg_Cons_0_1 = ys.x
+  arg_Cons_1_1 = ys.xs
+  ys__ = arg_Cons_1_1
+  y = arg_Cons_0_1
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_29(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_53(tmp22, ys__)
+fun concatUnique_SpecialRegExpIPv4_sp_53(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  xs
 fun concatUnique_SpecialRegExpIPv4_sp_54(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_31(xs, y)
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_30(xs, y)
   concatUnique_SpecialRegExpIPv4_sp_55(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_55(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_56(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  if ys is
-    Cons then
-      arg_Cons_0_1 = ys.x
-      arg_Cons_1_1 = ys.xs
-      ys__ = arg_Cons_1_1
-      y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_32(xs, y)
-      concatUnique(tmp22, ys__)
-    else xs
+  arg_Cons_0_1 = ys.x
+  arg_Cons_1_1 = ys.xs
+  ys__ = arg_Cons_1_1
+  y = arg_Cons_0_1
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_32(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_57(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_57(xs, ys) =
+  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
+  xs
+fun concatUnique_SpecialRegExpIPv4_sp_58(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
   tmp22 = pushUnique_SpecialRegExpIPv4_sp_33(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_58(tmp22, ys__)
-fun concatUnique_SpecialRegExpIPv4_sp_58(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
+  concatUnique_SpecialRegExpIPv4_sp_59(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_59(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  if ys is
-    Cons then
-      arg_Cons_0_1 = ys.x
-      arg_Cons_1_1 = ys.xs
-      ys__ = arg_Cons_1_1
-      y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_34(xs, y)
-      concatUnique(tmp22, ys__)
-    else xs
+  arg_Cons_0_1 = ys.x
+  arg_Cons_1_1 = ys.xs
+  ys__ = arg_Cons_1_1
+  y = arg_Cons_0_1
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_34(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_60(tmp22, ys__)
 fun concatUnique_SpecialRegExpIPv4_sp_6(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   xs
 fun concatUnique_SpecialRegExpIPv4_sp_60(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_35(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_61(tmp22, ys__)
+  xs
 fun concatUnique_SpecialRegExpIPv4_sp_61(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
-  xs
-fun concatUnique_SpecialRegExpIPv4_sp_62(xs, ys) =
-  let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   if ys is
     Cons then
       arg_Cons_0_1 = ys.x
       arg_Cons_1_1 = ys.xs
       ys__ = arg_Cons_1_1
       y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_36(xs, y)
+      tmp22 = pushUnique_SpecialRegExpIPv4_sp_35(xs, y)
       concatUnique(tmp22, ys__)
     else xs
-fun concatUnique_SpecialRegExpIPv4_sp_63(xs, ys) =
+fun concatUnique_SpecialRegExpIPv4_sp_62(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   arg_Cons_0_1 = ys.x
   arg_Cons_1_1 = ys.xs
   ys__ = arg_Cons_1_1
   y = arg_Cons_0_1
-  tmp22 = pushUnique_SpecialRegExpIPv4_sp_37(xs, y)
-  concatUnique_SpecialRegExpIPv4_sp_64(tmp22, ys__)
-fun concatUnique_SpecialRegExpIPv4_sp_64(xs, ys) =
+  tmp22 = pushUnique_SpecialRegExpIPv4_sp_36(xs, y)
+  concatUnique_SpecialRegExpIPv4_sp_63(tmp22, ys__)
+fun concatUnique_SpecialRegExpIPv4_sp_63(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   xs
-fun concatUnique_SpecialRegExpIPv4_sp_65(xs, ys) =
+fun concatUnique_SpecialRegExpIPv4_sp_64(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp22}
   if ys is
     Cons then
@@ -849,7 +839,7 @@ fun concatUnique_SpecialRegExpIPv4_sp_65(xs, ys) =
       arg_Cons_1_1 = ys.xs
       ys__ = arg_Cons_1_1
       y = arg_Cons_0_1
-      tmp22 = pushUnique_SpecialRegExpIPv4_sp_38(xs, y)
+      tmp22 = pushUnique_SpecialRegExpIPv4_sp_37(xs, y)
       concatUnique(tmp22, ys__)
     else xs
 fun concatUnique_SpecialRegExpIPv4_sp_7(xs, ys) =
@@ -1008,15 +998,22 @@ fun matchImpl_SpecialRegExpIPv4_sp_2(p, s, acc) =
   if scrut15 is
     true then
       if p is
-        Concat(Concat(Exact, Concat(Concat(Altern(Concat, Altern(Concat, Concat)), Exact), Concat(Altern(Concat, Altern(Concat, Concat)), Exact))), _) then
+        Concat(Concat(Exact, Nothing), _) then
           scrut16 = canBeEmpty_Concat_sp_7(p)
           new None()
-        Altern(Concat, Altern(Concat, Concat)) then
-          scrut16 = canBeEmpty_Altern_sp_4(p)
-          new None()
-        Concat(_, _) then
+        Concat(Concat(Exact, Concat(_, _)), _) then
           scrut16 = canBeEmpty_Concat_sp_9(p)
           new None()
+        Altern(Concat, Altern(Concat, _)) then
+          scrut16 = canBeEmpty_Altern_sp_4(p)
+          if scrut16 is
+            true then new Some(acc)
+            else new None()
+        Concat(_, _) then
+          scrut16 = canBeEmpty_Concat_sp_11(p)
+          if scrut16 is
+            true then new Some(acc)
+            else new None()
         Nothing then
           scrut16 = canBeEmpty_Nothing_sp_0(p)
           new None()
@@ -1025,7 +1022,7 @@ fun matchImpl_SpecialRegExpIPv4_sp_2(p, s, acc) =
           new None()
     else
       if p is
-        Concat(Concat(Exact, Concat(Concat(Altern(Concat, Altern(Concat, Concat)), Exact), Concat(Altern(Concat, Altern(Concat, Concat)), Exact))), _) then
+        Concat(Concat(Exact, Nothing), _) then
           c18 = s.0
           scrut17 = startsWith_Concat_sp_4(p, c18)
           if scrut17 is
@@ -1037,7 +1034,19 @@ fun matchImpl_SpecialRegExpIPv4_sp_2(p, s, acc) =
             else
               scrut18 = canBeEmpty_Concat_sp_7(p)
               new None()
-        Altern(Concat, Altern(Concat, Concat)) then
+        Concat(Concat(Exact, Concat(_, _)), _) then
+          c18 = s.0
+          scrut17 = startsWith_Concat_sp_6(p, c18)
+          if scrut17 is
+            true then
+              tmp35 = derive_Concat_sp_9(p, c18)
+              tmp36 = s.slice(1)
+              tmp37 = acc + c18
+              matchImpl(tmp35, tmp36, tmp37)
+            else
+              scrut18 = canBeEmpty_Concat_sp_9(p)
+              new None()
+        Altern(Concat, Altern(Concat, _)) then
           c18 = s.0
           scrut17 = startsWith_Altern_sp_2(p, c18)
           if scrut17 is
@@ -1048,19 +1057,23 @@ fun matchImpl_SpecialRegExpIPv4_sp_2(p, s, acc) =
               matchImpl(tmp35, tmp36, tmp37)
             else
               scrut18 = canBeEmpty_Altern_sp_4(p)
-              new None()
+              if scrut18 is
+                true then new Some(acc)
+                else new None()
         Concat(_, _) then
           c18 = s.0
-          scrut17 = startsWith_Concat_sp_16(p, c18)
+          scrut17 = startsWith_Concat_sp_8(p, c18)
           if scrut17 is
             true then
-              tmp35 = derive_Concat_sp_19(p, c18)
+              tmp35 = derive_Concat_sp_11(p, c18)
               tmp36 = s.slice(1)
               tmp37 = acc + c18
               matchImpl(tmp35, tmp36, tmp37)
             else
-              scrut18 = canBeEmpty_Concat_sp_9(p)
-              new None()
+              scrut18 = canBeEmpty_Concat_sp_11(p)
+              if scrut18 is
+                true then new Some(acc)
+                else new None()
         Nothing then new None()
         Nothing then new None()
 fun matchImpl_SpecialRegExpIPv4_sp_3(p, s, acc) =
@@ -1069,281 +1082,21 @@ fun matchImpl_SpecialRegExpIPv4_sp_3(p, s, acc) =
   scrut15 = tmp34 == 0
   if scrut15 is
     true then
-      if p is
-        Concat then
-          scrut16 = canBeEmpty_Concat_sp_10(p)
-        Nothing then
-          scrut16 = canBeEmpty_Nothing_sp_1(p)
+      scrut16 = canBeEmpty_Nothing_sp_1(p)
       new None()
-    else
-      if p is
-        Nothing then new None()
-        else
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_6(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_9(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_4(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_10(p)
-              new None()
-fun matchImpl_SpecialRegExpIPv4_sp_4(p, s, acc) =
-  let {scrut15, scrut16, c18, scrut17, scrut18, tmp34, tmp35, tmp36, tmp37}
-  tmp34 = len(s)
-  scrut15 = tmp34 == 0
-  if scrut15 is
-    true then
-      if p is
-        Concat(Concat(Exact, Concat(Altern(Concat, Altern(Concat, Concat)), Exact)), _) then
-          scrut16 = canBeEmpty_Concat_sp_13(p)
-          new None()
-        Altern(Concat, Altern(Concat, Concat)) then
-          scrut16 = canBeEmpty_Altern_sp_4(p)
-          new None()
-        Concat(_, _) then
-          scrut16 = canBeEmpty_Concat_sp_9(p)
-          new None()
-        Nothing then
-          scrut16 = canBeEmpty_Nothing_sp_0(p)
-          new None()
-        Nothing then
-          scrut16 = canBeEmpty_Nothing_sp_0(p)
-          new None()
-    else
-      if p is
-        Concat(Concat(Exact, Concat(Altern(Concat, Altern(Concat, Concat)), Exact)), _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_9(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_12(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_5(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_13(p)
-              new None()
-        Altern(Concat, Altern(Concat, Concat)) then
-          c18 = s.0
-          scrut17 = startsWith_Altern_sp_2(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Altern_sp_4(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Altern_sp_4(p)
-              new None()
-        Concat(_, _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_16(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_19(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_9(p)
-              new None()
-        Nothing then new None()
-        Nothing then new None()
-fun matchImpl_SpecialRegExpIPv4_sp_5(p, s, acc) =
-  let {scrut15, scrut16, c18, scrut17, scrut18, tmp34, tmp35, tmp36, tmp37}
-  tmp34 = len(s)
-  scrut15 = tmp34 == 0
-  if scrut15 is
-    true then
-      if p is
-        Concat then
-          scrut16 = canBeEmpty_Concat_sp_15(p)
-        Nothing then
-          scrut16 = canBeEmpty_Nothing_sp_1(p)
-      new None()
-    else
-      if p is
-        Nothing then new None()
-        else
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_11(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_14(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_6(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_15(p)
-              new None()
-fun matchImpl_SpecialRegExpIPv4_sp_6(p, s, acc) =
-  let {scrut15, scrut16, c18, scrut17, scrut18, tmp34, tmp35, tmp36, tmp37}
-  tmp34 = len(s)
-  scrut15 = tmp34 == 0
-  if scrut15 is
-    true then
-      if p is
-        Concat(Exact, _) then
-          scrut16 = canBeEmpty_Concat_sp_16(p)
-          new None()
-        Concat(Exact, _) then
-          scrut16 = canBeEmpty_Concat_sp_16(p)
-          new None()
-        Concat(Concat(_, Exact), _) then
-          scrut16 = canBeEmpty_Concat_sp_17(p)
-          new None()
-        Nothing then
-          scrut16 = canBeEmpty_Nothing_sp_0(p)
-          new None()
-    else
-      if p is
-        Concat(Exact, _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_12(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_15(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_7(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_16(p)
-              new None()
-        Concat(Exact, _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_12(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_15(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_7(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_16(p)
-              new None()
-        Concat(Concat(_, Exact), _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_13(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_16(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_8(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_17(p)
-              new None()
-        Nothing then new None()
-fun matchImpl_SpecialRegExpIPv4_sp_7(p, s, acc) =
-  let {scrut15, scrut16, c18, scrut17, scrut18, tmp34, tmp35, tmp36, tmp37}
-  tmp34 = len(s)
-  scrut15 = tmp34 == 0
-  if scrut15 is
-    true then
-      if p is
-        Altern then
-          scrut16 = canBeEmpty_Altern_sp_4(p)
-        Nothing then
-          scrut16 = canBeEmpty_Nothing_sp_1(p)
-      new None()
-    else
-      if p is
-        Nothing then new None()
-        else
-          c18 = s.0
-          scrut17 = startsWith_Altern_sp_2(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Altern_sp_4(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Altern_sp_4(p)
-              new None()
-fun matchImpl_SpecialRegExpIPv4_sp_8(p, s, acc) =
-  let {scrut15, scrut16, c18, scrut17, scrut18, tmp34, tmp35, tmp36, tmp37}
-  tmp34 = len(s)
-  scrut15 = tmp34 == 0
-  if scrut15 is
-    true then
-      if p is
-        Concat(Altern(Concat(_, Exact), Empty), _) then
-          scrut16 = canBeEmpty_Concat_sp_19(p)
-          new None()
-        Concat(Exact, _) then
-          scrut16 = canBeEmpty_Concat_sp_16(p)
-          new None()
-        Concat(Concat(_, Exact), _) then
-          scrut16 = canBeEmpty_Concat_sp_17(p)
-          new None()
-        Concat(Exact, _) then
-          scrut16 = canBeEmpty_Concat_sp_16(p)
-          new None()
-        Nothing then
-          scrut16 = canBeEmpty_Nothing_sp_0(p)
-          new None()
-    else
-      if p is
-        Concat(Altern(Concat(_, Exact), Empty), _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_15(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_18(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_19(p)
-              new None()
-        Concat(Exact, _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_12(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_15(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_7(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_16(p)
-              new None()
-        Concat(Concat(_, Exact), _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_13(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_16(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_8(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_17(p)
-              new None()
-        Concat(Exact, _) then
-          c18 = s.0
-          scrut17 = startsWith_Concat_sp_12(p, c18)
-          if scrut17 is
-            true then
-              tmp35 = derive_Concat_sp_15(p, c18)
-              tmp36 = s.slice(1)
-              tmp37 = acc + c18
-              matchImpl_SpecialRegExpIPv4_sp_7(tmp35, tmp36, tmp37)
-            else
-              scrut18 = canBeEmpty_Concat_sp_16(p)
-              new None()
-        Nothing then new None()
+    else new None()
 fun match_SpecialRegExpIPv4_sp_0(p, s) = matchImpl_SpecialRegExpIPv4_sp_1(p, s, "")
 fun mkUnion_SpecialRegExpIPv4_sp_0(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
+  xs5 = arg_Cons_1_4
+  x5 = arg_Cons_0_4
+  tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
+  new Altern(x5, tmp26)
 fun mkUnion_SpecialRegExpIPv4_sp_1(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   new Nothing()
@@ -1351,34 +1104,50 @@ fun mkUnion_SpecialRegExpIPv4_sp_10(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
+  do σ:
+    σ.break
+  xs5 = arg_Cons_1_4
+  x5 = arg_Cons_0_4
+  tmp26 = mkUnion_SpecialRegExpIPv4_sp_11(xs5)
+  new Altern(x5, tmp26)
 fun mkUnion_SpecialRegExpIPv4_sp_11(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
+  do σ:
+    σ.break
   xs5 = arg_Cons_1_4
   x5 = arg_Cons_0_4
-  tmp26 = mkUnion_SpecialRegExpIPv4_sp_0(xs5)
+  tmp26 = mkUnion_SpecialRegExpIPv4_sp_12(xs5)
   new Altern(x5, tmp26)
 fun mkUnion_SpecialRegExpIPv4_sp_12(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
-fun mkUnion_SpecialRegExpIPv4_sp_13(ls) =
-  let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
-  arg_Cons_0_4 = ls.x
-  arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
+  xs5 = arg_Cons_1_4
+  x5 = arg_Cons_0_4
+  tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
+  new Altern(x5, tmp26)
 fun mkUnion_SpecialRegExpIPv4_sp_2(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   if ls is
     Cons(Concat(Empty, In), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_0(xs5)
+      new Altern(x5, tmp26)
+    Cons(Concat(Altern(Empty, Nothing), In), _) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp26 = mkUnion_SpecialRegExpIPv4_sp_0(xs5)
@@ -1386,6 +1155,8 @@ fun mkUnion_SpecialRegExpIPv4_sp_2(ls) =
     Cons(Concat(Nothing, In), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp26 = mkUnion_SpecialRegExpIPv4_sp_0(xs5)
@@ -1396,19 +1167,50 @@ fun mkUnion_SpecialRegExpIPv4_sp_3(ls) =
     Cons(Concat(Empty, In), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
-      x4 = arg_Cons_0_4
-      x4
+      do σ:
+        x4 = arg_Cons_0_4
+        x4
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
+      new Altern(x5, tmp26)
+    Cons(Concat(Altern(Empty, Nothing), In), _) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        x4 = arg_Cons_0_4
+        x4
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
+      new Altern(x5, tmp26)
     Cons(Concat(Nothing, In), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
-      x4 = arg_Cons_0_4
-      x4
+      do σ:
+        x4 = arg_Cons_0_4
+        x4
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
+      new Altern(x5, tmp26)
 fun mkUnion_SpecialRegExpIPv4_sp_4(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   if ls is
     Cons(Concat(Empty, Concat), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_5(xs5)
+      new Altern(x5, tmp26)
+    Cons(Concat(Altern(Empty, Nothing), Concat), _) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp26 = mkUnion_SpecialRegExpIPv4_sp_5(xs5)
@@ -1416,6 +1218,8 @@ fun mkUnion_SpecialRegExpIPv4_sp_4(ls) =
     Cons(Concat(Nothing, Concat), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp26 = mkUnion_SpecialRegExpIPv4_sp_5(xs5)
@@ -1424,21 +1228,49 @@ fun mkUnion_SpecialRegExpIPv4_sp_5(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
+  xs5 = arg_Cons_1_4
+  x5 = arg_Cons_0_4
+  tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
+  new Altern(x5, tmp26)
 fun mkUnion_SpecialRegExpIPv4_sp_6(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   if ls is
-    Cons(Concat(Empty, Concat), _) then
+    Cons(Concat(Empty, Concat), Cons(Concat(Altern(Empty, Nothing), In), Nil)) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp26 = mkUnion_SpecialRegExpIPv4_sp_7(xs5)
       new Altern(x5, tmp26)
-    Cons(Concat(Nothing, Concat), _) then
+    Cons(Concat(Altern(Empty, Nothing), Concat), Nil) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        x4 = arg_Cons_0_4
+        x4
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
+      new Altern(x5, tmp26)
+    Cons(Concat(Altern(Empty, Nothing), Concat), Cons(Concat(Altern(Empty, Nothing), In), Nil)) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_7(xs5)
+      new Altern(x5, tmp26)
+    Cons(Concat(Nothing, Concat), Cons(Concat(Altern(Empty, Nothing), In), Nil)) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp26 = mkUnion_SpecialRegExpIPv4_sp_7(xs5)
@@ -1447,23 +1279,53 @@ fun mkUnion_SpecialRegExpIPv4_sp_7(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
-fun mkUnion_SpecialRegExpIPv4_sp_8(ls) =
-  let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
-  arg_Cons_0_4 = ls.x
-  arg_Cons_1_4 = ls.xs
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
   xs5 = arg_Cons_1_4
   x5 = arg_Cons_0_4
-  tmp26 = mkUnion_SpecialRegExpIPv4_sp_9(xs5)
+  tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
   new Altern(x5, tmp26)
+fun mkUnion_SpecialRegExpIPv4_sp_8(ls) =
+  let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
+  if ls is
+    Cons(Concat(Empty, Concat), _) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_9(xs5)
+      new Altern(x5, tmp26)
+    Cons(Concat(Altern(Empty, Nothing), Concat), _) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_9(xs5)
+      new Altern(x5, tmp26)
+    Cons(Concat(Nothing, Concat), _) then
+      arg_Cons_0_4 = ls.x
+      arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp26 = mkUnion_SpecialRegExpIPv4_sp_9(xs5)
+      new Altern(x5, tmp26)
 fun mkUnion_SpecialRegExpIPv4_sp_9(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp26}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
   xs5 = arg_Cons_1_4
   x5 = arg_Cons_0_4
-  tmp26 = mkUnion_SpecialRegExpIPv4_sp_10(xs5)
+  tmp26 = mkUnion_SpecialRegExpIPv4_sp_1(xs5)
   new Altern(x5, tmp26)
 fun nTimes_SpecialRegExpIPv4_sp_0(r, i) =
   let {scrut14, tmp31, tmp32}
@@ -1496,7 +1358,7 @@ fun pushUnique_SpecialRegExpIPv4_sp_11(ls, e) =
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_5(x2, e)
+  scrut10 = eq_Concat_sp_4(x2, e)
   if scrut10 is
     true then ls
     else
@@ -1504,14 +1366,35 @@ fun pushUnique_SpecialRegExpIPv4_sp_11(ls, e) =
       new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_12(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  new Cons(e, Nil)
+fun pushUnique_SpecialRegExpIPv4_sp_13(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
   scrut10 = eq_Concat_sp_6(x2, e)
-  tmp21 = pushUnique_SpecialRegExpIPv4_sp_4(xs1, e)
-  new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_13(ls, e) =
+  if scrut10 is
+    true then ls
+    else
+      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
+      new Cons(x2, tmp21)
+fun pushUnique_SpecialRegExpIPv4_sp_14(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  new Cons(e, Nil)
+fun pushUnique_SpecialRegExpIPv4_sp_15(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  arg_Cons_0_ = ls.x
+  arg_Cons_1_ = ls.xs
+  xs1 = arg_Cons_1_
+  x2 = arg_Cons_0_
+  scrut10 = eq_Concat_sp_7(x2, e)
+  if scrut10 is
+    true then ls
+    else
+      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
+      new Cons(x2, tmp21)
+fun pushUnique_SpecialRegExpIPv4_sp_16(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
@@ -1520,42 +1403,24 @@ fun pushUnique_SpecialRegExpIPv4_sp_13(ls, e) =
   scrut10 = eq_Concat_sp_8(x2, e)
   tmp21 = pushUnique_SpecialRegExpIPv4_sp_4(xs1, e)
   new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_14(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  arg_Cons_0_ = ls.x
-  arg_Cons_1_ = ls.xs
-  xs1 = arg_Cons_1_
-  x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_9(x2, e)
-  tmp21 = pushUnique_SpecialRegExpIPv4_sp_6(xs1, e)
-  new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_15(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  arg_Cons_0_ = ls.x
-  arg_Cons_1_ = ls.xs
-  xs1 = arg_Cons_1_
-  x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_10(x2, e)
-  tmp21 = pushUnique_SpecialRegExpIPv4_sp_6(xs1, e)
-  new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_16(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
 fun pushUnique_SpecialRegExpIPv4_sp_17(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_11(x2, e)
-  if scrut10 is
-    true then ls
-    else
-      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
-      new Cons(x2, tmp21)
+  scrut10 = eq_Concat_sp_10(x2, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_4(xs1, e)
+  new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_18(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
+  arg_Cons_0_ = ls.x
+  arg_Cons_1_ = ls.xs
+  xs1 = arg_Cons_1_
+  x2 = arg_Cons_0_
+  scrut10 = eq_Concat_sp_11(x2, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_4(xs1, e)
+  new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_19(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
@@ -1563,11 +1428,8 @@ fun pushUnique_SpecialRegExpIPv4_sp_19(ls, e) =
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
   scrut10 = eq_Concat_sp_12(x2, e)
-  if scrut10 is
-    true then ls
-    else
-      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
-      new Cons(x2, tmp21)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_6(xs1, e)
+  new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_2(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
@@ -1582,55 +1444,82 @@ fun pushUnique_SpecialRegExpIPv4_sp_2(ls, e) =
       new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_20(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
+  arg_Cons_0_ = ls.x
+  arg_Cons_1_ = ls.xs
+  xs1 = arg_Cons_1_
+  x2 = arg_Cons_0_
+  scrut10 = eq_Concat_sp_13(x2, e)
+  if scrut10 is
+    true then ls
+    else
+      tmp21 = pushUnique_SpecialRegExpIPv4_sp_6(xs1, e)
+      new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_21(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_13(x2, e)
-  tmp21 = pushUnique_SpecialRegExpIPv4_sp_22(xs1, e)
+  scrut10 = eq_Concat_sp_14(x2, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_6(xs1, e)
   new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_22(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
-fun pushUnique_SpecialRegExpIPv4_sp_23(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
-fun pushUnique_SpecialRegExpIPv4_sp_24(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_14(x2, e)
-  tmp21 = pushUnique_SpecialRegExpIPv4_sp_20(xs1, e)
+  scrut10 = eq_Concat_sp_15(x2, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_8(xs1, e)
   new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_25(ls, e) =
+fun pushUnique_SpecialRegExpIPv4_sp_23(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
   scrut10 = eq_Concat_sp_16(x2, e)
-  tmp21 = pushUnique_SpecialRegExpIPv4_sp_21(xs1, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_8(xs1, e)
   new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_26(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
-fun pushUnique_SpecialRegExpIPv4_sp_27(ls, e) =
+fun pushUnique_SpecialRegExpIPv4_sp_24(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
   scrut10 = eq_Concat_sp_17(x2, e)
-  tmp21 = pushUnique_SpecialRegExpIPv4_sp_3(xs1, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_8(xs1, e)
   new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_28(ls, e) =
+fun pushUnique_SpecialRegExpIPv4_sp_25(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   new Cons(e, Nil)
+fun pushUnique_SpecialRegExpIPv4_sp_26(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  arg_Cons_0_ = ls.x
+  arg_Cons_1_ = ls.xs
+  xs1 = arg_Cons_1_
+  x2 = arg_Cons_0_
+  scrut10 = eq_Concat_sp_18(x2, e)
+  if scrut10 is
+    true then ls
+    else
+      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
+      new Cons(x2, tmp21)
+fun pushUnique_SpecialRegExpIPv4_sp_27(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  new Cons(e, Nil)
+fun pushUnique_SpecialRegExpIPv4_sp_28(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  arg_Cons_0_ = ls.x
+  arg_Cons_1_ = ls.xs
+  xs1 = arg_Cons_1_
+  x2 = arg_Cons_0_
+  scrut10 = eq_Concat_sp_19(x2, e)
+  if scrut10 is
+    true then ls
+    else
+      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
+      new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_29(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   new Cons(e, Nil)
@@ -1643,67 +1532,55 @@ fun pushUnique_SpecialRegExpIPv4_sp_30(ls, e) =
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_18(x2, e)
-  if scrut10 is
-    true then ls
-    else
-      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
-      new Cons(x2, tmp21)
+  scrut10 = eq_Concat_sp_20(x2, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_31(xs1, e)
+  new Cons(x2, tmp21)
 fun pushUnique_SpecialRegExpIPv4_sp_31(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   new Cons(e, Nil)
 fun pushUnique_SpecialRegExpIPv4_sp_32(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  arg_Cons_0_ = ls.x
-  arg_Cons_1_ = ls.xs
-  xs1 = arg_Cons_1_
-  x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_19(x2, e)
-  if scrut10 is
-    true then ls
-    else
-      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
-      new Cons(x2, tmp21)
+  new Cons(e, Nil)
 fun pushUnique_SpecialRegExpIPv4_sp_33(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
-fun pushUnique_SpecialRegExpIPv4_sp_34(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  arg_Cons_0_ = ls.x
-  arg_Cons_1_ = ls.xs
-  xs1 = arg_Cons_1_
-  x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_20(x2, e)
-  if scrut10 is
-    true then ls
-    else
-      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
-      new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_35(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
-fun pushUnique_SpecialRegExpIPv4_sp_36(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
   scrut10 = eq_Concat_sp_21(x2, e)
-  if scrut10 is
-    true then ls
-    else
-      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
-      new Cons(x2, tmp21)
-fun pushUnique_SpecialRegExpIPv4_sp_37(ls, e) =
-  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
-  new Cons(e, Nil)
-fun pushUnique_SpecialRegExpIPv4_sp_38(ls, e) =
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_29(xs1, e)
+  new Cons(x2, tmp21)
+fun pushUnique_SpecialRegExpIPv4_sp_34(ls, e) =
   let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
   arg_Cons_0_ = ls.x
   arg_Cons_1_ = ls.xs
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
-  scrut10 = eq_Concat_sp_22(x2, e)
+  scrut10 = eq_Concat_sp_23(x2, e)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_30(xs1, e)
+  new Cons(x2, tmp21)
+fun pushUnique_SpecialRegExpIPv4_sp_35(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  arg_Cons_0_ = ls.x
+  arg_Cons_1_ = ls.xs
+  xs1 = arg_Cons_1_
+  x2 = arg_Cons_0_
+  scrut10 = eq_Concat_sp_24(x2, e)
+  if scrut10 is
+    true then ls
+    else
+      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
+      new Cons(x2, tmp21)
+fun pushUnique_SpecialRegExpIPv4_sp_36(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  new Cons(e, Nil)
+fun pushUnique_SpecialRegExpIPv4_sp_37(ls, e) =
+  let {x2, xs1, scrut10, arg_Cons_0_, arg_Cons_1_, tmp21}
+  arg_Cons_0_ = ls.x
+  arg_Cons_1_ = ls.xs
+  xs1 = arg_Cons_1_
+  x2 = arg_Cons_0_
+  scrut10 = eq_Concat_sp_25(x2, e)
   if scrut10 is
     true then ls
     else
@@ -1743,11 +1620,8 @@ fun pushUnique_SpecialRegExpIPv4_sp_9(ls, e) =
   xs1 = arg_Cons_1_
   x2 = arg_Cons_0_
   scrut10 = eq_Concat_sp_3(x2, e)
-  if scrut10 is
-    true then ls
-    else
-      tmp21 = pushUnique_SpecialRegExpIPv4_sp_0(xs1, e)
-      new Cons(x2, tmp21)
+  tmp21 = pushUnique_SpecialRegExpIPv4_sp_3(xs1, e)
+  new Cons(x2, tmp21)
 fun question_SpecialRegExpIPv4_sp_0(r) =
   let {tmp27}
   tmp27 = new Empty()
@@ -1763,9 +1637,9 @@ fun eq_Nothing_sp_0(self, other) =
     Nothing then true
     else false
 fun eq_Nothing_sp_1(self, other) = false
-fun eq_Nothing_sp_2(self, other) = true
+fun eq_Nothing_sp_2(self, other) = false
+fun eq_Nothing_sp_3(self, other) = true
 fun flat_Nothing_sp_0(self) = new Nil()
-fun flat_Nothing_sp_1(self) = new Nil()
 fun normalize_Nothing_sp_0(self) = self
 fun normalize_Nothing_sp_1(self) = self
 fun canBeEmpty_Empty_sp_0(self) = true
@@ -1776,9 +1650,9 @@ fun eq_Empty_sp_0(self, other) =
     else false
 fun eq_Empty_sp_1(self, other) = true
 fun eq_Empty_sp_2(self, other) = false
+fun eq_Empty_sp_3(self, other) = false
 fun flat_Empty_sp_0(self) = new Cons(self, Nil)
 fun normalize_Empty_sp_0(self) = self
-fun startsWith_Empty_sp_0(self, c) = false
 fun canBeEmpty_Exact_sp_0(self) = false
 fun canBeEmpty_Exact_sp_1(self) = false
 fun canBeEmpty_Exact_sp_2(self) = false
@@ -1817,9 +1691,8 @@ fun eq_Exact_sp_4(self, other) =
     Exact then
       arg_Exact_0_ = other.ch
       ch__ = arg_Exact_0_
-      "." == ch__
+      "2" == ch__
     else false
-fun flat_Exact_sp_0(self) = new Cons(self, Nil)
 fun normalize_Exact_sp_0(self) = self
 fun normalize_Exact_sp_1(self) = self
 fun startsWith_Exact_sp_0(self, c) = "2" == c
@@ -1829,25 +1702,34 @@ fun canBeEmpty_Altern_sp_0(self) = false
 fun canBeEmpty_Altern_sp_1(self) = false
 fun canBeEmpty_Altern_sp_2(self) = true
 fun canBeEmpty_Altern_sp_3(self) = true
-fun canBeEmpty_Altern_sp_4(self) = false
-fun canBeEmpty_Altern_sp_5(self) = false
-fun canBeEmpty_Altern_sp_6(self) = true
+fun canBeEmpty_Altern_sp_4(self) =
+  let {tmp4}
+  tmp4 = canBeEmpty_Concat_sp_3(self.p1)
+  if self.p2 is
+    Altern(_, Concat) then canBeEmpty_Altern_sp_5(self.p2)
+    Altern(_, Altern(Concat, Nothing)) then canBeEmpty_Altern_sp_5(self.p2)
+fun canBeEmpty_Altern_sp_5(self) =
+  let {tmp4}
+  tmp4 = self.p1.canBeEmpty()
+  if tmp4 is
+    false then self.p2.canBeEmpty()
+    else true
 fun derive_Altern_sp_0(self, c) =
   let {tmp1, tmp2, tmp3}
   tmp1 = derive_Concat_sp_3(self.p1, c)
   tmp2 = derive_Altern_sp_1(self.p2, c)
   tmp3 = new Altern(tmp1, tmp2)
   if tmp3 is
-    Altern(Concat(Exact, In), _) then normalize_Altern_sp_12(tmp3)
-    Altern(Nothing, _) then normalize_Altern_sp_11(tmp3)
+    Altern(Concat(Exact, In), _) then normalize_Altern_sp_17(tmp3)
+    Altern(Nothing, _) then normalize_Altern_sp_16(tmp3)
 fun derive_Altern_sp_1(self, c) =
   let {tmp1, tmp2, tmp3}
   tmp1 = derive_Concat_sp_4(self.p1, c)
   tmp2 = derive_Concat_sp_5(self.p2, c)
   tmp3 = new Altern(tmp1, tmp2)
   if tmp3 is
-    Altern(Concat(In, In), _) then normalize_Altern_sp_10(tmp3)
-    Altern(Nothing, _) then normalize_Altern_sp_11(tmp3)
+    Altern(Concat(In, In), _) then normalize_Altern_sp_15(tmp3)
+    Altern(Nothing, _) then normalize_Altern_sp_16(tmp3)
 fun derive_Altern_sp_2(self, c) =
   let {tmp1, tmp2, tmp3}
   tmp1 = derive_Exact_sp_1(self.p1, c)
@@ -1867,30 +1749,25 @@ fun derive_Altern_sp_3(self, c) =
 fun derive_Altern_sp_4(self, c) =
   let {tmp1, tmp2, tmp3}
   tmp1 = derive_Concat_sp_3(self.p1, c)
-  tmp2 = derive_Altern_sp_5(self.p2, c)
-  tmp3 = new Altern(tmp1, tmp2)
-  if tmp3 is
-    Altern(Concat(Exact, In), _) then normalize_Altern_sp_12(tmp3)
-    Altern(Nothing, _) then normalize_Altern_sp_11(tmp3)
+  if self.p2 is
+    Altern(_, Concat) then
+      tmp2 = derive_Altern_sp_5(self.p2, c)
+      tmp3 = new Altern(tmp1, tmp2)
+      if tmp3 is
+        Altern(Concat(Exact, In), _) then normalize_Altern_sp_17(tmp3)
+        Altern(Nothing, _) then normalize_Altern_sp_16(tmp3)
+    Altern(_, Altern(Concat, Nothing)) then
+      tmp2 = derive_Altern_sp_5(self.p2, c)
+      tmp3 = new Altern(tmp1, tmp2)
+      if tmp3 is
+        Altern(Concat(Exact, In), _) then normalize_Altern_sp_17(tmp3)
+        Altern(Nothing, _) then normalize_Altern_sp_16(tmp3)
 fun derive_Altern_sp_5(self, c) =
   let {tmp1, tmp2, tmp3}
-  tmp1 = derive_Concat_sp_4(self.p1, c)
-  tmp2 = derive_Concat_sp_5(self.p2, c)
+  tmp1 = self.p1.derive(c)
+  tmp2 = self.p2.derive(c)
   tmp3 = new Altern(tmp1, tmp2)
-  if tmp3 is
-    Altern(Concat(In, In), _) then normalize_Altern_sp_10(tmp3)
-    Altern(Nothing, _) then normalize_Altern_sp_11(tmp3)
-fun derive_Altern_sp_6(self, c) =
-  let {tmp1, tmp2, tmp3}
-  tmp1 = derive_Concat_sp_17(self.p1, c)
-  tmp2 = derive_Empty_sp_0(self.p2, c)
-  tmp3 = new Altern(tmp1, tmp2)
-  if tmp3 is
-    Altern(Altern(Concat(_, Exact), Empty), _) then normalize_Altern_sp_17(tmp3)
-    Altern(Concat(_, Exact), _) then normalize_Altern_sp_16(tmp3)
-    Altern(Exact, _) then normalize_Altern_sp_18(tmp3)
-    Altern(Nothing, _) then normalize_Altern_sp_19(tmp3)
-    Altern(Concat(_, Exact), _) then normalize_Altern_sp_16(tmp3)
+  normalize_Altern_sp_0(tmp3)
 fun eq_Altern_sp_0(self, other) =
   let {tmp6, tmp7}
   if other is
@@ -1899,11 +1776,18 @@ fun eq_Altern_sp_0(self, other) =
       tmp7 = flat_Altern_sp_1(other)
       lsEq(tmp6, tmp7)
     else false
-fun eq_Altern_sp_1(self, other) =
+fun eq_Altern_sp_1(self, other) = false
+fun eq_Altern_sp_2(self, other) =
+  let {tmp6, tmp7}
+  tmp6 = flat_Altern_sp_1(self)
+  tmp7 = flat_Altern_sp_1(other)
+  lsEq(tmp6, tmp7)
+fun eq_Altern_sp_3(self, other) = false
+fun eq_Altern_sp_4(self, other) =
   let {tmp6, tmp7}
   if other is
     Altern then
-      tmp6 = flat_Altern_sp_1(self)
+      tmp6 = flat_Altern_sp_21(self)
       tmp7 = flat_Altern_sp_1(other)
       lsEq(tmp6, tmp7)
     else false
@@ -1925,80 +1809,156 @@ fun flat_Altern_sp_10(self) =
   let {p1__, p2__, tmp9, tmp10}
   if self.p1 is
     Concat(Empty, _) then
-      p1__ = flat_Concat_sp_3(self.p1)
-      p2__ = flat_Concat_sp_2(self.p2)
+      p1__ = flat_Concat_sp_4(self.p1)
+      p2__ = flat_Concat_sp_1(self.p2)
       tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_15(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_25(tmp10, p2__)
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_28(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      p2__ = flat_Concat_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_30(tmp10, p2__)
     Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      p2__ = flat_Concat_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_32(tmp10, p2__)
+fun flat_Altern_sp_11(self) =
+  let {p1__, p2__, tmp9, tmp10}
+  if self.p1 is
+    Concat(Empty, _) then
+      p1__ = flat_Concat_sp_4(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
+fun flat_Altern_sp_12(self) =
+  let {p1__, p2__, tmp9, tmp10}
+  if self.p1 is
+    Concat(Empty, _) then
       p1__ = flat_Concat_sp_4(self.p1)
       p2__ = flat_Concat_sp_2(self.p2)
       tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_18(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
-fun flat_Altern_sp_11(self) =
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_34(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      p2__ = flat_Concat_sp_2(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_36(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      p2__ = flat_Concat_sp_2(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_38(tmp10, p2__)
+fun flat_Altern_sp_13(self) =
   let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_5(self.p1)
+  if self.p1 is
+    Concat(Empty, _) then
+      p1__ = flat_Concat_sp_4(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
+fun flat_Altern_sp_14(self) =
+  let {p1__, p2__, tmp9, tmp10}
+  if self.p1 is
+    Concat(Empty, _) then
+      p1__ = flat_Concat_sp_4(self.p1)
+      p2__ = flat_Concat_sp_3(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_40(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      p2__ = flat_Concat_sp_3(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_42(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      p2__ = flat_Concat_sp_3(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_44(tmp10, p2__)
+fun flat_Altern_sp_15(self) =
+  let {p1__, p2__, tmp9, tmp10}
+  if self.p1 is
+    Concat(Empty, _) then
+      p1__ = flat_Concat_sp_4(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
+fun flat_Altern_sp_16(self) =
+  let {p1__, p2__, tmp9, tmp10}
+  p1__ = flat_Concat_sp_7(self.p1)
   p2__ = self.p2.flat()
   tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_29(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_31(tmp10, p2__)
-fun flat_Altern_sp_12(self) =
+  tmp10 = concatUnique_SpecialRegExpIPv4_sp_46(tmp9, p1__)
+  concatUnique_SpecialRegExpIPv4_sp_48(tmp10, p2__)
+fun flat_Altern_sp_17(self) =
   let {p1__, p2__, tmp9, tmp10}
   p1__ = flat_Nothing_sp_0(self.p1)
   p2__ = self.p2.flat()
   tmp9 = new Nil()
   tmp10 = concatUnique_SpecialRegExpIPv4_sp_6(tmp9, p1__)
   concatUnique_SpecialRegExpIPv4_sp_0(tmp10, p2__)
-fun flat_Altern_sp_13(self) =
-  let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_6(self.p1)
-  p2__ = self.p2.flat()
-  tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_32(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_34(tmp10, p2__)
-fun flat_Altern_sp_14(self) =
-  let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_7(self.p1)
-  p2__ = flat_Altern_sp_15(self.p2)
-  tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_39(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_41(tmp10, p2__)
-fun flat_Altern_sp_15(self) =
-  let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_8(self.p1)
-  p2__ = flat_Concat_sp_9(self.p2)
-  tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_35(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_37(tmp10, p2__)
-fun flat_Altern_sp_16(self) =
-  let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_7(self.p1)
-  p2__ = flat_Altern_sp_17(self.p2)
-  tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_39(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_41(tmp10, p2__)
-fun flat_Altern_sp_17(self) =
-  let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_8(self.p1)
-  p2__ = flat_Concat_sp_9(self.p2)
-  tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_35(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_37(tmp10, p2__)
 fun flat_Altern_sp_18(self) =
   let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_10(self.p1)
-  p2__ = flat_Empty_sp_0(self.p2)
+  p1__ = flat_Concat_sp_8(self.p1)
+  p2__ = self.p2.flat()
   tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_44(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_46(tmp10, p2__)
+  tmp10 = concatUnique_SpecialRegExpIPv4_sp_49(tmp9, p1__)
+  concatUnique_SpecialRegExpIPv4_sp_51(tmp10, p2__)
 fun flat_Altern_sp_19(self) =
   let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_10(self.p1)
-  p2__ = flat_Nothing_sp_0(self.p2)
+  p1__ = flat_Concat_sp_9(self.p1)
+  p2__ = flat_Altern_sp_20(self.p2)
   tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_44(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_45(tmp10, p2__)
+  tmp10 = concatUnique_SpecialRegExpIPv4_sp_56(tmp9, p1__)
+  concatUnique_SpecialRegExpIPv4_sp_58(tmp10, p2__)
 fun flat_Altern_sp_2(self) =
   let {p1__, p2__, tmp9, tmp10}
   p1__ = flat_Concat_sp_0(self.p1)
@@ -2008,59 +1968,32 @@ fun flat_Altern_sp_2(self) =
   concatUnique_SpecialRegExpIPv4_sp_3(tmp10, p2__)
 fun flat_Altern_sp_20(self) =
   let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Altern_sp_18(self.p1)
-  p2__ = flat_Nothing_sp_0(self.p2)
+  p1__ = flat_Concat_sp_10(self.p1)
+  p2__ = flat_Concat_sp_11(self.p2)
   tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_48(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_47(tmp10, p2__)
+  tmp10 = concatUnique_SpecialRegExpIPv4_sp_52(tmp9, p1__)
+  concatUnique_SpecialRegExpIPv4_sp_54(tmp10, p2__)
 fun flat_Altern_sp_21(self) =
   let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Exact_sp_0(self.p1)
-  p2__ = flat_Nothing_sp_0(self.p2)
-  tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_49(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_50(tmp10, p2__)
+  p1__ = flat_Concat_sp_9(self.p1)
+  if self.p2 is
+    Altern(_, Concat) then
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_56(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_61(tmp10, p2__)
+    Altern(_, Altern(Concat, Nothing)) then
+      p2__ = flat_Altern_sp_1(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_56(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_61(tmp10, p2__)
 fun flat_Altern_sp_22(self) =
   let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Nothing_sp_1(self.p1)
-  p2__ = flat_Nothing_sp_0(self.p2)
-  tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_6(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_6(tmp10, p2__)
-fun flat_Altern_sp_23(self) =
-  let {p1__, p2__, tmp9, tmp10}
-  if self.p1 is
-    Concat(Altern(Concat(_, Exact), Empty), _) then
-      p1__ = flat_Concat_sp_11(self.p1)
-      p2__ = self.p2.flat()
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_51(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_53(tmp10, p2__)
-    Concat(Concat(_, Exact), _) then
-      p1__ = flat_Concat_sp_12(self.p1)
-      p2__ = self.p2.flat()
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_54(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_56(tmp10, p2__)
-    Concat(Exact, _) then
-      p1__ = flat_Concat_sp_13(self.p1)
-      p2__ = self.p2.flat()
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_57(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_59(tmp10, p2__)
-    Concat(Nothing, _) then
-      p1__ = flat_Concat_sp_14(self.p1)
-      p2__ = self.p2.flat()
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_60(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_62(tmp10, p2__)
-fun flat_Altern_sp_24(self) =
-  let {p1__, p2__, tmp9, tmp10}
-  p1__ = flat_Concat_sp_15(self.p1)
+  p1__ = flat_Concat_sp_12(self.p1)
   p2__ = self.p2.flat()
   tmp9 = new Nil()
-  tmp10 = concatUnique_SpecialRegExpIPv4_sp_63(tmp9, p1__)
-  concatUnique_SpecialRegExpIPv4_sp_65(tmp10, p2__)
+  tmp10 = concatUnique_SpecialRegExpIPv4_sp_62(tmp9, p1__)
+  concatUnique_SpecialRegExpIPv4_sp_64(tmp10, p2__)
 fun flat_Altern_sp_3(self) =
   let {p1__, p2__, tmp9, tmp10}
   p1__ = flat_Empty_sp_0(self.p1)
@@ -2084,12 +2017,18 @@ fun flat_Altern_sp_5(self) =
       tmp9 = new Nil()
       tmp10 = concatUnique_SpecialRegExpIPv4_sp_7(tmp9, p1__)
       concatUnique_SpecialRegExpIPv4_sp_9(tmp10, p2__)
-    Concat(Nothing, _) then
+    Concat(Altern(Empty, Nothing), _) then
       p1__ = flat_Concat_sp_2(self.p1)
       p2__ = flat_Empty_sp_0(self.p2)
       tmp9 = new Nil()
       tmp10 = concatUnique_SpecialRegExpIPv4_sp_11(tmp9, p1__)
       concatUnique_SpecialRegExpIPv4_sp_13(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_3(self.p1)
+      p2__ = flat_Empty_sp_0(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_15(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_17(tmp10, p2__)
 fun flat_Altern_sp_6(self) =
   let {p1__, p2__, tmp9, tmp10}
   if self.p1 is
@@ -2099,57 +2038,144 @@ fun flat_Altern_sp_6(self) =
       tmp9 = new Nil()
       tmp10 = concatUnique_SpecialRegExpIPv4_sp_7(tmp9, p1__)
       concatUnique_SpecialRegExpIPv4_sp_8(tmp10, p2__)
-    Concat(Nothing, _) then
+    Concat(Altern(Empty, Nothing), _) then
       p1__ = flat_Concat_sp_2(self.p1)
       p2__ = flat_Nothing_sp_0(self.p2)
       tmp9 = new Nil()
       tmp10 = concatUnique_SpecialRegExpIPv4_sp_11(tmp9, p1__)
       concatUnique_SpecialRegExpIPv4_sp_12(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_3(self.p1)
+      p2__ = flat_Nothing_sp_0(self.p2)
+      tmp9 = new Nil()
+      tmp10 = concatUnique_SpecialRegExpIPv4_sp_15(tmp9, p1__)
+      concatUnique_SpecialRegExpIPv4_sp_16(tmp10, p2__)
 fun flat_Altern_sp_7(self) =
   let {p1__, p2__, tmp9, tmp10}
   if self.p1 is
     Concat(Empty, _) then
-      p1__ = flat_Concat_sp_3(self.p1)
-      p2__ = flat_Altern_sp_1(self.p2)
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_15(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_17(tmp10, p2__)
-    Concat(Nothing, _) then
       p1__ = flat_Concat_sp_4(self.p1)
-      p2__ = flat_Altern_sp_1(self.p2)
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_18(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_20(tmp10, p2__)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
 fun flat_Altern_sp_8(self) =
   let {p1__, p2__, tmp9, tmp10}
   if self.p1 is
     Concat(Empty, _) then
-      p1__ = flat_Concat_sp_3(self.p1)
-      p2__ = flat_Altern_sp_1(self.p2)
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_15(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_17(tmp10, p2__)
-    Concat(Nothing, _) then
       p1__ = flat_Concat_sp_4(self.p1)
-      p2__ = flat_Altern_sp_1(self.p2)
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_18(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_20(tmp10, p2__)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
 fun flat_Altern_sp_9(self) =
   let {p1__, p2__, tmp9, tmp10}
   if self.p1 is
     Concat(Empty, _) then
-      p1__ = flat_Concat_sp_3(self.p1)
-      p2__ = flat_Concat_sp_1(self.p2)
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_15(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
-    Concat(Nothing, _) then
       p1__ = flat_Concat_sp_4(self.p1)
-      p2__ = flat_Concat_sp_1(self.p2)
-      tmp9 = new Nil()
-      tmp10 = concatUnique_SpecialRegExpIPv4_sp_18(tmp9, p1__)
-      concatUnique_SpecialRegExpIPv4_sp_23(tmp10, p2__)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_19(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_21(tmp10, p2__)
+    Concat(Altern(Empty, Nothing), _) then
+      p1__ = flat_Concat_sp_5(self.p1)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_22(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_24(tmp10, p2__)
+    Concat(Nothing, _) then
+      p1__ = flat_Concat_sp_6(self.p1)
+      if self.p2 is
+        Altern(_, Empty) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
+        Altern(_, Altern(Empty, Nothing)) then
+          p2__ = flat_Altern_sp_1(self.p2)
+          tmp9 = new Nil()
+          tmp10 = concatUnique_SpecialRegExpIPv4_sp_25(tmp9, p1__)
+          concatUnique_SpecialRegExpIPv4_sp_27(tmp10, p2__)
 fun normalize_Altern_sp_0(self) =
   let {tmp5}
   tmp5 = flat_Altern_sp_0(self)
@@ -2165,7 +2191,7 @@ fun normalize_Altern_sp_10(self) =
 fun normalize_Altern_sp_11(self) =
   let {tmp5}
   tmp5 = flat_Altern_sp_12(self)
-  mkUnion(tmp5)
+  mkUnion_SpecialRegExpIPv4_sp_6(tmp5)
 fun normalize_Altern_sp_12(self) =
   let {tmp5}
   tmp5 = flat_Altern_sp_13(self)
@@ -2176,39 +2202,35 @@ fun normalize_Altern_sp_13(self) =
   mkUnion_SpecialRegExpIPv4_sp_8(tmp5)
 fun normalize_Altern_sp_14(self) =
   let {tmp5}
-  tmp5 = flat_Altern_sp_16(self)
-  mkUnion_SpecialRegExpIPv4_sp_8(tmp5)
+  tmp5 = flat_Altern_sp_15(self)
+  mkUnion(tmp5)
 fun normalize_Altern_sp_15(self) =
   let {tmp5}
-  tmp5 = flat_Altern_sp_18(self)
-  mkUnion_SpecialRegExpIPv4_sp_11(tmp5)
+  tmp5 = flat_Altern_sp_16(self)
+  mkUnion(tmp5)
 fun normalize_Altern_sp_16(self) =
   let {tmp5}
-  tmp5 = flat_Altern_sp_19(self)
-  mkUnion_SpecialRegExpIPv4_sp_12(tmp5)
+  tmp5 = flat_Altern_sp_17(self)
+  mkUnion(tmp5)
 fun normalize_Altern_sp_17(self) =
   let {tmp5}
-  tmp5 = flat_Altern_sp_20(self)
-  mkUnion_SpecialRegExpIPv4_sp_11(tmp5)
+  tmp5 = flat_Altern_sp_18(self)
+  mkUnion(tmp5)
 fun normalize_Altern_sp_18(self) =
   let {tmp5}
-  tmp5 = flat_Altern_sp_21(self)
-  mkUnion_SpecialRegExpIPv4_sp_13(tmp5)
+  tmp5 = flat_Altern_sp_19(self)
+  mkUnion_SpecialRegExpIPv4_sp_10(tmp5)
 fun normalize_Altern_sp_19(self) =
   let {tmp5}
-  tmp5 = flat_Altern_sp_22(self)
-  mkUnion_SpecialRegExpIPv4_sp_1(tmp5)
+  tmp5 = flat_Altern_sp_21(self)
+  mkUnion(tmp5)
 fun normalize_Altern_sp_2(self) =
   let {tmp5}
   tmp5 = flat_Altern_sp_3(self)
   mkUnion_SpecialRegExpIPv4_sp_0(tmp5)
 fun normalize_Altern_sp_20(self) =
   let {tmp5}
-  tmp5 = flat_Altern_sp_23(self)
-  mkUnion(tmp5)
-fun normalize_Altern_sp_21(self) =
-  let {tmp5}
-  tmp5 = flat_Altern_sp_24(self)
+  tmp5 = flat_Altern_sp_22(self)
   mkUnion(tmp5)
 fun normalize_Altern_sp_3(self) =
   let {tmp5}
@@ -2233,11 +2255,11 @@ fun normalize_Altern_sp_7(self) =
 fun normalize_Altern_sp_8(self) =
   let {tmp5}
   tmp5 = flat_Altern_sp_9(self)
-  mkUnion_SpecialRegExpIPv4_sp_4(tmp5)
+  mkUnion(tmp5)
 fun normalize_Altern_sp_9(self) =
   let {tmp5}
   tmp5 = flat_Altern_sp_10(self)
-  mkUnion_SpecialRegExpIPv4_sp_6(tmp5)
+  mkUnion_SpecialRegExpIPv4_sp_4(tmp5)
 fun startsWith_Altern_sp_0(self, c) =
   let {tmp8}
   tmp8 = startsWith_Concat_sp_3(self.p1, c)
@@ -2254,13 +2276,10 @@ fun startsWith_Altern_sp_2(self, c) =
   let {tmp8}
   tmp8 = startsWith_Concat_sp_3(self.p1, c)
   if tmp8 is
-    false then startsWith_Altern_sp_1(self.p2, c)
-    else true
-fun startsWith_Altern_sp_3(self, c) =
-  let {tmp8}
-  tmp8 = startsWith_Concat_sp_14(self.p1, c)
-  if tmp8 is
-    false then startsWith_Empty_sp_0(self.p2, c)
+    false then
+      if self.p2 is
+        Altern(_, Concat) then startsWith_Altern_sp_1(self.p2, c)
+        Altern(_, Altern(Concat, Nothing)) then startsWith_Altern_sp_1(self.p2, c)
     else true
 fun canBeEmpty_In_sp_0(self) = false
 fun derive_In_sp_0(self, c) =
@@ -2300,15 +2319,16 @@ fun startsWith_In_sp_0(self, c) = has_SpecialRegExpIPv4_sp_0(self.chars, c)
 fun canBeEmpty_Concat_sp_0(self) = false
 fun canBeEmpty_Concat_sp_1(self) = false
 fun canBeEmpty_Concat_sp_10(self) = false
-fun canBeEmpty_Concat_sp_11(self) = false
-fun canBeEmpty_Concat_sp_12(self) = false
-fun canBeEmpty_Concat_sp_13(self) = false
-fun canBeEmpty_Concat_sp_14(self) = false
-fun canBeEmpty_Concat_sp_15(self) = false
-fun canBeEmpty_Concat_sp_16(self) = false
-fun canBeEmpty_Concat_sp_17(self) = false
-fun canBeEmpty_Concat_sp_18(self) = false
-fun canBeEmpty_Concat_sp_19(self) = false
+fun canBeEmpty_Concat_sp_11(self) =
+  let {scrut4, scrut5}
+  scrut4 = self.p1.canBeEmpty()
+  if scrut4 is
+    true then
+      scrut5 = canBeEmpty_Altern_sp_4(self.p2)
+      if scrut5 is
+        true then true
+        else false
+    else false
 fun canBeEmpty_Concat_sp_2(self) = false
 fun canBeEmpty_Concat_sp_3(self) = false
 fun canBeEmpty_Concat_sp_4(self) = false
@@ -2323,7 +2343,7 @@ fun derive_Concat_sp_0(self, c) =
   scrut3 = canBeEmpty_Concat_sp_1(self.p1)
   tmp14 = new Concat.class(p1__1, self.p2)
   if tmp14 is
-    Concat(Concat(Exact, Concat(Concat(Altern(Concat, Altern(Concat, Concat)), Exact), Concat(Altern(Concat, Altern(Concat, Concat)), Exact))), _) then normalize_Concat_sp_15(tmp14)
+    Concat(Concat(Exact, Concat(Concat(Altern(Concat, Altern(Concat, _)), Exact), Concat(Altern(Concat, Altern(Concat, _)), Exact))), _) then normalize_Concat_sp_15(tmp14)
     Concat(Nothing, _) then normalize_Concat_sp_19(tmp14)
     Concat(Concat(_, _), _) then normalize_Concat_sp_20(tmp14)
 fun derive_Concat_sp_1(self, c) =
@@ -2337,87 +2357,13 @@ fun derive_Concat_sp_1(self, c) =
     Concat(Concat(_, Exact), _) then normalize_Concat_sp_13(tmp14)
 fun derive_Concat_sp_10(self, c) =
   let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Concat_sp_11(self.p1, c)
-  scrut3 = canBeEmpty_Concat_sp_12(self.p1)
+  p1__1 = derive_Exact_sp_2(self.p1, c)
+  scrut3 = canBeEmpty_Exact_sp_2(self.p1)
   tmp14 = new Concat.class(p1__1, self.p2)
   if tmp14 is
-    Concat(Exact, _) then normalize_Concat_sp_25(tmp14)
+    Concat(Empty, _) then normalize_Concat_sp_25(tmp14)
     Concat(Nothing, _) then normalize_Concat_sp_26(tmp14)
-    Concat(Concat(_, Exact), _) then normalize_Concat_sp_27(tmp14)
 fun derive_Concat_sp_11(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Altern_sp_4(self.p1, c)
-  scrut3 = canBeEmpty_Altern_sp_4(self.p1)
-  tmp14 = new Concat.class(p1__1, self.p2)
-  normalize_Concat_sp_8(tmp14)
-fun derive_Concat_sp_12(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Concat_sp_13(self.p1, c)
-  scrut3 = canBeEmpty_Concat_sp_14(self.p1)
-  tmp14 = new Concat.class(p1__1, self.p2)
-  if tmp14 is
-    Concat(Concat(Altern(Concat, Altern(Concat, Concat)), Exact), _) then normalize_Concat_sp_33(tmp14)
-    Concat(Nothing, _) then normalize_Concat_sp_24(tmp14)
-fun derive_Concat_sp_13(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Exact_sp_2(self.p1, c)
-  scrut3 = canBeEmpty_Exact_sp_2(self.p1)
-  tmp14 = new Concat.class(p1__1, self.p2)
-  if tmp14 is
-    Concat(Empty, _) then normalize_Concat_sp_31(tmp14)
-    Concat(Nothing, _) then normalize_Concat_sp_32(tmp14)
-fun derive_Concat_sp_14(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Concat_sp_11(self.p1, c)
-  scrut3 = canBeEmpty_Concat_sp_12(self.p1)
-  tmp14 = new Concat.class(p1__1, self.p2)
-  if tmp14 is
-    Concat(Exact, _) then normalize_Concat_sp_34(tmp14)
-    Concat(Nothing, _) then normalize_Concat_sp_29(tmp14)
-    Concat(Concat(_, Exact), _) then normalize_Concat_sp_35(tmp14)
-fun derive_Concat_sp_15(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Exact_sp_2(self.p1, c)
-  scrut3 = canBeEmpty_Exact_sp_2(self.p1)
-  tmp14 = new Concat.class(p1__1, self.p2)
-  if tmp14 is
-    Concat(Empty, _) then normalize_Concat_sp_36(tmp14)
-    Concat(Nothing, _) then normalize_Concat_sp_24(tmp14)
-fun derive_Concat_sp_16(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Concat_sp_17(self.p1, c)
-  scrut3 = canBeEmpty_Concat_sp_18(self.p1)
-  tmp14 = new Concat.class(p1__1, self.p2)
-  if tmp14 is
-    Concat(Altern(Concat(_, Exact), Empty), _) then normalize_Concat_sp_37(tmp14)
-    Concat(Concat(_, Exact), _) then normalize_Concat_sp_35(tmp14)
-    Concat(Exact, _) then normalize_Concat_sp_34(tmp14)
-    Concat(Nothing, _) then normalize_Concat_sp_29(tmp14)
-    Concat(Concat(_, Exact), _) then normalize_Concat_sp_35(tmp14)
-fun derive_Concat_sp_17(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = self.p1.derive(c)
-  scrut3 = self.p1.canBeEmpty()
-  if scrut3 is
-    true then
-      tmp11 = new Concat.class(p1__1, self.p2)
-      tmp12 = derive_Exact_sp_2(self.p2, c)
-      tmp13 = new Altern(tmp11, tmp12)
-      if tmp13 is
-        Altern(_, Empty) then normalize_Altern_sp_15(tmp13)
-        Altern(_, Nothing) then normalize_Altern_sp_16(tmp13)
-    else
-      tmp14 = new Concat.class(p1__1, self.p2)
-      normalize_Concat_sp_8(tmp14)
-fun derive_Concat_sp_18(self, c) =
-  let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
-  p1__1 = derive_Altern_sp_6(self.p1, c)
-  scrut3 = canBeEmpty_Altern_sp_6(self.p1)
-  tmp11 = new Concat.class(p1__1, self.p2)
-  tmp12 = derive_Altern_sp_4(self.p2, c)
-  tmp13 = new Altern(tmp11, tmp12)
-  normalize_Altern_sp_20(tmp13)
-fun derive_Concat_sp_19(self, c) =
   let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
   p1__1 = self.p1.derive(c)
   scrut3 = self.p1.canBeEmpty()
@@ -2426,10 +2372,10 @@ fun derive_Concat_sp_19(self, c) =
       tmp11 = new Concat.class(p1__1, self.p2)
       tmp12 = derive_Altern_sp_4(self.p2, c)
       tmp13 = new Altern(tmp11, tmp12)
-      normalize_Altern_sp_21(tmp13)
+      normalize_Altern_sp_20(tmp13)
     else
       tmp14 = new Concat.class(p1__1, self.p2)
-      normalize_Concat_sp_38(tmp14)
+      normalize_Concat_sp_27(tmp14)
 fun derive_Concat_sp_2(self, c) =
   let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
   p1__1 = derive_Altern_sp_0(self.p1, c)
@@ -2460,10 +2406,15 @@ fun derive_Concat_sp_5(self, c) =
   tmp12 = derive_Concat_sp_6(self.p2, c)
   tmp13 = new Altern(tmp11, tmp12)
   if tmp13 is
-    Altern(_, Altern(Concat(Empty, In), Empty)) then normalize_Altern_sp_6(tmp13)
-    Altern(_, Altern(Concat(Nothing, In), Empty)) then normalize_Altern_sp_7(tmp13)
-    Altern(_, Concat(Empty, In)) then normalize_Altern_sp_8(tmp13)
-    Altern(_, Concat(Nothing, In)) then normalize_Altern_sp_9(tmp13)
+    Altern(_, Altern(Concat(Empty, In), _)) then normalize_Altern_sp_6(tmp13)
+    Altern(_, Altern(Concat(Altern(Empty, Nothing), In), _)) then normalize_Altern_sp_7(tmp13)
+    Altern(_, Altern(Concat(Nothing, In), _)) then normalize_Altern_sp_8(tmp13)
+    Altern(_, Concat(Empty, In)) then normalize_Altern_sp_9(tmp13)
+    Altern(_, Altern(Concat(Empty, In), Nothing)) then normalize_Altern_sp_10(tmp13)
+    Altern(_, Concat(Altern(Empty, Nothing), In)) then normalize_Altern_sp_11(tmp13)
+    Altern(_, Altern(Concat(Altern(Empty, Nothing), In), Nothing)) then normalize_Altern_sp_12(tmp13)
+    Altern(_, Concat(Nothing, In)) then normalize_Altern_sp_13(tmp13)
+    Altern(_, Altern(Concat(Nothing, In), Nothing)) then normalize_Altern_sp_14(tmp13)
 fun derive_Concat_sp_6(self, c) =
   let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
   p1__1 = derive_Altern_sp_3(self.p1, c)
@@ -2480,7 +2431,7 @@ fun derive_Concat_sp_7(self, c) =
   scrut3 = canBeEmpty_Concat_sp_8(self.p1)
   tmp14 = new Concat.class(p1__1, self.p2)
   if tmp14 is
-    Concat(Concat(Concat(Altern(Concat, Altern(Concat, Concat)), Exact), Concat(Altern(Concat, Altern(Concat, Concat)), Exact)), _) then normalize_Concat_sp_23(tmp14)
+    Concat(Nothing, _) then normalize_Concat_sp_23(tmp14)
     Concat(Nothing, _) then normalize_Concat_sp_24(tmp14)
 fun derive_Concat_sp_8(self, c) =
   let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
@@ -2493,12 +2444,9 @@ fun derive_Concat_sp_8(self, c) =
 fun derive_Concat_sp_9(self, c) =
   let {p1__1, scrut3, tmp11, tmp12, tmp13, tmp14}
   p1__1 = derive_Concat_sp_10(self.p1, c)
-  scrut3 = canBeEmpty_Concat_sp_11(self.p1)
+  scrut3 = canBeEmpty_Concat_sp_10(self.p1)
   tmp14 = new Concat.class(p1__1, self.p2)
-  if tmp14 is
-    Concat(Concat(Exact, Concat(Altern(Concat, Altern(Concat, Concat)), Exact)), _) then normalize_Concat_sp_28(tmp14)
-    Concat(Nothing, _) then normalize_Concat_sp_29(tmp14)
-    Concat(Concat(_, _), _) then normalize_Concat_sp_30(tmp14)
+  normalize_Concat_sp_27(tmp14)
 fun eq_Concat_sp_0(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
@@ -2518,7 +2466,27 @@ fun eq_Concat_sp_0(self, other) =
     else false
 fun eq_Concat_sp_1(self, other) = false
 fun eq_Concat_sp_10(self, other) = false
-fun eq_Concat_sp_11(self, other) =
+fun eq_Concat_sp_11(self, other) = false
+fun eq_Concat_sp_12(self, other) = false
+fun eq_Concat_sp_13(self, other) =
+  let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
+  arg_Concat_0_ = other.p1
+  arg_Concat_1_ = other.p2
+  p2__1 = arg_Concat_1_
+  p1__3 = arg_Concat_0_
+  scrut6 = eq_Altern_sp_2(self.p1, p1__3)
+  if scrut6 is
+    true then
+      scrut7 = eq_Concat_sp_5(self.p2, p2__1)
+      if scrut7 is
+        true then true
+        else false
+    else false
+fun eq_Concat_sp_14(self, other) = false
+fun eq_Concat_sp_15(self, other) = false
+fun eq_Concat_sp_16(self, other) = false
+fun eq_Concat_sp_17(self, other) = false
+fun eq_Concat_sp_18(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
     Concat then
@@ -2535,7 +2503,7 @@ fun eq_Concat_sp_11(self, other) =
             else false
         else false
     else false
-fun eq_Concat_sp_12(self, other) =
+fun eq_Concat_sp_19(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
     Concat then
@@ -2552,47 +2520,12 @@ fun eq_Concat_sp_12(self, other) =
             else false
         else false
     else false
-fun eq_Concat_sp_13(self, other) = false
-fun eq_Concat_sp_14(self, other) = false
-fun eq_Concat_sp_15(self, other) = false
-fun eq_Concat_sp_16(self, other) = false
-fun eq_Concat_sp_17(self, other) = false
-fun eq_Concat_sp_18(self, other) =
-  let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
-  if other is
-    Concat then
-      arg_Concat_0_ = other.p1
-      arg_Concat_1_ = other.p2
-      p2__1 = arg_Concat_1_
-      p1__3 = arg_Concat_0_
-      scrut6 = eq_Altern_sp_0(self.p1, p1__3)
-      if scrut6 is
-        true then
-          scrut7 = eq_Altern_sp_1(self.p2, p2__1)
-          if scrut7 is
-            true then true
-            else false
-        else false
-    else false
-fun eq_Concat_sp_19(self, other) =
-  let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
-  if other is
-    Concat then
-      arg_Concat_0_ = other.p1
-      arg_Concat_1_ = other.p2
-      p2__1 = arg_Concat_1_
-      p1__3 = arg_Concat_0_
-      scrut6 = eq_Concat_sp_4(self.p1, p1__3)
-      if scrut6 is
-        true then
-          scrut7 = eq_Altern_sp_1(self.p2, p2__1)
-          if scrut7 is
-            true then true
-            else false
-        else false
-    else false
 fun eq_Concat_sp_2(self, other) = false
-fun eq_Concat_sp_20(self, other) =
+fun eq_Concat_sp_20(self, other) = false
+fun eq_Concat_sp_21(self, other) = false
+fun eq_Concat_sp_22(self, other) = false
+fun eq_Concat_sp_23(self, other) = false
+fun eq_Concat_sp_24(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
     Concat then
@@ -2603,30 +2536,13 @@ fun eq_Concat_sp_20(self, other) =
       scrut6 = eq_Exact_sp_4(self.p1, p1__3)
       if scrut6 is
         true then
-          scrut7 = eq_Altern_sp_1(self.p2, p2__1)
+          scrut7 = eq_Concat_sp_5(self.p2, p2__1)
           if scrut7 is
             true then true
             else false
         else false
     else false
-fun eq_Concat_sp_21(self, other) =
-  let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
-  if other is
-    Concat then
-      arg_Concat_0_ = other.p1
-      arg_Concat_1_ = other.p2
-      p2__1 = arg_Concat_1_
-      p1__3 = arg_Concat_0_
-      scrut6 = eq_Nothing_sp_0(self.p1, p1__3)
-      if scrut6 is
-        true then
-          scrut7 = eq_Altern_sp_1(self.p2, p2__1)
-          if scrut7 is
-            true then true
-            else false
-        else false
-    else false
-fun eq_Concat_sp_22(self, other) =
+fun eq_Concat_sp_25(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
     Concat then
@@ -2637,13 +2553,14 @@ fun eq_Concat_sp_22(self, other) =
       scrut6 = self.p1.eq(p1__3)
       if scrut6 is
         true then
-          scrut7 = eq_Altern_sp_1(self.p2, p2__1)
+          scrut7 = eq_Altern_sp_4(self.p2, p2__1)
           if scrut7 is
             true then true
             else false
         else false
     else false
-fun eq_Concat_sp_3(self, other) =
+fun eq_Concat_sp_3(self, other) = false
+fun eq_Concat_sp_4(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
     Concat then
@@ -2654,13 +2571,13 @@ fun eq_Concat_sp_3(self, other) =
       scrut6 = eq_Empty_sp_0(self.p1, p1__3)
       if scrut6 is
         true then
-          scrut7 = eq_Concat_sp_4(self.p2, p2__1)
+          scrut7 = eq_Concat_sp_5(self.p2, p2__1)
           if scrut7 is
             true then true
             else false
         else false
     else false
-fun eq_Concat_sp_4(self, other) =
+fun eq_Concat_sp_5(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
     Concat then
@@ -2677,7 +2594,24 @@ fun eq_Concat_sp_4(self, other) =
             else false
         else false
     else false
-fun eq_Concat_sp_5(self, other) =
+fun eq_Concat_sp_6(self, other) =
+  let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
+  if other is
+    Concat then
+      arg_Concat_0_ = other.p1
+      arg_Concat_1_ = other.p2
+      p2__1 = arg_Concat_1_
+      p1__3 = arg_Concat_0_
+      scrut6 = eq_Altern_sp_0(self.p1, p1__3)
+      if scrut6 is
+        true then
+          scrut7 = eq_Concat_sp_5(self.p2, p2__1)
+          if scrut7 is
+            true then true
+            else false
+        else false
+    else false
+fun eq_Concat_sp_7(self, other) =
   let {p2__1, p1__3, scrut6, scrut7, arg_Concat_0_, arg_Concat_1_}
   if other is
     Concat then
@@ -2688,14 +2622,12 @@ fun eq_Concat_sp_5(self, other) =
       scrut6 = eq_Nothing_sp_0(self.p1, p1__3)
       if scrut6 is
         true then
-          scrut7 = eq_Concat_sp_4(self.p2, p2__1)
+          scrut7 = eq_Concat_sp_5(self.p2, p2__1)
           if scrut7 is
             true then true
             else false
         else false
     else false
-fun eq_Concat_sp_6(self, other) = false
-fun eq_Concat_sp_7(self, other) = false
 fun eq_Concat_sp_8(self, other) = false
 fun eq_Concat_sp_9(self, other) = false
 fun flat_Concat_sp_0(self) = new Cons(self, Nil)
@@ -2703,9 +2635,6 @@ fun flat_Concat_sp_1(self) = new Cons(self, Nil)
 fun flat_Concat_sp_10(self) = new Cons(self, Nil)
 fun flat_Concat_sp_11(self) = new Cons(self, Nil)
 fun flat_Concat_sp_12(self) = new Cons(self, Nil)
-fun flat_Concat_sp_13(self) = new Cons(self, Nil)
-fun flat_Concat_sp_14(self) = new Cons(self, Nil)
-fun flat_Concat_sp_15(self) = new Cons(self, Nil)
 fun flat_Concat_sp_2(self) = new Cons(self, Nil)
 fun flat_Concat_sp_3(self) = new Cons(self, Nil)
 fun flat_Concat_sp_4(self) = new Cons(self, Nil)
@@ -2739,7 +2668,7 @@ fun normalize_Concat_sp_10(self) =
   new Concat.class(p1__2, tmp15)
 fun normalize_Concat_sp_11(self) =
   let {p1__2, tmp15}
-  p1__2 = normalize_Altern_sp_13(self.p1)
+  p1__2 = normalize_Altern_sp_18(self.p1)
   tmp15 = normalize_Exact_sp_1(self.p2)
   new Concat.class(p1__2, tmp15)
 fun normalize_Concat_sp_12(self) =
@@ -2766,8 +2695,13 @@ fun normalize_Concat_sp_14(self) =
 fun normalize_Concat_sp_15(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Concat_sp_16(self.p1)
-  tmp15 = normalize_Altern_sp_13(self.p2)
-  new Concat.class(p1__2, tmp15)
+  if p1__2 is
+    Concat(_, Nothing) then
+      tmp15 = normalize_Altern_sp_18(self.p2)
+      new Concat.class(p1__2, tmp15)
+    Concat(_, Concat(_, _)) then
+      tmp15 = normalize_Altern_sp_18(self.p2)
+      new Concat.class(p1__2, tmp15)
 fun normalize_Concat_sp_16(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Exact_sp_1(self.p1)
@@ -2776,13 +2710,20 @@ fun normalize_Concat_sp_16(self) =
 fun normalize_Concat_sp_17(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Concat_sp_18(self.p1)
-  tmp15 = normalize_Concat_sp_18(self.p2)
-  new Concat.class(p1__2, tmp15)
+  if p1__2 is
+    Nothing then p1__2
+    else
+      tmp15 = normalize_Concat_sp_14(self.p2)
+      new Concat.class(p1__2, tmp15)
 fun normalize_Concat_sp_18(self) =
   let {p1__2, tmp15}
-  p1__2 = normalize_Altern_sp_14(self.p1)
-  tmp15 = normalize_Exact_sp_1(self.p2)
-  new Concat.class(p1__2, tmp15)
+  p1__2 = normalize_Altern_sp_19(self.p1)
+  if p1__2 is
+    Empty then normalize_Exact_sp_1(self.p2)
+    Nothing then p1__2
+    else
+      tmp15 = normalize_Exact_sp_1(self.p2)
+      new Concat.class(p1__2, tmp15)
 fun normalize_Concat_sp_19(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Nothing_sp_1(self.p1)
@@ -2797,130 +2738,59 @@ fun normalize_Concat_sp_20(self) =
     Concat(Exact, _) then
       p1__2 = normalize_Concat_sp_14(self.p1)
       if p1__2 is
-        Empty then normalize_Altern_sp_13(self.p2)
+        Empty then normalize_Altern_sp_18(self.p2)
         Nothing then p1__2
         else
-          tmp15 = normalize_Altern_sp_13(self.p2)
+          tmp15 = normalize_Altern_sp_18(self.p2)
           new Concat.class(p1__2, tmp15)
     Concat(Concat(_, Exact), _) then
       p1__2 = normalize_Concat_sp_14(self.p1)
       if p1__2 is
-        Empty then normalize_Altern_sp_13(self.p2)
+        Empty then normalize_Altern_sp_18(self.p2)
         Nothing then p1__2
         else
-          tmp15 = normalize_Altern_sp_13(self.p2)
+          tmp15 = normalize_Altern_sp_18(self.p2)
           new Concat.class(p1__2, tmp15)
 fun normalize_Concat_sp_21(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Empty_sp_0(self.p1)
-  normalize_Concat_sp_17(self.p2)
+  normalize_Nothing_sp_1(self.p2)
 fun normalize_Concat_sp_22(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Nothing_sp_0(self.p1)
   p1__2
 fun normalize_Concat_sp_23(self) =
   let {p1__2, tmp15}
-  p1__2 = normalize_Concat_sp_17(self.p1)
-  tmp15 = normalize_Altern_sp_14(self.p2)
-  new Concat.class(p1__2, tmp15)
+  p1__2 = normalize_Nothing_sp_1(self.p1)
+  p1__2
 fun normalize_Concat_sp_24(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Nothing_sp_0(self.p1)
   p1__2
 fun normalize_Concat_sp_25(self) =
   let {p1__2, tmp15}
-  p1__2 = normalize_Exact_sp_1(self.p1)
-  tmp15 = normalize_Concat_sp_18(self.p2)
-  new Concat.class(p1__2, tmp15)
+  p1__2 = normalize_Empty_sp_0(self.p1)
+  if self.p2 is
+    Concat(Exact, _) then normalize_Concat_sp_14(self.p2)
+    Concat(Concat(_, Exact), _) then normalize_Concat_sp_14(self.p2)
 fun normalize_Concat_sp_26(self) =
   let {p1__2, tmp15}
-  p1__2 = normalize_Nothing_sp_1(self.p1)
+  p1__2 = normalize_Nothing_sp_0(self.p1)
   p1__2
 fun normalize_Concat_sp_27(self) =
   let {p1__2, tmp15}
-  p1__2 = normalize_Concat_sp_8(self.p1)
+  p1__2 = self.p1.normalize()
   if p1__2 is
+    Empty then normalize_Altern_sp_19(self.p2)
     Nothing then p1__2
     else
-      tmp15 = normalize_Concat_sp_14(self.p2)
+      tmp15 = normalize_Altern_sp_19(self.p2)
       new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_28(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Concat_sp_25(self.p1)
-  tmp15 = normalize_Altern_sp_14(self.p2)
-  new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_29(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Nothing_sp_1(self.p1)
-  p1__2
 fun normalize_Concat_sp_3(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Exact_sp_0(self.p1)
   tmp15 = normalize_In_sp_0(self.p2)
   new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_30(self) =
-  let {p1__2, tmp15}
-  if self.p1 is
-    Concat(Exact, _) then
-      p1__2 = normalize_Concat_sp_14(self.p1)
-      if p1__2 is
-        Empty then normalize_Altern_sp_14(self.p2)
-        Nothing then p1__2
-        else
-          tmp15 = normalize_Altern_sp_14(self.p2)
-          new Concat.class(p1__2, tmp15)
-    Concat(Concat(_, Exact), _) then
-      p1__2 = normalize_Concat_sp_14(self.p1)
-      if p1__2 is
-        Empty then normalize_Altern_sp_14(self.p2)
-        Nothing then p1__2
-        else
-          tmp15 = normalize_Altern_sp_14(self.p2)
-          new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_31(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Empty_sp_0(self.p1)
-  normalize_Concat_sp_18(self.p2)
-fun normalize_Concat_sp_32(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Nothing_sp_0(self.p1)
-  p1__2
-fun normalize_Concat_sp_33(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Concat_sp_18(self.p1)
-  tmp15 = normalize_Altern_sp_14(self.p2)
-  new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_34(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Exact_sp_1(self.p1)
-  tmp15 = normalize_Altern_sp_14(self.p2)
-  new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_35(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Concat_sp_8(self.p1)
-  if p1__2 is
-    Nothing then p1__2
-    else
-      tmp15 = normalize_Altern_sp_14(self.p2)
-      new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_36(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Empty_sp_0(self.p1)
-  normalize_Altern_sp_14(self.p2)
-fun normalize_Concat_sp_37(self) =
-  let {p1__2, tmp15}
-  p1__2 = normalize_Altern_sp_15(self.p1)
-  tmp15 = normalize_Altern_sp_14(self.p2)
-  new Concat.class(p1__2, tmp15)
-fun normalize_Concat_sp_38(self) =
-  let {p1__2, tmp15}
-  p1__2 = self.p1.normalize()
-  if p1__2 is
-    Empty then normalize_Altern_sp_14(self.p2)
-    Nothing then p1__2
-    else
-      tmp15 = normalize_Altern_sp_14(self.p2)
-      new Concat.class(p1__2, tmp15)
 fun normalize_Concat_sp_4(self) =
   let {p1__2, tmp15}
   p1__2 = normalize_Nothing_sp_0(self.p1)
@@ -2968,77 +2838,6 @@ fun startsWith_Concat_sp_1(self, c) =
       scrut8 = canBeEmpty_Concat_sp_2(self.p1)
       false
     else true
-fun startsWith_Concat_sp_10(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Exact_sp_2(self.p1, c)
-  if tmp16 is
-    false then
-      scrut8 = canBeEmpty_Exact_sp_2(self.p1)
-      false
-    else true
-fun startsWith_Concat_sp_11(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Concat_sp_8(self.p1, c)
-  if tmp16 is
-    false then
-      scrut8 = canBeEmpty_Concat_sp_12(self.p1)
-      false
-    else true
-fun startsWith_Concat_sp_12(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Exact_sp_2(self.p1, c)
-  if tmp16 is
-    false then
-      scrut8 = canBeEmpty_Exact_sp_2(self.p1)
-      false
-    else true
-fun startsWith_Concat_sp_13(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Concat_sp_14(self.p1, c)
-  if tmp16 is
-    false then
-      scrut8 = canBeEmpty_Concat_sp_18(self.p1)
-      false
-    else true
-fun startsWith_Concat_sp_14(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = self.p1.startsWith(c)
-  if tmp16 is
-    false then
-      scrut8 = self.p1.canBeEmpty()
-      if scrut8 is
-        true then
-          scrut9 = startsWith_Exact_sp_2(self.p2, c)
-          if scrut9 is
-            true then true
-            else false
-        else false
-    else true
-fun startsWith_Concat_sp_15(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Altern_sp_3(self.p1, c)
-  if tmp16 is
-    false then
-      scrut8 = canBeEmpty_Altern_sp_6(self.p1)
-      scrut9 = startsWith_Altern_sp_2(self.p2, c)
-      if scrut9 is
-        true then true
-        else false
-    else true
-fun startsWith_Concat_sp_16(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = self.p1.startsWith(c)
-  if tmp16 is
-    false then
-      scrut8 = self.p1.canBeEmpty()
-      if scrut8 is
-        true then
-          scrut9 = startsWith_Altern_sp_2(self.p2, c)
-          if scrut9 is
-            true then true
-            else false
-        else false
-    else true
 fun startsWith_Concat_sp_2(self, c) =
   let {scrut8, scrut9, tmp16}
   tmp16 = startsWith_Altern_sp_0(self.p1, c)
@@ -3076,32 +2875,30 @@ fun startsWith_Concat_sp_6(self, c) =
   tmp16 = startsWith_Concat_sp_7(self.p1, c)
   if tmp16 is
     false then
-      scrut8 = canBeEmpty_Concat_sp_11(self.p1)
+      scrut8 = canBeEmpty_Concat_sp_10(self.p1)
       false
     else true
 fun startsWith_Concat_sp_7(self, c) =
   let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Concat_sp_8(self.p1, c)
+  tmp16 = startsWith_Exact_sp_2(self.p1, c)
   if tmp16 is
     false then
-      scrut8 = canBeEmpty_Concat_sp_12(self.p1)
+      scrut8 = canBeEmpty_Exact_sp_2(self.p1)
       false
     else true
 fun startsWith_Concat_sp_8(self, c) =
   let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Altern_sp_2(self.p1, c)
+  tmp16 = self.p1.startsWith(c)
   if tmp16 is
     false then
-      scrut8 = canBeEmpty_Altern_sp_4(self.p1)
-      false
-    else true
-fun startsWith_Concat_sp_9(self, c) =
-  let {scrut8, scrut9, tmp16}
-  tmp16 = startsWith_Concat_sp_10(self.p1, c)
-  if tmp16 is
-    false then
-      scrut8 = canBeEmpty_Concat_sp_14(self.p1)
-      false
+      scrut8 = self.p1.canBeEmpty()
+      if scrut8 is
+        true then
+          scrut9 = startsWith_Altern_sp_2(self.p2, c)
+          if scrut9 is
+            true then true
+            else false
+        else false
     else true
 fun normalize_Star_sp_0(self) =
   let {tmp20}

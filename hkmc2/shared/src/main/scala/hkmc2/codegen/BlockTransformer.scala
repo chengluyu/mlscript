@@ -9,8 +9,15 @@ import semantics.*
 
 // Default implementation: nothing is transformed
 class BlockTransformer(subst: SymbolSubst):
-  
+
   given SymbolSubst = subst
+
+  private enum AssignLikeStep:
+    case Plain(block: Assign, lhs: Assignable, rhs: Result)
+    case Field(block: AssignField, lhs: Path, rhs: Result, symbol: Opt[MemberSymbol])
+    case DynField(block: AssignDynField, lhs: Path, fld: Path, rhs: Result)
+
+  protected def useStackSafeAssignLikeChain: Bool = false
   
   def applyProgram(prog: Program): Program =
     val imports2 = prog.imports.mapConserve(applyImport)
@@ -79,6 +86,8 @@ class BlockTransformer(subst: SymbolSubst):
       val fin2 = applySub(fin)
       val rst2 = applySubBlock(rst)
       if (sub2 is sub) && (fin2 is fin) && (rst2 is rst) then b else TryBlock(sub2, fin2, rst2)
+    case _: Assign | _: AssignField | _: AssignDynField if useStackSafeAssignLikeChain =>
+      applyAssignLikeChain(b)
     case Assign(l, r, rst) =>
       applyResult(r): r2 =>
         val l2 = applyAssignLhs(l)
@@ -104,6 +113,72 @@ class BlockTransformer(subst: SymbolSubst):
             then b
             else AssignDynField(lhs2, fld2, arrayIdx, rhs2, rest2)
     case _: Scoped => applyScopedBlock(b)
+
+  /** Transform long straight-line assignment runs without consuming one JVM
+    * stack frame per `rest` link. Staged modules can quote very large blocks as
+    * data, and their instrumentation is mostly assignment chains constructing
+    * `Block.*` values.
+    */
+  private def applyAssignLikeChain(start: Block): Block =
+    import AssignLikeStep.*
+
+    def transformResult(result: Result): Result =
+      var transformed = result
+      val wrapper = applyResult(result): result2 =>
+        transformed = result2
+        End()
+      assert(wrapper.isEmpty, "assignment-chain result traversal unexpectedly emitted a block")
+      transformed
+
+    def transformPath(path: Path): Path =
+      var transformed = path
+      val wrapper = applyPath(path): path2 =>
+        transformed = path2
+        End()
+      assert(wrapper.isEmpty, "assignment-chain path traversal unexpectedly emitted a block")
+      transformed
+
+    var steps: Ls[AssignLikeStep] = Nil
+    var cur = start
+    var collecting = true
+    while collecting do
+      cur match
+      case block @ Assign(lhs, rhs, rest) =>
+        val rhs2 = transformResult(rhs)
+        val lhs2 = applyAssignLhs(lhs)
+        steps ::= Plain(block, lhs2, rhs2)
+        cur = rest
+      case block @ AssignField(lhs, _, rhs, rest) =>
+        val rhs2 = transformResult(rhs)
+        val lhs2 = transformPath(lhs)
+        val symbol2 = block.symbol.mapConserve(_.subst)
+        steps ::= Field(block, lhs2, rhs2, symbol2)
+        cur = rest
+      case block @ AssignDynField(lhs, fld, _, rhs, rest) =>
+        val rhs2 = transformResult(rhs)
+        val lhs2 = transformPath(lhs)
+        val fld2 = transformPath(fld)
+        steps ::= DynField(block, lhs2, fld2, rhs2)
+        cur = rest
+      case _ =>
+        collecting = false
+
+    var acc = applySubBlock(cur)
+    for step <- steps do
+      acc = step match
+        case Plain(block, lhs, rhs) =>
+          if (lhs is block.lhs) && (rhs is block.rhs) && (acc is block.rest)
+          then block
+          else Assign(lhs, rhs, acc)
+        case Field(block, lhs, rhs, symbol) =>
+          if (lhs is block.lhs) && (rhs is block.rhs) && (acc is block.rest) && (symbol is block.symbol)
+          then block
+          else AssignField(lhs, block.nme, rhs, acc)(symbol)
+        case DynField(block, lhs, fld, rhs) =>
+          if (lhs is block.lhs) && (fld is block.fld) && (rhs is block.rhs) && (acc is block.rest)
+          then block
+          else AssignDynField(lhs, fld, block.arrayIdx, rhs, acc)
+    acc
   
   // FunDefn body, Lambda body, Handler body, ctor and pCtor are considered "funBodyLike"
   def applyFunBodyLikeBlock(b: Block): Block = applyScopedBlock(b)
@@ -332,6 +407,26 @@ class BlockTransformer(subst: SymbolSubst):
       case a :: t =>
         f(a, a2 => rec(t, t2 => if (a2 is a) && (t2 is t) then k(ls) else k(a2 :: t2)))
     rec(ls, k)
+
+  /** Stack-safe list traversal for passes whose element transforms never emit
+    * block wrappers around the element continuation. Use the normal
+    * `applyListOf` when a transformer may introduce such wrappers.
+    */
+  protected def applyListOfStackSafeNoWrappers[A]
+      (ls: List[A], f: (A, (A => Block)) => Block)
+      (k: List[A] => Block): Block =
+    val builder = List.newBuilder[A]
+    var changed = false
+    for elem <- ls do
+      var elem2 = elem
+      val wrapper = f(elem, transformed =>
+        elem2 = transformed
+        End()
+      )
+      assert(wrapper.isEmpty, "stack-safe list traversal unexpectedly emitted a block")
+      if !(elem2 is elem) then changed = true
+      builder += elem2
+    if changed then k(builder.result()) else k(ls)
 
 
 

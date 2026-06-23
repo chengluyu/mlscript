@@ -13,6 +13,8 @@ class Normalization(lowering: Lowering)(using tl: TL)(using Raise, Ctx, State, C
   import Normalization.*, Mode.*
   import tl.*
 
+  private val preservedUseSplits = collection.mutable.Set.empty[SplitSymbol]
+
   def reportUnreachableCase[T <: Located](unreachable: Located, subsumedBy: T, when: Bool = true): T =
     if when then warn(
       msg"this case is unreachable" -> unreachable.toLoc,
@@ -124,6 +126,35 @@ class Normalization(lowering: Lowering)(using tl: TL)(using Raise, Ctx, State, C
     case Split.LetSplit(s, tail) => Split.LetSplit(s, inlineUseSplit(tail, sym, body))
     case Split.UseSplit(s) => if s eq sym then body.duplicate else split
 
+  private def shouldShareSplitBody(body: Split): Bool =
+    config.patMatConsequentSharingThreshold match
+      case S(threshold) => body.size * 2 > threshold
+      case N => false
+
+  /** Normalize `consequent` while sharing `fallback` as a branch-local join point.
+    *
+    * Positive-specialized fallbacks may refer to constructor-field symbols bound
+    * by the branch that owns `consequent`, so the `LetSplit` must remain inside
+    * that branch rather than being hoisted around the whole match. These fallback
+    * join points are intentionally opaque to later specialization: re-running the
+    * fallback decision tree is semantically valid, and it prevents inner tests
+    * from inlining the same large fallback back into every failure path.
+    */
+  private def normalizeWithSharedFallback(consequent: Split, fallback: Split)(using VarSet): Split =
+    if !shouldShareSplitBody(fallback) then
+      normalize(consequent ++ fallback)
+    else
+      val normalizedFallback = normalize(fallback)
+      val splitSymbol = new SplitSymbol(normalizedFallback, "σ")
+      preservedUseSplits += splitSymbol
+      val whenTrue = normalize(consequent ++ Split.UseSplit(splitSymbol))
+      if whenTrue.freeSplitSyms.contains(splitSymbol) then
+        log(s"SHARE: branch-local let-split ${splitSymbol.nme}, body size ${normalizedFallback.size}")
+        Split.LetSplit(splitSymbol, whenTrue)
+      else
+        log(s"ABSORB: branch-local fallback $$${splitSymbol.nme} was not used")
+        whenTrue
+
   /** Workhorse of `normalize`. Returns the normalized split. Whether a
     * candidate join point survives normalization is decided by inspecting
     * `freeSplitSyms` of the recursive result. */
@@ -150,10 +181,7 @@ class Normalization(lowering: Lowering)(using tl: TL)(using Raise, Ctx, State, C
           val useSplit = Split.UseSplit(splitSymbol)
           val whenTrue = normalize(specializedConsequent ++ useSplit)
           if whenTrue.freeSplitSyms.contains(splitSymbol) then
-            val shouldShare = config.patMatConsequentSharingThreshold match
-              case S(threshold) => normalizedAlternative.size * 2 > threshold
-              case N => false
-            if shouldShare then
+            if shouldShareSplitBody(normalizedAlternative) then
               log(s"SHARE: let-split ${splitSymbol.nme}, body size ${normalizedAlternative.size}")
               Split.LetSplit(splitSymbol, Branch(scrutinee, pattern, whenTrue) ~: useSplit)
             else
@@ -164,13 +192,13 @@ class Normalization(lowering: Lowering)(using tl: TL)(using Raise, Ctx, State, C
             Branch(scrutinee, pattern, whenTrue) ~: normalizedAlternative
         case (S(positiveAlternative), S(negativeAlternative)) =>
           log("DUP: pos≠, neg≠")
-          Branch(scrutinee, pattern, normalize(specializedConsequent ++ positiveAlternative)) ~: normalize(negativeAlternative)
+          Branch(scrutinee, pattern, normalizeWithSharedFallback(specializedConsequent, positiveAlternative)) ~: normalize(negativeAlternative)
         case (S(positiveAlternative), N) =>
           log("DUP: pos≠, neg=")
-          Branch(scrutinee, pattern, normalize(specializedConsequent ++ positiveAlternative)) ~: normalize(alternative)
+          Branch(scrutinee, pattern, normalizeWithSharedFallback(specializedConsequent, positiveAlternative)) ~: normalize(alternative)
         case (N, S(negativeAlternative)) =>
           log("DUP: pos=, neg≠")
-          Branch(scrutinee, pattern, normalize(specializedConsequent ++ alternative.duplicate)) ~: normalize(negativeAlternative)
+          Branch(scrutinee, pattern, normalizeWithSharedFallback(specializedConsequent, alternative.duplicate)) ~: normalize(negativeAlternative)
     case Split.Let(v, _, tail) if vs has v =>
       log(s"LET: SKIP already declared scrutinee $v")
       normalizeImpl(tail)
@@ -299,7 +327,9 @@ class Normalization(lowering: Lowering)(using tl: TL)(using Raise, Ctx, State, C
         // scrutinee, inline it and specialize; otherwise keep the reference.
         // When rec returns N (body unchanged), the UseSplit is preserved to
         // maintain sharing via the join point.
-        if sym.body.referencesScrutinee(scrutinee) then
+        if preservedUseSplits.contains(sym) then
+          N
+        else if sym.body.referencesScrutinee(scrutinee) then
           rec(sym.body)
         else N
     end rec

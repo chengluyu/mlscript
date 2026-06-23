@@ -618,6 +618,11 @@ fun prop(ctx, b) = if b is
       // preCtor$ is usually scoped, so commit a super() shape discovered inside the scope.
       ctx.setSuperShape(newCtx.getSuperShape())
       [wrapScoped([...symbols, ...newAllocs], res.0), res.1, res.2]
+    Label(label, loop, body, restBlock) and
+      prop(ctx, body) is [body2, bodyShape, bodyCanReachEnd] and
+        prop(ctx, restBlock) is [rest2, restShape, restCanReachEnd] then
+          [Label(label, loop, body2, rest2), union2(bodyShape, restShape), bodyCanReachEnd || restCanReachEnd]
+    Break(_) | Continue(_) then [b, mkBot(), false]
     Assign(x, Call(Select(p, Symbol(f)), args, isSpecial), restBlock) and isDispatchPath(p) then
       let pss = prepareUCSShapes(sop(ctx, p))
       if needsUCS(pss) then

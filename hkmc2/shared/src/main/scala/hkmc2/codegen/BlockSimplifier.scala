@@ -103,6 +103,13 @@ class BlockSimplifier
     * hopefully allows more expensive passes such as DataFlowAnalysis to do less work. */
   class DeadCodeElim() extends BlockTransformer(SymbolSubst.Id), Helper:
     
+    private enum DceAssignStep:
+      case KeepAssign(original: Assign, lhs: Assignable, rhs: Result)
+      case DropAssign(rhs: Result)
+      case KeepAssignField(original: AssignField, lhs: Path, rhs: Result, symbol: Opt[MemberSymbol])
+      case DropAssignField(lhs: Path, rhs: Result)
+      case KeepAssignDynField(original: AssignDynField, lhs: Path, fld: Path, rhs: Result)
+
     var analysisDone = false
     
     val usedLabels = MutSet.empty[LabelSymbol]
@@ -223,20 +230,8 @@ class BlockSimplifier
       case _ => super.applyValue(v)(k)
     
     override def applyBlock(b: Block): Block = b match
-      // * Discard assignments to local variables that are never read (and are not preserved)
-      case Assign(lhs: LocalVarSymbol, rhs, rst) if localVars(lhs) && !usedVars(lhs) && !symbolsToPreserve(lhs) =>
-        registerChange(s"rm ${lhs.showDbg} = ${rhs.showDbg}")
-        applyResult(rhs)(r => Assign.discard(r, applyBlock(rst)))
-
-      // * Discard writes to private fields that are never read
-      case assign @ AssignField(lhs, _, rhs, rst) =>
-        assign.symbol match
-        case S(ts: TermSymbol) if privateFieldsToRemove(ts) =>
-          registerChange(s"rm unused private field write ${ts.showDbg} = ${rhs.showDbg}")
-          applyPath(lhs): lhs2 =>
-            applyResult(rhs): rhs2 =>
-              Assign.discard(lhs2, Assign.discard(rhs2, applyBlock(rst)))
-        case _ => super.applyBlock(b)
+      case _: Assign | _: AssignField | _: AssignDynField =>
+        applyAssignLikeChain(b)
 
       // * Remove local pure definitions that are never read (and are not preserved)
       case Define(defn, rest) =>
@@ -278,6 +273,88 @@ class BlockSimplifier
         End()
       
       case x => super.applyBlock(x)
+
+    /** DCE often sees long straight-line generated instruction blocks. Process
+      * assignment-like rest chains iteratively to avoid one JVM stack frame per
+      * assignment while preserving the old head-to-tail transformation order.
+      */
+    private def applyAssignLikeChain(start: Block): Block =
+      import DceAssignStep.*
+
+      def transformResult(result: Result): Result =
+        var transformed = result
+        val wrapper = applyResult(result): result2 =>
+          transformed = result2
+          End()
+        softAssert(wrapper.isEmpty, "DCE result traversal unexpectedly emitted a block")
+        transformed
+
+      def transformPath(path: Path): Path =
+        var transformed = path
+        val wrapper = applyPath(path): path2 =>
+          transformed = path2
+          End()
+        softAssert(wrapper.isEmpty, "DCE path traversal unexpectedly emitted a block")
+        transformed
+
+      var steps: Ls[DceAssignStep] = Nil
+      var cur = start
+      var collecting = true
+      while collecting do
+        cur match
+        // * Discard assignments to local variables that are never read (and are not preserved)
+        case Assign(lhs: LocalVarSymbol, rhs, rst) if localVars(lhs) && !usedVars(lhs) && !symbolsToPreserve(lhs) =>
+          registerChange(s"rm ${lhs.showDbg} = ${rhs.showDbg}")
+          steps ::= DropAssign(transformResult(rhs))
+          cur = rst
+        case block @ Assign(lhs, rhs, rst) =>
+          val rhs2 = transformResult(rhs)
+          val lhs2 = applyAssignLhs(lhs)
+          steps ::= KeepAssign(block, lhs2, rhs2)
+          cur = rst
+        // * Discard writes to private fields that are never read
+        case assign @ AssignField(lhs, _, rhs, rst) =>
+          assign.symbol match
+          case S(ts: TermSymbol) if privateFieldsToRemove(ts) =>
+            registerChange(s"rm unused private field write ${ts.showDbg} = ${rhs.showDbg}")
+            val lhs2 = transformPath(lhs)
+            val rhs2 = transformResult(rhs)
+            steps ::= DropAssignField(lhs2, rhs2)
+          case _ =>
+            val rhs2 = transformResult(rhs)
+            val lhs2 = transformPath(lhs)
+            val symbol2 = assign.symbol.mapConserve(_.subst)
+            steps ::= KeepAssignField(assign, lhs2, rhs2, symbol2)
+          cur = rst
+        case assign @ AssignDynField(lhs, fld, arrayIdx, rhs, rst) =>
+          val rhs2 = transformResult(rhs)
+          val lhs2 = transformPath(lhs)
+          val fld2 = transformPath(fld)
+          steps ::= KeepAssignDynField(assign, lhs2, fld2, rhs2)
+          cur = rst
+        case _ =>
+          collecting = false
+
+      var acc = applySubBlock(cur)
+      for step <- steps do
+        acc = step match
+          case KeepAssign(original, lhs, rhs) =>
+            if (lhs is original.lhs) && (rhs is original.rhs) && (acc is original.rest)
+            then original
+            else Assign(lhs, rhs, acc)
+          case DropAssign(rhs) =>
+            Assign.discard(rhs, acc)
+          case KeepAssignField(original, lhs, rhs, symbol) =>
+            if (lhs is original.lhs) && (rhs is original.rhs) && (acc is original.rest) && (symbol is original.symbol)
+            then original
+            else AssignField(lhs, original.nme, rhs, acc)(symbol)
+          case DropAssignField(lhs, rhs) =>
+            Assign.discard(lhs, Assign.discard(rhs, acc))
+          case KeepAssignDynField(original, lhs, fld, rhs) =>
+            if (lhs is original.lhs) && (fld is original.fld) && (rhs is original.rhs) && (acc is original.rest)
+            then original
+            else AssignDynField(lhs, fld, original.arrayIdx, rhs, acc)
+      acc
 
     private def removeUnusedPrivateFields(fields: Ls[TermSymbol]): Ls[TermSymbol] =
       fields.filterConserve: fld =>
@@ -635,6 +712,8 @@ class BlockSimplifier
       assignedResults = oldAssignedResults
       res
     
+    override def applyListOf[A](ls: List[A], f: (A, A => Block) => Block)(k: List[A] => Block): Block =
+      applyListOfStackSafeNoWrappers(ls, f)(k)
     
     private def showMap: Str = assignedResults
       .iterator.map: (k, v) =>
@@ -1188,6 +1267,9 @@ class BlockSimplifier
         override def applyMainBlock(main: Block): Block =
           super.applyMainBlock(main).flattened
         
+        override def applyListOf[A](ls: List[A], f: (A, A => Block) => Block)(k: List[A] => Block): Block =
+          applyListOfStackSafeNoWrappers(ls, f)(k)
+
         override def applyBlock(blk: Block) =
           blk match
           case Define(defn: FunDefn, rest) if m.get(defn.dSym).exists(_.canBeInlineEliminated) =>

@@ -191,13 +191,20 @@ module SpecialRegExpSimple with
     fun lsEq(xs, ys) =
       let {scrut9, x3, y1, xs4, ys2, scrut10, scrut11, element1_, element0_, arg_Cons_0_2, arg_Cons_1_2, arg_Cons_0_3, arg_Cons_1_3}
       scrut9 = [xs, ys]
+      do σ:
+        element0_ = scrut9.0
+        element1_ = scrut9.1
+        if element0_ is
+          Nil then
+            if element1_ is
+              Nil then true
+              else
+                σ.break
+          else
+            σ.break
       element0_ = scrut9.0
       element1_ = scrut9.1
       if element0_ is
-        Nil then
-          if element1_ is
-            Nil then true
-            else false
         Cons then
           arg_Cons_0_2 = element0_.x
           arg_Cons_1_2 = element0_.xs
@@ -253,15 +260,17 @@ module SpecialRegExpSimple with
         Cons then
           arg_Cons_0_4 = ls.x
           arg_Cons_1_4 = ls.xs
-          if arg_Cons_1_4 is
-            Nil then
-              x4 = arg_Cons_0_4
-              x4
-            else
-              xs5 = arg_Cons_1_4
-              x5 = arg_Cons_0_4
-              tmp21 = mkUnion(xs5)
-              new Altern(x5, tmp21)
+          do σ:
+            if arg_Cons_1_4 is
+              Nil then
+                x4 = arg_Cons_0_4
+                x4
+              else
+                σ.break
+          xs5 = arg_Cons_1_4
+          x5 = arg_Cons_0_4
+          tmp21 = mkUnion(xs5)
+          new Altern(x5, tmp21)
         else new Nothing()
     fun pushUnique(ls, e) =
       let {x2, xs1, scrut8, arg_Cons_0_, arg_Cons_1_, tmp19}
@@ -318,20 +327,10 @@ fun concatUnique_SpecialRegExpSimple_sp_11(xs, ys) =
   xs
 fun concatUnique_SpecialRegExpSimple_sp_12(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp20}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp20 = pushUnique_SpecialRegExpSimple_sp_3(xs, y)
-  concatUnique_SpecialRegExpSimple_sp_6(tmp20, ys__)
+  xs
 fun concatUnique_SpecialRegExpSimple_sp_13(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp20}
-  arg_Cons_0_1 = ys.x
-  arg_Cons_1_1 = ys.xs
-  ys__ = arg_Cons_1_1
-  y = arg_Cons_0_1
-  tmp20 = pushUnique_SpecialRegExpSimple_sp_6(xs, y)
-  concatUnique_SpecialRegExpSimple_sp_10(tmp20, ys__)
+  xs
 fun concatUnique_SpecialRegExpSimple_sp_2(xs, ys) =
   let {y, ys__, arg_Cons_0_1, arg_Cons_1_1, tmp20}
   xs
@@ -433,21 +432,33 @@ fun matchImpl_SpecialRegExpSimple_sp_2(p, s, acc) =
   if scrut12 is
     true then
       if p is
-        Altern(Concat(Star(Exact), Exact), _) then
+        Altern(Concat(Star(Exact), Exact), Empty) then
           scrut13 = canBeEmpty_Altern_sp_0(p)
           new Some(acc)
-        Altern(Concat(Nothing, Exact), _) then
+        Altern(Concat(Star(Exact), Exact), Altern(Empty, Nothing)) then
           scrut13 = canBeEmpty_Altern_sp_1(p)
+          new Some(acc)
+        Altern(Concat(Nothing, Exact), Empty) then
+          scrut13 = canBeEmpty_Altern_sp_3(p)
+          new Some(acc)
+        Altern(Concat(Nothing, Exact), Altern(Empty, Nothing)) then
+          scrut13 = canBeEmpty_Altern_sp_4(p)
           new Some(acc)
         Concat(Star(Exact), _) then
           scrut13 = canBeEmpty_Concat_sp_1(p)
           new None()
+        Altern(Concat(Star(Exact), Exact), Nothing) then
+          scrut13 = canBeEmpty_Altern_sp_5(p)
+          new None()
         Concat(Nothing, _) then
           scrut13 = canBeEmpty_Concat_sp_2(p)
           new None()
+        Altern(Concat(Nothing, Exact), Nothing) then
+          scrut13 = canBeEmpty_Altern_sp_6(p)
+          new None()
     else
       if p is
-        Altern(Concat(Star(Exact), Exact), _) then
+        Altern(Concat(Star(Exact), Exact), Empty) then
           c12 = s.0
           scrut14 = startsWith_Altern_sp_0(p, c12)
           if scrut14 is
@@ -455,14 +466,31 @@ fun matchImpl_SpecialRegExpSimple_sp_2(p, s, acc) =
               tmp23 = derive_Altern_sp_0(p, c12)
               tmp24 = s.slice(1)
               tmp25 = acc + c12
-              matchImpl_SpecialRegExpSimple_sp_2(tmp23, tmp24, tmp25)
+              matchImpl(tmp23, tmp24, tmp25)
             else
               scrut15 = canBeEmpty_Altern_sp_0(p)
               new Some(acc)
-        Altern(Concat(Nothing, Exact), _) then
+        Altern(Concat(Star(Exact), Exact), Altern(Empty, Nothing)) then
           c12 = s.0
           scrut14 = startsWith_Altern_sp_1(p, c12)
-          scrut15 = canBeEmpty_Altern_sp_1(p)
+          if scrut14 is
+            true then
+              tmp23 = derive_Altern_sp_1(p, c12)
+              tmp24 = s.slice(1)
+              tmp25 = acc + c12
+              matchImpl(tmp23, tmp24, tmp25)
+            else
+              scrut15 = canBeEmpty_Altern_sp_1(p)
+              new Some(acc)
+        Altern(Concat(Nothing, Exact), Empty) then
+          c12 = s.0
+          scrut14 = startsWith_Altern_sp_3(p, c12)
+          scrut15 = canBeEmpty_Altern_sp_3(p)
+          new Some(acc)
+        Altern(Concat(Nothing, Exact), Altern(Empty, Nothing)) then
+          c12 = s.0
+          scrut14 = startsWith_Altern_sp_4(p, c12)
+          scrut15 = canBeEmpty_Altern_sp_4(p)
           new Some(acc)
         Concat(Star(Exact), _) then
           c12 = s.0
@@ -476,10 +504,27 @@ fun matchImpl_SpecialRegExpSimple_sp_2(p, s, acc) =
             else
               scrut15 = canBeEmpty_Concat_sp_1(p)
               new None()
+        Altern(Concat(Star(Exact), Exact), Nothing) then
+          c12 = s.0
+          scrut14 = startsWith_Altern_sp_6(p, c12)
+          if scrut14 is
+            true then
+              tmp23 = derive_Altern_sp_3(p, c12)
+              tmp24 = s.slice(1)
+              tmp25 = acc + c12
+              matchImpl(tmp23, tmp24, tmp25)
+            else
+              scrut15 = canBeEmpty_Altern_sp_5(p)
+              new None()
         Concat(Nothing, _) then
           c12 = s.0
           scrut14 = startsWith_Concat_sp_2(p, c12)
           scrut15 = canBeEmpty_Concat_sp_2(p)
+          new None()
+        Altern(Concat(Nothing, Exact), Nothing) then
+          c12 = s.0
+          scrut14 = startsWith_Altern_sp_7(p, c12)
+          scrut15 = canBeEmpty_Altern_sp_6(p)
           new None()
 fun match_SpecialRegExpSimple_sp_0(p, s) = matchImpl_SpecialRegExpSimple_sp_1(p, s, "")
 fun mkUnion_SpecialRegExpSimple_sp_0(ls) =
@@ -488,6 +533,8 @@ fun mkUnion_SpecialRegExpSimple_sp_0(ls) =
     Cons(Concat(Star(Exact), Exact), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp21 = mkUnion_SpecialRegExpSimple_sp_1(xs5)
@@ -495,6 +542,8 @@ fun mkUnion_SpecialRegExpSimple_sp_0(ls) =
     Cons(Concat(Nothing, Exact), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
+      do σ:
+        σ.break
       xs5 = arg_Cons_1_4
       x5 = arg_Cons_0_4
       tmp21 = mkUnion_SpecialRegExpSimple_sp_1(xs5)
@@ -503,49 +552,61 @@ fun mkUnion_SpecialRegExpSimple_sp_1(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp21}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
+  xs5 = arg_Cons_1_4
+  x5 = arg_Cons_0_4
+  tmp21 = mkUnion_SpecialRegExpSimple_sp_2(xs5)
+  new Altern(x5, tmp21)
 fun mkUnion_SpecialRegExpSimple_sp_2(ls) =
+  let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp21}
+  new Nothing()
+fun mkUnion_SpecialRegExpSimple_sp_3(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp21}
   if ls is
     Cons(Concat(Star(Exact), Exact), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
-      x4 = arg_Cons_0_4
-      x4
+      do σ:
+        x4 = arg_Cons_0_4
+        x4
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp21 = mkUnion_SpecialRegExpSimple_sp_2(xs5)
+      new Altern(x5, tmp21)
     Cons(Concat(Nothing, Exact), _) then
       arg_Cons_0_4 = ls.x
       arg_Cons_1_4 = ls.xs
-      x4 = arg_Cons_0_4
-      x4
-fun mkUnion_SpecialRegExpSimple_sp_3(ls) =
-  let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp21}
-  arg_Cons_0_4 = ls.x
-  arg_Cons_1_4 = ls.xs
-  xs5 = arg_Cons_1_4
-  x5 = arg_Cons_0_4
-  tmp21 = mkUnion_SpecialRegExpSimple_sp_1(xs5)
-  new Altern(x5, tmp21)
+      do σ:
+        x4 = arg_Cons_0_4
+        x4
+      xs5 = arg_Cons_1_4
+      x5 = arg_Cons_0_4
+      tmp21 = mkUnion_SpecialRegExpSimple_sp_2(xs5)
+      new Altern(x5, tmp21)
 fun mkUnion_SpecialRegExpSimple_sp_4(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp21}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
   xs5 = arg_Cons_1_4
   x5 = arg_Cons_0_4
-  tmp21 = mkUnion_SpecialRegExpSimple_sp_1(xs5)
+  tmp21 = mkUnion_SpecialRegExpSimple_sp_2(xs5)
   new Altern(x5, tmp21)
 fun mkUnion_SpecialRegExpSimple_sp_5(ls) =
   let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp21}
   arg_Cons_0_4 = ls.x
   arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
-fun mkUnion_SpecialRegExpSimple_sp_6(ls) =
-  let {x4, x5, xs5, arg_Cons_0_4, arg_Cons_1_4, tmp21}
-  arg_Cons_0_4 = ls.x
-  arg_Cons_1_4 = ls.xs
-  x4 = arg_Cons_0_4
-  x4
+  do σ:
+    x4 = arg_Cons_0_4
+    x4
+  xs5 = arg_Cons_1_4
+  x5 = arg_Cons_0_4
+  tmp21 = mkUnion_SpecialRegExpSimple_sp_2(xs5)
+  new Altern(x5, tmp21)
 fun pushUnique_SpecialRegExpSimple_sp_0(ls, e) =
   let {x2, xs1, scrut8, arg_Cons_0_, arg_Cons_1_, tmp19}
   new Cons(e, Nil)
@@ -592,6 +653,7 @@ fun pushUnique_SpecialRegExpSimple_sp_7(ls, e) =
   tmp19 = pushUnique_SpecialRegExpSimple_sp_5(xs1, e)
   new Cons(x2, tmp19)
 fun canBeEmpty_Nothing_sp_0(self) = false
+fun derive_Nothing_sp_0(self, c) = self
 fun flat_Nothing_sp_0(self) = new Nil()
 fun normalize_Nothing_sp_0(self) = self
 fun startsWith_Nothing_sp_0(self, c) = false
@@ -618,16 +680,53 @@ fun startsWith_Exact_sp_0(self, c) = "a" == c
 fun startsWith_Exact_sp_1(self, c) = "b" == c
 fun canBeEmpty_Altern_sp_0(self) = true
 fun canBeEmpty_Altern_sp_1(self) = true
+fun canBeEmpty_Altern_sp_2(self) = true
+fun canBeEmpty_Altern_sp_3(self) = true
+fun canBeEmpty_Altern_sp_4(self) = true
+fun canBeEmpty_Altern_sp_5(self) = false
+fun canBeEmpty_Altern_sp_6(self) = false
 fun derive_Altern_sp_0(self, c) =
   let {tmp, tmp1, tmp2}
   tmp = derive_Concat_sp_1(self.p1, c)
   tmp1 = derive_Empty_sp_0(self.p2, c)
   tmp2 = new Altern(tmp, tmp1)
   if tmp2 is
-    Altern(Altern(Concat(Star(Exact), Exact), Empty), _) then normalize_Altern_sp_4(tmp2)
-    Altern(Altern(Concat(Nothing, Exact), Empty), _) then normalize_Altern_sp_5(tmp2)
+    Altern(Altern(Concat(Star(Exact), Exact), _), _) then normalize_Altern_sp_4(tmp2)
+    Altern(Altern(Concat(Nothing, Exact), _), _) then normalize_Altern_sp_5(tmp2)
     Altern(Concat(Star(Exact), Exact), _) then normalize_Altern_sp_6(tmp2)
-    Altern(Concat(Nothing, Exact), _) then normalize_Altern_sp_7(tmp2)
+    Altern(Altern(Concat(Star(Exact), Exact), Nothing), _) then normalize_Altern_sp_7(tmp2)
+    Altern(Concat(Nothing, Exact), _) then normalize_Altern_sp_8(tmp2)
+    Altern(Altern(Concat(Nothing, Exact), Nothing), _) then normalize_Altern_sp_9(tmp2)
+fun derive_Altern_sp_1(self, c) =
+  let {tmp, tmp1, tmp2}
+  tmp = derive_Concat_sp_1(self.p1, c)
+  tmp1 = derive_Altern_sp_2(self.p2, c)
+  tmp2 = new Altern(tmp, tmp1)
+  if tmp2 is
+    Altern(Altern(Concat(Star(Exact), Exact), _), _) then normalize_Altern_sp_4(tmp2)
+    Altern(Altern(Concat(Nothing, Exact), _), _) then normalize_Altern_sp_5(tmp2)
+    Altern(Concat(Star(Exact), Exact), _) then normalize_Altern_sp_6(tmp2)
+    Altern(Altern(Concat(Star(Exact), Exact), Nothing), _) then normalize_Altern_sp_7(tmp2)
+    Altern(Concat(Nothing, Exact), _) then normalize_Altern_sp_8(tmp2)
+    Altern(Altern(Concat(Nothing, Exact), Nothing), _) then normalize_Altern_sp_9(tmp2)
+fun derive_Altern_sp_2(self, c) =
+  let {tmp, tmp1, tmp2}
+  tmp = derive_Empty_sp_0(self.p1, c)
+  tmp1 = derive_Nothing_sp_0(self.p2, c)
+  tmp2 = new Altern(tmp, tmp1)
+  normalize_Altern_sp_10(tmp2)
+fun derive_Altern_sp_3(self, c) =
+  let {tmp, tmp1, tmp2}
+  tmp = derive_Concat_sp_1(self.p1, c)
+  tmp1 = derive_Nothing_sp_0(self.p2, c)
+  tmp2 = new Altern(tmp, tmp1)
+  if tmp2 is
+    Altern(Altern(Concat(Star(Exact), Exact), _), _) then normalize_Altern_sp_4(tmp2)
+    Altern(Altern(Concat(Nothing, Exact), _), _) then normalize_Altern_sp_5(tmp2)
+    Altern(Concat(Star(Exact), Exact), _) then normalize_Altern_sp_6(tmp2)
+    Altern(Altern(Concat(Star(Exact), Exact), Nothing), _) then normalize_Altern_sp_7(tmp2)
+    Altern(Concat(Nothing, Exact), _) then normalize_Altern_sp_8(tmp2)
+    Altern(Altern(Concat(Nothing, Exact), Nothing), _) then normalize_Altern_sp_9(tmp2)
 fun flat_Altern_sp_0(self) =
   let {p1__, p2__, tmp8}
   p1__ = self.p1.flat()
@@ -642,10 +741,16 @@ fun flat_Altern_sp_1(self) =
   concatUnique(tmp8, p2__)
 fun flat_Altern_sp_10(self) =
   let {p1__, p2__, tmp8}
-  p1__ = flat_Concat_sp_2(self.p1)
+  p1__ = flat_Altern_sp_9(self.p1)
   p2__ = flat_Nothing_sp_0(self.p2)
   tmp8 = concatUnique_SpecialRegExpSimple_sp_8(Nil, p1__)
   concatUnique_SpecialRegExpSimple_sp_9(tmp8, p2__)
+fun flat_Altern_sp_11(self) =
+  let {p1__, p2__, tmp8}
+  p1__ = flat_Nothing_sp_0(self.p1)
+  p2__ = flat_Nothing_sp_0(self.p2)
+  tmp8 = concatUnique_SpecialRegExpSimple_sp_13(Nil, p1__)
+  concatUnique_SpecialRegExpSimple_sp_13(tmp8, p2__)
 fun flat_Altern_sp_2(self) =
   let {p1__, p2__, tmp8}
   p1__ = flat_Concat_sp_0(self.p1)
@@ -680,34 +785,48 @@ fun flat_Altern_sp_4(self) =
       concatUnique_SpecialRegExpSimple_sp_9(tmp8, p2__)
 fun flat_Altern_sp_5(self) =
   let {p1__, p2__, tmp8}
-  p1__ = flat_Altern_sp_6(self.p1)
-  p2__ = flat_Nothing_sp_0(self.p2)
-  tmp8 = concatUnique_SpecialRegExpSimple_sp_12(Nil, p1__)
-  concatUnique_SpecialRegExpSimple_sp_7(tmp8, p2__)
+  if self.p1 is
+    Altern(_, Empty) then
+      p1__ = flat_Altern_sp_1(self.p1)
+      p2__ = flat_Nothing_sp_0(self.p2)
+      tmp8 = concatUnique_SpecialRegExpSimple_sp_0(Nil, p1__)
+      concatUnique_SpecialRegExpSimple_sp_12(tmp8, p2__)
+    Altern(_, Altern(Empty, Nothing)) then
+      p1__ = flat_Altern_sp_1(self.p1)
+      p2__ = flat_Nothing_sp_0(self.p2)
+      tmp8 = concatUnique_SpecialRegExpSimple_sp_0(Nil, p1__)
+      concatUnique_SpecialRegExpSimple_sp_12(tmp8, p2__)
 fun flat_Altern_sp_6(self) =
   let {p1__, p2__, tmp8}
-  p1__ = flat_Concat_sp_1(self.p1)
-  p2__ = flat_Empty_sp_0(self.p2)
-  tmp8 = concatUnique_SpecialRegExpSimple_sp_4(Nil, p1__)
-  concatUnique_SpecialRegExpSimple_sp_6(tmp8, p2__)
+  if self.p1 is
+    Altern(_, Empty) then
+      p1__ = flat_Altern_sp_1(self.p1)
+      p2__ = flat_Nothing_sp_0(self.p2)
+      tmp8 = concatUnique_SpecialRegExpSimple_sp_0(Nil, p1__)
+      concatUnique_SpecialRegExpSimple_sp_12(tmp8, p2__)
+    Altern(_, Altern(Empty, Nothing)) then
+      p1__ = flat_Altern_sp_1(self.p1)
+      p2__ = flat_Nothing_sp_0(self.p2)
+      tmp8 = concatUnique_SpecialRegExpSimple_sp_0(Nil, p1__)
+      concatUnique_SpecialRegExpSimple_sp_12(tmp8, p2__)
 fun flat_Altern_sp_7(self) =
-  let {p1__, p2__, tmp8}
-  p1__ = flat_Altern_sp_8(self.p1)
-  p2__ = flat_Nothing_sp_0(self.p2)
-  tmp8 = concatUnique_SpecialRegExpSimple_sp_13(Nil, p1__)
-  concatUnique_SpecialRegExpSimple_sp_11(tmp8, p2__)
-fun flat_Altern_sp_8(self) =
-  let {p1__, p2__, tmp8}
-  p1__ = flat_Concat_sp_2(self.p1)
-  p2__ = flat_Empty_sp_0(self.p2)
-  tmp8 = concatUnique_SpecialRegExpSimple_sp_8(Nil, p1__)
-  concatUnique_SpecialRegExpSimple_sp_10(tmp8, p2__)
-fun flat_Altern_sp_9(self) =
   let {p1__, p2__, tmp8}
   p1__ = flat_Concat_sp_1(self.p1)
   p2__ = flat_Nothing_sp_0(self.p2)
   tmp8 = concatUnique_SpecialRegExpSimple_sp_4(Nil, p1__)
   concatUnique_SpecialRegExpSimple_sp_5(tmp8, p2__)
+fun flat_Altern_sp_8(self) =
+  let {p1__, p2__, tmp8}
+  p1__ = flat_Altern_sp_7(self.p1)
+  p2__ = flat_Nothing_sp_0(self.p2)
+  tmp8 = concatUnique_SpecialRegExpSimple_sp_4(Nil, p1__)
+  concatUnique_SpecialRegExpSimple_sp_5(tmp8, p2__)
+fun flat_Altern_sp_9(self) =
+  let {p1__, p2__, tmp8}
+  p1__ = flat_Concat_sp_2(self.p1)
+  p2__ = flat_Nothing_sp_0(self.p2)
+  tmp8 = concatUnique_SpecialRegExpSimple_sp_8(Nil, p1__)
+  concatUnique_SpecialRegExpSimple_sp_9(tmp8, p2__)
 fun normalize_Altern_sp_0(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_0(self)
@@ -716,6 +835,10 @@ fun normalize_Altern_sp_1(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_2(self)
   mkUnion(tmp4)
+fun normalize_Altern_sp_10(self) =
+  let {tmp4}
+  tmp4 = flat_Altern_sp_11(self)
+  mkUnion_SpecialRegExpSimple_sp_2(tmp4)
 fun normalize_Altern_sp_2(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_3(self)
@@ -723,30 +846,59 @@ fun normalize_Altern_sp_2(self) =
 fun normalize_Altern_sp_3(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_4(self)
-  mkUnion_SpecialRegExpSimple_sp_2(tmp4)
+  mkUnion_SpecialRegExpSimple_sp_3(tmp4)
 fun normalize_Altern_sp_4(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_5(self)
-  mkUnion_SpecialRegExpSimple_sp_3(tmp4)
+  mkUnion(tmp4)
 fun normalize_Altern_sp_5(self) =
+  let {tmp4}
+  tmp4 = flat_Altern_sp_6(self)
+  mkUnion(tmp4)
+fun normalize_Altern_sp_6(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_7(self)
   mkUnion_SpecialRegExpSimple_sp_4(tmp4)
-fun normalize_Altern_sp_6(self) =
+fun normalize_Altern_sp_7(self) =
+  let {tmp4}
+  tmp4 = flat_Altern_sp_8(self)
+  mkUnion_SpecialRegExpSimple_sp_4(tmp4)
+fun normalize_Altern_sp_8(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_9(self)
   mkUnion_SpecialRegExpSimple_sp_5(tmp4)
-fun normalize_Altern_sp_7(self) =
+fun normalize_Altern_sp_9(self) =
   let {tmp4}
   tmp4 = flat_Altern_sp_10(self)
-  mkUnion_SpecialRegExpSimple_sp_6(tmp4)
+  mkUnion_SpecialRegExpSimple_sp_5(tmp4)
 fun startsWith_Altern_sp_0(self, c) =
   let {tmp7}
   tmp7 = startsWith_Concat_sp_1(self.p1, c)
   if tmp7 is
     false then startsWith_Empty_sp_0(self.p2, c)
     else true
-fun startsWith_Altern_sp_1(self, c) = false
+fun startsWith_Altern_sp_1(self, c) =
+  let {tmp7}
+  tmp7 = startsWith_Concat_sp_1(self.p1, c)
+  if tmp7 is
+    false then startsWith_Altern_sp_2(self.p2, c)
+    else true
+fun startsWith_Altern_sp_2(self, c) =
+  let {tmp7}
+  tmp7 = self.p1.startsWith(c)
+  if tmp7 is
+    false then self.p2.startsWith(c)
+    else true
+fun startsWith_Altern_sp_3(self, c) = false
+fun startsWith_Altern_sp_4(self, c) = false
+fun startsWith_Altern_sp_5(self, c) = false
+fun startsWith_Altern_sp_6(self, c) =
+  let {tmp7}
+  tmp7 = startsWith_Concat_sp_1(self.p1, c)
+  if tmp7 is
+    false then startsWith_Nothing_sp_0(self.p2, c)
+    else true
+fun startsWith_Altern_sp_7(self, c) = false
 fun canBeEmpty_Concat_sp_0(self) = false
 fun canBeEmpty_Concat_sp_1(self) = false
 fun canBeEmpty_Concat_sp_2(self) = false

@@ -1,3 +1,4 @@
+:js
 :patMatConsequentSharingThreshold 1
 
 // === POC: positive-specialized fallback sharing ===
@@ -35,6 +36,35 @@ fun positiveFallbackDuplicationPoc(x, y) = if x is
 //│ Normalized:
 //│ >  ‹if|while›
 //│ >    x is Node(arg$Node$0$, arg$Node$1$) and
+//│ >      let-split σ =
+//│ >        tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >          let-split σ =
+//│ >            let-split σ = else "fallback"
+//│ >            tmp:arg$Leaf$0$ is "a" and
+//│ >              tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
+//│ >                tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
+//│ >                  tmp:arg$Leaf$0$ is "b" and
+//│ >                    tmp:arg$Alt$1$ is Leaf(arg$Leaf$0$) and
+//│ >                      tmp:arg$Leaf$0$ is "c" then "alt"
+//│ >                      $σ
+//│ >                    $σ
+//│ >                  $σ
+//│ >                $σ
+//│ >              $σ
+//│ >            $σ
+//│ >          tmp:arg$Leaf$0$ is "a" and
+//│ >            tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >              tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                tmp:arg$Leaf$0$ is "b" and
+//│ >                  tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
+//│ >                    tmp:arg$Leaf$0$ is "d" then "abd"
+//│ >                    $σ
+//│ >                  $σ
+//│ >                $σ
+//│ >              $σ
+//│ >            $σ
+//│ >          $σ
+//│ >        else "fallback"
 //│ >      tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
 //│ >        tmp:arg$Leaf$0$ is "a" and
 //│ >          tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
@@ -43,25 +73,14 @@ fun positiveFallbackDuplicationPoc(x, y) = if x is
 //│ >                tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
 //│ >                  tmp:arg$Leaf$0$ is "c" and
 //│ >                    y is 0 then "abc0"
-//│ >                    else "fallback"
-//│ >                  tmp:arg$Leaf$0$ is "d" then "abd"
-//│ >                  else "fallback"
-//│ >                else "fallback"
-//│ >              else "fallback"
-//│ >            else "fallback"
-//│ >          let-split σ = else "fallback"
-//│ >          tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
-//│ >            tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
-//│ >              tmp:arg$Leaf$0$ is "b" and
-//│ >                tmp:arg$Alt$1$ is Leaf(arg$Leaf$0$) and
-//│ >                  tmp:arg$Leaf$0$ is "c" then "alt"
+//│ >                    $σ
 //│ >                  $σ
 //│ >                $σ
 //│ >              $σ
 //│ >            $σ
 //│ >          $σ
-//│ >        else "fallback"
-//│ >      else "fallback"
+//│ >        $σ
+//│ >      $σ
 //│ >    x is Empty() then "empty"
 //│ >    else "fallback"
 
@@ -135,6 +154,82 @@ fun deepNestedFallbackExpressionPoc(x, y, z) = if x is
 //│ Normalized:
 //│ >  ‹if|while›
 //│ >    x is Node(arg$Node$0$, arg$Node$1$) and
+//│ >      let-split σ =
+//│ >        tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >          let-split σ =
+//│ >            tmp:arg$Leaf$0$ is "a" and
+//│ >              let-split σ =
+//│ >                let-split σ = else "fallback"
+//│ >                tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                  tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                    tmp:arg$Leaf$0$ is "b" and
+//│ >                      tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
+//│ >                        tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
+//│ >                          tmp:arg$Leaf$0$ is "c" and
+//│ >                            tmp:arg$Alt$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                              tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                                tmp:arg$Leaf$0$ is "d" and
+//│ >                                  tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
+//│ >                                    tmp:arg$Leaf$0$ is "e" then "ab-alt"
+//│ >                                    $σ
+//│ >                                  $σ
+//│ >                                $σ
+//│ >                              $σ
+//│ >                            $σ
+//│ >                          $σ
+//│ >                        $σ
+//│ >                      $σ
+//│ >                    $σ
+//│ >                  $σ
+//│ >                $σ
+//│ >              tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                  tmp:arg$Leaf$0$ is "b" and
+//│ >                    tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                      tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                        tmp:arg$Leaf$0$ is "c" and
+//│ >                          tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
+//│ >                            tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
+//│ >                              tmp:arg$Leaf$0$ is "d" and
+//│ >                                tmp:arg$Alt$1$ is Leaf(arg$Leaf$0$) and
+//│ >                                  tmp:arg$Leaf$0$ is "e" then "abc-alt"
+//│ >                                  $σ
+//│ >                                $σ
+//│ >                              $σ
+//│ >                            $σ
+//│ >                          $σ
+//│ >                        $σ
+//│ >                      $σ
+//│ >                    $σ
+//│ >                  $σ
+//│ >                $σ
+//│ >              $σ
+//│ >            else "fallback"
+//│ >          tmp:arg$Leaf$0$ is "a" and
+//│ >            tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >              tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                tmp:arg$Leaf$0$ is "b" and
+//│ >                  tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                    tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                      tmp:arg$Leaf$0$ is "c" and
+//│ >                        tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
+//│ >                          tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
+//│ >                            tmp:arg$Leaf$0$ is "d" and
+//│ >                              tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
+//│ >                                tmp:arg$Leaf$0$ is "f" then "abcdf"
+//│ >                                $σ
+//│ >                              $σ
+//│ >                            $σ
+//│ >                          $σ
+//│ >                        $σ
+//│ >                      $σ
+//│ >                    $σ
+//│ >                  $σ
+//│ >                $σ
+//│ >              $σ
+//│ >            $σ
+//│ >          $σ
+//│ >        else "fallback"
 //│ >      tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
 //│ >        tmp:arg$Leaf$0$ is "a" and
 //│ >          tmp:arg$Node$1$ is Node(arg$Node$0$, arg$Node$1$) and
@@ -148,38 +243,10 @@ fun deepNestedFallbackExpressionPoc(x, y, z) = if x is
 //│ >                          tmp:arg$Leaf$0$ is "d" and
 //│ >                            tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
 //│ >                              tmp:arg$Leaf$0$ is "e" and
-//│ >                                let-split σ = else "fallback"
 //│ >                                y is 0 and
 //│ >                                  z is 0 then "abcde"
 //│ >                                  $σ
 //│ >                                $σ
-//│ >                              tmp:arg$Leaf$0$ is "f" then "abcdf"
-//│ >                              else "fallback"
-//│ >                            else "fallback"
-//│ >                          else "fallback"
-//│ >                        else "fallback"
-//│ >                      let-split σ = else "fallback"
-//│ >                      tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
-//│ >                        tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
-//│ >                          tmp:arg$Leaf$0$ is "d" and
-//│ >                            tmp:arg$Alt$1$ is Leaf(arg$Leaf$0$) and
-//│ >                              tmp:arg$Leaf$0$ is "e" then "abc-alt"
-//│ >                              $σ
-//│ >                            $σ
-//│ >                          $σ
-//│ >                        $σ
-//│ >                      $σ
-//│ >                    else "fallback"
-//│ >                  else "fallback"
-//│ >                let-split σ = else "fallback"
-//│ >                tmp:arg$Node$1$ is Alt(arg$Alt$0$, arg$Alt$1$) and
-//│ >                  tmp:arg$Alt$0$ is Leaf(arg$Leaf$0$) and
-//│ >                    tmp:arg$Leaf$0$ is "c" and
-//│ >                      tmp:arg$Alt$1$ is Node(arg$Node$0$, arg$Node$1$) and
-//│ >                        tmp:arg$Node$0$ is Leaf(arg$Leaf$0$) and
-//│ >                          tmp:arg$Leaf$0$ is "d" and
-//│ >                            tmp:arg$Node$1$ is Leaf(arg$Leaf$0$) and
-//│ >                              tmp:arg$Leaf$0$ is "e" then "ab-alt"
 //│ >                              $σ
 //│ >                            $σ
 //│ >                          $σ
@@ -188,10 +255,10 @@ fun deepNestedFallbackExpressionPoc(x, y, z) = if x is
 //│ >                    $σ
 //│ >                  $σ
 //│ >                $σ
-//│ >              else "fallback"
-//│ >            else "fallback"
-//│ >          else "fallback"
-//│ >        else "fallback"
-//│ >      else "fallback"
+//│ >              $σ
+//│ >            $σ
+//│ >          $σ
+//│ >        $σ
+//│ >      $σ
 //│ >    x is Empty() then "empty"
 //│ >    else "fallback"
